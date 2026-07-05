@@ -676,7 +676,7 @@ function pageHtml() {
           \`Post ID: \${json.post_id || "-"}\`,
           \`Media ID: \${json.media_id || "-"}\`,
           \`Link: \${json.permalink_url || "-"}\`,
-          \`Comment ID: \${json.comment_id || "-"}\`,
+          json.media_type === "video" ? "Comment ID: - (CTA sudah dimasukkan dalam description video)" : \`Comment ID: \${json.comment_id || "-"}\`,
           json.processing_note ? \`Nota: \${json.processing_note}\` : ""
         ].filter(Boolean).join("\\n");
         form.reset();
