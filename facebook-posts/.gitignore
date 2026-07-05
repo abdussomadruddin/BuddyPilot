@@ -1,0 +1,15 @@
+facebook.env
+.facebook-user-token
+.facebook-app-secret
+assets/telegram-creatives/
+assets/
+drafts/
+telegram/telegram.env
+telegram/telegram-state.json
+telegram/inbox/
+telegram/*.log
+webapp/.env
+webapp/uploads/
+webapp/posts/
+__pycache__/
+*.pyc
