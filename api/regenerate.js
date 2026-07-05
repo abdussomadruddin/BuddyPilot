@@ -22,6 +22,7 @@ module.exports = async function handler(req, res) {
       mediaType: body.media_type,
       salespageContext: body.salespage_context,
       variation: body.variation,
+      seenVariations: body.seen_variations,
     });
 
     res.statusCode = 200;

@@ -258,6 +258,7 @@ function pageHtml() {
     const approveButton = document.getElementById("approveButton");
     const regenerateButton = document.getElementById("regenerateButton");
     let currentPreview = null;
+    let seenVariations = [];
 
     function showError(error) {
       result.className = "result err";
@@ -266,11 +267,12 @@ function pageHtml() {
 
     function showPreview(json) {
       currentPreview = json.preview;
+      seenVariations = [Number(currentPreview.variation || 0)];
       captionPreview.value = currentPreview.caption || "";
       commentPreview.value = currentPreview.comment_cta || "";
       previewMeta.textContent = [
         \`Salespage context: \${currentPreview.salespage_context?.product_name || "-"}\`,
-        \`Variation: \${currentPreview.variation || 0}\`,
+        \`Concept: \${Number(currentPreview.variation || 0) + 1}/500\`,
         \`Style: \${currentPreview.style || "-"}\`
       ].join(" | ");
       previewPanel.className = "preview show";
@@ -325,7 +327,8 @@ function pageHtml() {
             creative_angle: currentPreview.creative_angle,
             media_type: currentPreview.media_type,
             salespage_context: currentPreview.salespage_context?.raw,
-            variation: currentPreview.variation
+            variation: currentPreview.variation,
+            seen_variations: seenVariations
           })
         });
         const json = await response.json();
@@ -343,11 +346,12 @@ function pageHtml() {
           variation: json.preview.variation,
           style: json.preview.style
         };
+        seenVariations.push(Number(currentPreview.variation || 0));
         captionPreview.value = currentPreview.caption || "";
         commentPreview.value = currentPreview.comment_cta || "";
         previewMeta.textContent = [
           \`Salespage context: \${currentPreview.salespage_context?.product_name || "-"}\`,
-          \`Variation: \${currentPreview.variation || 0}\`,
+          \`Concept: \${Number(currentPreview.variation || 0) + 1}/500\`,
           \`Style: \${currentPreview.style || "-"}\`
         ].join(" | ");
         result.className = "result ok";
@@ -402,6 +406,7 @@ function pageHtml() {
         document.getElementById("salespage_link").value = "https://digitaldominate.com/";
         previewPanel.className = "preview";
         currentPreview = null;
+        seenVariations = [];
       } catch (error) {
         showError(error);
       } finally {
