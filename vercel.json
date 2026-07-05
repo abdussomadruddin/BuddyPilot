@@ -20,6 +20,9 @@
     "api/preview.js": {
       "maxDuration": 30
     },
+    "api/preview-metadata.js": {
+      "maxDuration": 30
+    },
     "api/regenerate.js": {
       "maxDuration": 30
     }

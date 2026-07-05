@@ -257,12 +257,28 @@ function pageHtml() {
     const commentPreview = document.getElementById("commentPreview");
     const approveButton = document.getElementById("approveButton");
     const regenerateButton = document.getElementById("regenerateButton");
+    const MAX_DIRECT_UPLOAD_BYTES = 4 * 1024 * 1024;
     let currentPreview = null;
     let seenVariations = [];
 
     function showError(error) {
       result.className = "result err";
       result.textContent = error.message || String(error);
+    }
+
+    function uploadLimitMessage(file) {
+      const sizeMb = (file.size / 1024 / 1024).toFixed(1);
+      return \`File ini \${sizeMb}MB. Vercel Serverless Function ada request body limit sekitar 4.5MB, jadi video besar tidak boleh dihantar terus melalui route ini. Preview copywriting boleh dibuat, tapi untuk approve/post video besar perlu compress bawah 4MB atau gunakan flow chunked/direct storage.\`;
+    }
+
+    async function readApiJson(response) {
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        const cleanText = text.trim() || response.statusText || "Unknown server response";
+        throw new Error(\`Server balas bukan JSON: \${cleanText.slice(0, 220)}\`);
+      }
     }
 
     function showPreview(json) {
@@ -289,11 +305,28 @@ function pageHtml() {
       button.textContent = "Generating preview...";
 
       try {
-        const response = await fetch("/api/preview", {
-          method: "POST",
-          body: new FormData(form)
-        });
-        const json = await response.json();
+        const file = document.getElementById("creative").files[0];
+        let response;
+        if (file && file.size > MAX_DIRECT_UPLOAD_BYTES) {
+          response = await fetch("/api/preview-metadata", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              filename: file.name,
+              content_type: file.type,
+              salespage_link: document.getElementById("salespage_link").value,
+              caption_note: document.getElementById("caption_note").value,
+              custom_caption: document.getElementById("custom_caption").value,
+              first_comment: document.getElementById("first_comment").value
+            })
+          });
+        } else {
+          response = await fetch("/api/preview", {
+            method: "POST",
+            body: new FormData(form)
+          });
+        }
+        const json = await readApiJson(response);
         if (response.status === 401) {
           window.location.href = "/login";
           return;
@@ -303,6 +336,10 @@ function pageHtml() {
         }
 
         showPreview(json);
+        if (file && file.size > MAX_DIRECT_UPLOAD_BYTES) {
+          result.className = "result err";
+          result.textContent = \`Preview siap, tapi file terlalu besar untuk direct approve/post dari Vercel.\\n\\n\${uploadLimitMessage(file)}\`;
+        }
       } catch (error) {
         showError(error);
       } finally {
@@ -331,7 +368,7 @@ function pageHtml() {
             seen_variations: seenVariations
           })
         });
-        const json = await response.json();
+        const json = await readApiJson(response);
         if (response.status === 401) {
           window.location.href = "/login";
           return;
@@ -371,6 +408,10 @@ function pageHtml() {
         showError(new Error("Creative file tiada. Sila pilih semula file dan preview semula."));
         return;
       }
+      if (file.size > MAX_DIRECT_UPLOAD_BYTES) {
+        showError(new Error(uploadLimitMessage(file)));
+        return;
+      }
 
       const payload = new FormData();
       payload.append("creative", file);
@@ -388,7 +429,7 @@ function pageHtml() {
           method: "POST",
           body: payload
         });
-        const json = await response.json();
+        const json = await readApiJson(response);
         if (response.status === 401) {
           window.location.href = "/login";
           return;
