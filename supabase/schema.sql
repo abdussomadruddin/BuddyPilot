@@ -20,6 +20,9 @@ create table if not exists public.invoice_clients (
   service_status text not null default 'active',
   service_stopped_at timestamptz,
   service_recovered_at timestamptz,
+  deleted_at timestamptz,
+  deleted_drive_folder_id text not null default '',
+  deleted_drive_folder_name text not null default '',
   source text not null default 'supabase',
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
@@ -29,6 +32,9 @@ create table if not exists public.invoice_clients (
 alter table public.invoice_clients add column if not exists service_status text not null default 'active';
 alter table public.invoice_clients add column if not exists service_stopped_at timestamptz;
 alter table public.invoice_clients add column if not exists service_recovered_at timestamptz;
+alter table public.invoice_clients add column if not exists deleted_at timestamptz;
+alter table public.invoice_clients add column if not exists deleted_drive_folder_id text not null default '';
+alter table public.invoice_clients add column if not exists deleted_drive_folder_name text not null default '';
 
 create table if not exists public.business_settings (
   id text primary key default 'default',

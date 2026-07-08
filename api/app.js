@@ -4,6 +4,7 @@ const routes = {
   "bank-accounts": require("../api_handlers/bank-accounts"),
   "bank-accounts/qr": require("../api_handlers/bank-accounts/qr"),
   clients: require("../api_handlers/clients"),
+  "clients/delete-permanent": require("../api_handlers/clients/delete-permanent"),
   "clients/share-link": require("../api_handlers/clients/share-link"),
   "google/oauth-callback": require("../api_handlers/google/oauth-callback"),
   "google/oauth-start": require("../api_handlers/google/oauth-start"),

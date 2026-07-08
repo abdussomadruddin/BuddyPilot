@@ -11,20 +11,45 @@ function pageHtml() {
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#ff2442">
   <style>
     :root {
       color-scheme: light;
-      font-family: Arial, sans-serif;
-      background: #f4f5f7;
-      color: #111827;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #fff7df;
+      color: #14213d;
+      --ink: #14213d;
+      --muted: #667085;
+      --line: #dbeafe;
+      --panel: #ffffff;
+      --cream: #fff7df;
+      --red: #ff2442;
+      --red-dark: #d91632;
+      --blue: #1d9bf0;
+      --blue-soft: #e8f5ff;
+      --yellow: #ffd23f;
+      --yellow-soft: #fff3bf;
+      --green: #20c997;
+      --green-soft: #dffcf3;
+      --purple: #845ef7;
+      --purple-soft: #f0eaff;
     }
 
-    body { margin: 0; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(255, 210, 63, 0.18) 0 12px, transparent 12px 40px),
+        #fff7df;
+      color: var(--ink);
+    }
 
     main {
-      width: min(1080px, calc(100% - 32px));
-      margin: 40px auto;
+      width: min(1220px, calc(100% - 28px));
+      margin: 24px auto 42px;
     }
 
     .topbar {
@@ -32,7 +57,12 @@ function pageHtml() {
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
+      padding: 12px;
+      border: 3px solid #ffffff;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 12px 0 rgba(29, 155, 240, 0.14);
     }
 
     .brand {
@@ -40,46 +70,52 @@ function pageHtml() {
       align-items: center;
       gap: 10px;
       font-weight: 800;
+      color: var(--ink);
+      font-size: 18px;
     }
 
     .brand img {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 5px 0 rgba(20, 33, 61, 0.12);
     }
 
     .card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 18px;
-      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
-      padding: 26px;
+      background: var(--panel);
+      border: 3px solid #ffffff;
+      border-radius: 26px;
+      box-shadow: 0 16px 0 rgba(20, 33, 61, 0.08), 0 22px 45px rgba(20, 33, 61, 0.08);
+      padding: 24px;
     }
 
     .tabs,
     .subtabs {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin: 16px 0;
+      gap: 10px;
+      margin: 18px 0;
     }
 
     .tab-button,
     .subtab-button {
       margin-top: 0;
-      border: 1px solid #d1d5db;
+      border: 3px solid #ffffff;
       background: #fff;
-      color: #111827;
+      color: var(--ink);
       border-radius: 999px;
-      padding: 10px 16px;
+      padding: 12px 18px;
       font-weight: 800;
+      box-shadow: 0 7px 0 rgba(20, 33, 61, 0.10);
     }
 
     .tab-button.active,
     .subtab-button.active {
-      background: #111827;
-      border-color: #111827;
+      background: var(--red);
+      border-color: #ffffff;
       color: #fff;
+      box-shadow: 0 7px 0 rgba(217, 22, 50, 0.28);
     }
 
     .tab-panel,
@@ -119,42 +155,47 @@ function pageHtml() {
     }
 
     .mini-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 14px;
-      background: #f8fafc;
+      border: 3px solid #ffffff;
+      border-radius: 22px;
+      padding: 16px;
+      background: var(--blue-soft);
+      box-shadow: 0 8px 0 rgba(29, 155, 240, 0.12);
     }
 
     .mini-card strong {
       display: block;
       margin-top: 4px;
-      font-size: 22px;
+      font-size: 24px;
+      color: var(--red);
     }
 
     .quick-card {
       width: 100%;
-      min-height: 76px;
+      min-height: 84px;
       margin-top: 0;
-      border-radius: 14px;
-      background: #f0fdf4;
-      color: #14532d;
-      border: 1px solid #bbf7d0;
+      border-radius: 22px;
+      background: var(--yellow);
+      color: var(--ink);
+      border: 3px solid #ffffff;
       font-size: 16px;
+      box-shadow: 0 9px 0 rgba(245, 158, 11, 0.24);
     }
 
     .client-list {
       margin-top: 18px;
-      border: 1px solid #dbe3ef;
-      border-radius: 14px;
+      border: 3px solid #ffffff;
+      border-radius: 24px;
       overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 12px 0 rgba(29, 155, 240, 0.12);
     }
 
     .client-row {
       display: grid;
-      grid-template-columns: minmax(150px, 1.05fr) minmax(180px, 1.15fr) minmax(220px, 1.3fr) minmax(120px, 0.72fr) minmax(300px, 1.45fr);
+      grid-template-columns: minmax(150px, 1.1fr) minmax(180px, 1.15fr) minmax(220px, 1.35fr) minmax(120px, 0.78fr) minmax(140px, 0.55fr);
       gap: 16px;
       padding: 14px 16px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 2px solid #e8f0ff;
       align-items: start;
     }
 
@@ -173,10 +214,10 @@ function pageHtml() {
     }
 
     .client-row.header {
-      background: #f8fafc;
-      color: #475569;
+      background: var(--yellow-soft);
+      color: var(--ink);
       font-weight: 800;
-      font-size: 13px;
+      font-size: 14px;
       align-items: center;
     }
 
@@ -192,10 +233,11 @@ function pageHtml() {
     .bank-list,
     .activity-feed {
       margin-top: 18px;
-      border: 1px solid #dbe3ef;
-      border-radius: 14px;
+      border: 3px solid #ffffff;
+      border-radius: 24px;
       overflow: hidden;
       background: #fff;
+      box-shadow: 0 12px 0 rgba(132, 94, 247, 0.12);
     }
 
     .bank-row {
@@ -203,7 +245,7 @@ function pageHtml() {
       grid-template-columns: minmax(160px, 1.1fr) minmax(150px, 1fr) minmax(130px, 0.9fr) minmax(150px, auto);
       gap: 12px;
       padding: 14px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 2px solid #e8f0ff;
       align-items: center;
     }
 
@@ -231,9 +273,9 @@ function pageHtml() {
       width: fit-content;
       margin-top: 6px;
       border-radius: 999px;
-      padding: 4px 9px;
-      background: #dcfce7;
-      color: #166534;
+      padding: 5px 12px;
+      background: var(--green-soft);
+      color: #087f5b;
       font-size: 12px;
       font-weight: 800;
     }
@@ -244,9 +286,9 @@ function pageHtml() {
       gap: 12px;
       margin-top: 10px;
       padding: 12px;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      background: #f8fafc;
+      border: 3px solid #ffffff;
+      border-radius: 18px;
+      background: var(--blue-soft);
     }
 
     .asset-preview[hidden] {
@@ -257,9 +299,9 @@ function pageHtml() {
       width: 92px;
       height: 92px;
       object-fit: contain;
-      border-radius: 10px;
+      border-radius: 16px;
       background: #fff;
-      border: 1px solid #e5e7eb;
+      border: 2px solid #dbeafe;
     }
 
     .qr-pill {
@@ -267,34 +309,34 @@ function pageHtml() {
       width: fit-content;
       margin-top: 6px;
       border-radius: 999px;
-      padding: 4px 9px;
-      background: #eef2ff;
-      color: #3730a3;
+      padding: 5px 12px;
+      background: var(--purple-soft);
+      color: #5f3dc4;
       font-size: 12px;
       font-weight: 800;
     }
 
     .activity-item {
       padding: 14px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 2px solid #e8f0ff;
     }
 
     .activity-item strong {
       display: block;
-      color: #111827;
+      color: var(--ink);
     }
 
     .activity-time {
       display: block;
-      color: #64748b;
+      color: var(--muted);
       font-size: 13px;
       margin-top: 4px;
     }
 
     .empty-state {
       padding: 16px;
-      color: #64748b;
-      background: #f8fafc;
+      color: var(--muted);
+      background: var(--blue-soft);
     }
 
     .client-actions {
@@ -306,12 +348,70 @@ function pageHtml() {
       min-width: 0;
     }
 
-    .client-actions button {
+    .client-actions button,
+    .action-menu summary {
       margin-top: 0;
       padding: 9px 12px;
       width: auto;
       flex: 0 0 auto;
       white-space: nowrap;
+    }
+
+    .action-menu {
+      width: 140px;
+      margin-left: auto;
+    }
+
+    .action-menu summary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--ink);
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 120ms ease, background-color 160ms ease, color 160ms ease;
+    }
+
+    .action-menu summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .action-menu summary::after {
+      content: "⌄";
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .action-menu[open] summary {
+      background: var(--blue);
+      color: #ffffff;
+    }
+
+    .action-menu[open] summary::after {
+      transform: rotate(180deg);
+    }
+
+    .action-menu-list {
+      display: grid;
+      gap: 7px;
+      padding-top: 8px;
+    }
+
+    .action-menu-list button {
+      width: 100%;
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    button.danger,
+    .action-menu-list button.danger {
+      background: #ffe3e8;
+      color: #b00020;
     }
 
     .client-form-actions {
@@ -335,8 +435,9 @@ function pageHtml() {
     .hero img {
       width: 64px;
       height: 64px;
-      border-radius: 18px;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+      border-radius: 20px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 9px 0 rgba(255, 36, 66, 0.18);
     }
 
     h1 {
@@ -347,7 +448,7 @@ function pageHtml() {
 
     p {
       line-height: 1.55;
-      color: #4b5563;
+      color: var(--muted);
     }
 
     label {
@@ -360,11 +461,19 @@ function pageHtml() {
     textarea {
       width: 100%;
       box-sizing: border-box;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 13px 14px;
+      border: 3px solid #e4edff;
+      border-radius: 18px;
+      padding: 14px 16px;
       font: inherit;
       background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 5px rgba(29, 155, 240, 0.14);
     }
 
     input[type="checkbox"] {
@@ -392,10 +501,11 @@ function pageHtml() {
       border: 0;
       border-radius: 999px;
       padding: 14px 22px;
-      background: #111827;
+      background: var(--red);
       color: #fff;
       font-weight: 800;
       cursor: pointer;
+      box-shadow: 0 8px 0 rgba(217, 22, 50, 0.28);
       transition: transform 120ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease, opacity 160ms ease;
       transform-origin: center;
       -webkit-tap-highlight-color: transparent;
@@ -420,16 +530,19 @@ function pageHtml() {
 
     button.secondary {
       margin-top: 0;
-      background: #e5e7eb;
-      color: #111827;
+      background: var(--blue-soft);
+      color: var(--ink);
+      box-shadow: 0 7px 0 rgba(29, 155, 240, 0.14);
     }
 
     button.approve {
-      background: #15803d;
+      background: var(--green);
+      box-shadow: 0 8px 0 rgba(8, 127, 91, 0.22);
     }
 
     button.regenerate {
-      background: #2563eb;
+      background: var(--blue);
+      box-shadow: 0 8px 0 rgba(29, 155, 240, 0.24);
     }
 
     button:disabled {
@@ -441,7 +554,7 @@ function pageHtml() {
 
     .result {
       margin-top: 18px;
-      border-radius: 14px;
+      border-radius: 20px;
       padding: 14px;
       white-space: pre-wrap;
       display: none;
@@ -450,21 +563,21 @@ function pageHtml() {
     .result.ok {
       display: block;
       background: #ecfdf5;
-      border: 1px solid #86efac;
+      border: 3px solid #b2f2bb;
       color: #14532d;
     }
 
     .result.err {
       display: block;
       background: #fef2f2;
-      border: 1px solid #fecaca;
+      border: 3px solid #ffc9c9;
       color: #7f1d1d;
     }
 
     .preview {
       display: none;
       margin-top: 22px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 3px solid #e4edff;
       padding-top: 22px;
     }
 
@@ -473,9 +586,9 @@ function pageHtml() {
     }
 
     .preview-box {
-      background: #f8fafc;
-      border: 1px solid #dbe3ef;
-      border-radius: 14px;
+      background: var(--blue-soft);
+      border: 3px solid #ffffff;
+      border-radius: 22px;
       padding: 14px;
       white-space: pre-wrap;
       line-height: 1.5;
@@ -519,8 +632,8 @@ function pageHtml() {
       height: 38px;
       margin-top: 0;
       border-radius: 999px;
-      background: #e5e7eb;
-      color: #111827;
+      background: var(--yellow);
+      color: var(--ink);
       font-size: 20px;
       line-height: 1;
       flex: 0 0 auto;
@@ -536,7 +649,7 @@ function pageHtml() {
 
     .client-form {
       margin-top: 18px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 3px solid #e4edff;
       padding-top: 18px;
     }
 
@@ -582,10 +695,11 @@ function pageHtml() {
     .invoice-list {
       margin-top: 18px;
       display: none;
-      border: 1px solid #dbe3ef;
-      border-radius: 14px;
+      border: 3px solid #ffffff;
+      border-radius: 24px;
       overflow: hidden;
       background: #fff;
+      box-shadow: 0 12px 0 rgba(32, 201, 151, 0.12);
     }
 
     .invoice-list.show {
@@ -598,7 +712,7 @@ function pageHtml() {
       gap: 12px;
       align-items: center;
       padding: 12px 14px;
-      border-top: 1px solid #e5e7eb;
+      border-top: 2px solid #e8f0ff;
     }
 
     .invoice-row:first-child {
@@ -606,8 +720,8 @@ function pageHtml() {
     }
 
     .invoice-row.header {
-      background: #f8fafc;
-      color: #475569;
+      background: var(--green-soft);
+      color: var(--ink);
       font-weight: 800;
       font-size: 13px;
     }
@@ -618,12 +732,12 @@ function pageHtml() {
 
     .invoice-client {
       font-weight: 800;
-      color: #111827;
+      color: var(--ink);
     }
 
     .invoice-muted {
       display: block;
-      color: #64748b;
+      color: var(--muted);
       font-size: 13px;
       margin-top: 3px;
     }
@@ -636,8 +750,8 @@ function pageHtml() {
       margin-top: 0;
       border: 0;
       border-radius: 999px;
-      background: #e5e7eb;
-      color: #111827;
+      background: var(--blue-soft);
+      color: var(--ink);
       text-decoration: none;
       font-weight: 800;
       font: inherit;
@@ -660,7 +774,21 @@ function pageHtml() {
       text-align: right;
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 1040px) {
+      main {
+        width: min(100% - 24px, 900px);
+      }
+
+      .mini-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .quick-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 840px) {
       .mini-grid,
       .quick-grid,
       .client-grid {
@@ -682,7 +810,7 @@ function pageHtml() {
         content: attr(data-label);
         display: block;
         margin-bottom: 4px;
-        color: #64748b;
+        color: var(--muted);
         font-size: 12px;
         font-weight: 800;
         text-transform: uppercase;
@@ -700,19 +828,35 @@ function pageHtml() {
         flex: 1 1 130px;
       }
 
+      .action-menu {
+        width: 100%;
+        margin-left: 0;
+      }
+
       .client-row.header,
       .invoice-row.header {
         display: none;
       }
 
       main {
-        width: min(100% - 20px, 1080px);
+        width: min(100% - 18px, 1080px);
         margin: 14px auto 28px;
       }
 
       .card {
-        border-radius: 14px;
+        border-radius: 22px;
         padding: 16px;
+      }
+
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+        border-radius: 22px;
+      }
+
+      .topbar form,
+      .topbar button {
+        width: 100%;
       }
 
       .tabs,
@@ -740,6 +884,35 @@ function pageHtml() {
 
       .toolbar input {
         min-width: 0;
+      }
+
+      .action-menu summary,
+      .action-menu-list button {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 520px) {
+      h1 {
+        font-size: 28px;
+        letter-spacing: 0;
+      }
+
+      .brand {
+        font-size: 16px;
+      }
+
+      .mini-card strong {
+        font-size: 22px;
+      }
+
+      .tab-button,
+      .subtab-button,
+      button {
+        padding-left: 14px;
+        padding-right: 14px;
       }
     }
   </style>
@@ -1196,6 +1369,11 @@ function pageHtml() {
         button.disabled = false;
         button.textContent = originalText;
       };
+    }
+
+    function closeActionMenu(button) {
+      const menu = button?.closest(".action-menu");
+      if (menu) menu.open = false;
     }
 
     function showClientError(error) {
@@ -1752,9 +1930,15 @@ function pageHtml() {
             <span class="invoice-muted">\${escapeHtml(client.source || "config")}</span>
           </div>
           <div class="client-actions" data-label="Action">
-            <button class="secondary copy-drive-link-button" type="button" data-client-code="\${escapeHtml(client.code)}">Copy Drive Link</button>
-            <button class="secondary edit-client-button" type="button" data-client-code="\${escapeHtml(client.code)}">Edit</button>
-            <button class="secondary service-client-button" type="button" data-client-code="\${escapeHtml(client.code)}" data-next-status="\${client.serviceStatus === "paused" ? "active" : "paused"}">\${client.serviceStatus === "paused" ? "Recover" : "Stop Service"}</button>
+            <details class="action-menu">
+              <summary>Actions</summary>
+              <div class="action-menu-list">
+                <button class="secondary copy-drive-link-button" type="button" data-client-code="\${escapeHtml(client.code)}">Copy Drive Link</button>
+                <button class="secondary edit-client-button" type="button" data-client-code="\${escapeHtml(client.code)}">Edit</button>
+                <button class="secondary service-client-button" type="button" data-client-code="\${escapeHtml(client.code)}" data-next-status="\${client.serviceStatus === "paused" ? "active" : "paused"}">\${client.serviceStatus === "paused" ? "Recover" : "Stop Service"}</button>
+                <button class="danger delete-client-button" type="button" data-client-code="\${escapeHtml(client.code)}">Delete</button>
+              </div>
+            </details>
           </div>
         </div>
       \`).join("");
@@ -1833,6 +2017,7 @@ function pageHtml() {
         if (!response.ok || !json.ok) throw new Error(json.error || "Update service status failed.");
         finishButton("Done");
         await sleep(350);
+        closeActionMenu(triggerButton);
         resetClientFormMode();
         await loadClients();
         await loadActivity();
@@ -1845,6 +2030,64 @@ function pageHtml() {
         setMessage(clientResult, "ok", nextStatus === "active"
           ? \`Service disambung semula: \${label}. Client akan muncul semula dalam invoice/receipt.\`
           : \`Service dihentikan: \${label}. Client disimpan untuk recover akan datang dan tidak masuk invoice/receipt.\`);
+      } catch (error) {
+        finishButton();
+        showClientError(error);
+      }
+    }
+
+    async function deleteClientPermanently(clientCode, triggerButton) {
+      const client = currentClients.find((item) => item.code === clientCode);
+      const label = client?.brandClient || client?.name || clientCode;
+      const confirmLabel = client?.brandClient || client?.name || "";
+      if (!client) {
+        showClientError(new Error("Client tidak dijumpai dalam senarai semasa."));
+        return;
+      }
+
+      const warning = [
+        \`Delete \${label} secara kekal?\`,
+        "",
+        "Folder Google Drive client termasuk Weekly Report dan Invoice & Receipt akan dipadam.",
+        "Tindakan ini tidak boleh recover melalui button Recover.",
+      ].join("\\n");
+      if (!window.confirm(warning)) return;
+
+      const typed = window.prompt(\`Untuk confirm, taip nama client tepat:\\n\${confirmLabel}\`, "");
+      if (typed === null) return;
+      const validNames = [client.brandClient, client.name].filter(Boolean).map((value) => String(value).trim());
+      if (!validNames.includes(String(typed || "").trim())) {
+        setMessage(clientResult, "err", \`Delete dibatalkan. Nama mesti sama tepat: \${confirmLabel}.\`);
+        return;
+      }
+
+      const finishButton = setButtonBusy(triggerButton, "Deleting...");
+      setMessage(clientResult, "", "");
+      try {
+        const response = await fetch("/api/clients/delete-permanent", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ clientCode, confirmName: typed.trim() })
+        });
+        const json = await readApiJson(response);
+        if (response.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        if (!response.ok || !json.ok) throw new Error(json.error || "Delete client failed.");
+        finishButton("Deleted");
+        await sleep(450);
+        closeActionMenu(triggerButton);
+        resetClientFormMode();
+        await loadClients();
+        await loadActivity();
+        currentInvoices = [];
+        currentReceipts = [];
+        invoiceList.innerHTML = "";
+        receiptList.innerHTML = "";
+        invoiceList.className = "invoice-list";
+        receiptList.className = "invoice-list";
+        setMessage(clientResult, "ok", \`\${label} dipadam. Folder Drive \${json.deletedFolder?.name || ""} juga dipadam.\`);
       } catch (error) {
         finishButton();
         showClientError(error);
@@ -1884,6 +2127,8 @@ function pageHtml() {
           window.prompt("Copy template WhatsApp ini:", text);
         }
         finishButton(copied ? "Copied" : "Ready");
+        await sleep(250);
+        closeActionMenu(triggerButton);
         setMessage(clientResult, "ok", copied
           ? \`Link WhatsApp copied untuk \${label}. Folder sudah set Anyone with link = Editor.\`
           : \`Template WhatsApp siap untuk \${label}. Folder sudah set Anyone with link = Editor.\`);
@@ -2726,13 +2971,19 @@ function pageHtml() {
       const editButton = event.target.closest(".edit-client-button");
       if (editButton) {
         markButtonSuccess(editButton, "Open");
+        closeActionMenu(editButton);
         editClient(editButton.dataset.clientCode);
         return;
       }
       const deleteButton = event.target.closest(".delete-client-button");
-      if (deleteButton) setClientService(deleteButton.dataset.clientCode, "paused", deleteButton);
+      if (deleteButton) {
+        deleteClientPermanently(deleteButton.dataset.clientCode, deleteButton);
+        return;
+      }
       const serviceButton = event.target.closest(".service-client-button");
-      if (serviceButton) setClientService(serviceButton.dataset.clientCode, serviceButton.dataset.nextStatus, serviceButton);
+      if (serviceButton) {
+        setClientService(serviceButton.dataset.clientCode, serviceButton.dataset.nextStatus, serviceButton);
+      }
     });
     settingsForm.addEventListener("submit", saveSettings);
     businessLogoImage.addEventListener("change", () => {
