@@ -30,6 +30,27 @@ MAX_UPLOAD_MB=20
 
 The app also includes a monthly ads invoice generator. It auto-detects the current month, creates one PDF per configured client, lets you review each PDF, then uploads approved invoices into each client's Google Drive `Invoice & Receipt` subfolder.
 
+## Vercel Deploy / Repair CLI
+
+This project uses one Vercel serverless function at `api/app.js`. The actual route handlers live in `api_handlers/`, and `vercel.json` rewrites each API path to `api/app.js?route=...`. This keeps the Hobby plan under the 12-function deployment limit.
+
+Useful commands:
+
+```bash
+npm run ip -- check
+npm run ip -- link
+npm run ip -- pull
+npm run ip -- build
+npm run ip -- deploy
+npm run ip -- env
+npm run ip -- env:add APP_PASSWORD production
+npm run ip -- repair
+```
+
+`npm run ip -- repair` links to the `invoice-pilot` Vercel project, pulls production settings, checks syntax, builds, and deploys production.
+
+Set `VERCEL_PROJECT=your-project-name` if you need to target a different Vercel project.
+
 ### Invoice Environment Variables
 
 ```text

@@ -1,6 +1,6 @@
 const { isAuthed } = require("../lib/auth");
 
-function loginHtml({ error } = {}) {
+function loginHtml({ error, setupMissing } = {}) {
   return `<!doctype html>
 <html lang="ms">
 <head>
@@ -78,16 +78,26 @@ function loginHtml({ error } = {}) {
       cursor: pointer;
     }
 
-    .error {
-      margin-top: 16px;
-      border-radius: 12px;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #7f1d1d;
-      padding: 12px;
-      display: ${error ? "block" : "none"};
-    }
-  </style>
+	    .error {
+	      margin-top: 16px;
+	      border-radius: 12px;
+	      background: #fef2f2;
+	      border: 1px solid #fecaca;
+	      color: #7f1d1d;
+	      padding: 12px;
+	      display: ${error ? "block" : "none"};
+	    }
+
+	    .setup {
+	      margin-top: 16px;
+	      border-radius: 12px;
+	      background: #fff7ed;
+	      border: 1px solid #fed7aa;
+	      color: #7c2d12;
+	      padding: 12px;
+	      display: ${setupMissing ? "block" : "none"};
+	    }
+	  </style>
 </head>
 <body>
   <main>
@@ -99,9 +109,10 @@ function loginHtml({ error } = {}) {
         <label for="password">Password</label>
         <input id="password" name="password" type="password" autocomplete="current-password" autofocus required>
         <button type="submit">Login</button>
-      </form>
-      <div class="error">Password salah.</div>
-    </section>
+	      </form>
+	      <div class="error">Password salah.</div>
+	      <div class="setup">APP_PASSWORD belum diset di Vercel env. Set env production dahulu, kemudian redeploy.</div>
+	    </section>
   </main>
 </body>
 </html>`;
@@ -122,7 +133,8 @@ module.exports = async function handler(req, res) {
   }
 
   const hasError = String(req.url || "").includes("error=1");
+  const setupMissing = !process.env.APP_PASSWORD;
   res.setHeader("content-type", "text/html; charset=utf-8");
   res.statusCode = 200;
-  res.end(loginHtml({ error: hasError }));
+  res.end(loginHtml({ error: hasError, setupMissing }));
 };

@@ -4,7 +4,10 @@
   "private": true,
   "description": "Upload a creative and publish it directly to a Facebook Page.",
   "scripts": {
-    "check": "find api lib -name '*.js' -print0 | xargs -0 -n1 node --check"
+    "check": "find api api_handlers lib scripts -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "ip": "node scripts/invoice-pilot-cli.js",
+    "vercel:repair": "node scripts/invoice-pilot-cli.js repair",
+    "vercel:deploy": "node scripts/invoice-pilot-cli.js deploy"
   },
   "dependencies": {
     "googleapis": "^173.0.0",

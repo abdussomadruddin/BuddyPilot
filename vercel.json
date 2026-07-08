@@ -2,11 +2,18 @@
   "routes": [
     {
       "src": "/",
-      "dest": "/api/app"
+      "dest": "/api/app?route=app"
     },
     {
       "src": "/login",
-      "dest": "/api/login-page"
+      "dest": "/api/app?route=login-page"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/app?route=$1"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
@@ -14,31 +21,7 @@
     }
   ],
   "functions": {
-    "api/post.js": {
-      "maxDuration": 60
-    },
-    "api/preview.js": {
-      "maxDuration": 30
-    },
-    "api/preview-metadata.js": {
-      "maxDuration": 30
-    },
-    "api/regenerate.js": {
-      "maxDuration": 30
-    },
-    "api/invoices/upload.js": {
-      "maxDuration": 60
-    },
-    "api/invoices/pdf.js": {
-      "maxDuration": 30
-    },
-    "api/invoices/preview.js": {
-      "maxDuration": 30
-    },
-    "api/clients.js": {
-      "maxDuration": 60
-    },
-    "api/settings.js": {
+    "api/app.js": {
       "maxDuration": 60
     }
   }
