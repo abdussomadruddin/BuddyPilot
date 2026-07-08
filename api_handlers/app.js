@@ -134,7 +134,7 @@ function pageHtml() {
 
     .client-row {
       display: grid;
-      grid-template-columns: minmax(140px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr) minmax(110px, 0.7fr);
+      grid-template-columns: minmax(130px, 1fr) minmax(135px, 1fr) minmax(135px, 1fr) minmax(95px, 0.65fr) minmax(88px, auto);
       gap: 12px;
       padding: 12px 14px;
       border-top: 1px solid #e5e7eb;
@@ -150,6 +150,32 @@ function pageHtml() {
       color: #475569;
       font-weight: 800;
       font-size: 13px;
+    }
+
+    .client-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .client-actions button {
+      margin-top: 0;
+      padding: 9px 12px;
+      width: auto;
+      white-space: nowrap;
+    }
+
+    .client-form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .client-form-actions button {
+      margin-top: 0;
+      width: auto;
     }
 
     .hero {
@@ -565,6 +591,7 @@ function pageHtml() {
         <div id="client-add-panel" class="subtab-panel" data-subtab-panel="client">
           <form id="clientForm" class="client-form">
             <h2>Tambah Pelanggan</h2>
+            <input id="clientCode" name="clientCode" type="hidden">
             <div class="client-grid">
               <div>
                 <label for="clientBrand">Brand client</label>
@@ -599,7 +626,10 @@ function pageHtml() {
                 <textarea id="clientAddress" name="billingAddress" placeholder="Alamat billing client"></textarea>
               </div>
             </div>
-            <button id="saveClientButton" type="submit">Save Client & Create Drive Folders</button>
+            <div class="client-form-actions">
+              <button id="saveClientButton" type="submit">Save Client & Create Drive Folders</button>
+              <button id="cancelClientEditButton" class="secondary" type="button" hidden>Cancel Edit</button>
+            </div>
           </form>
         </div>
       </section>
@@ -711,6 +741,7 @@ function pageHtml() {
     const invoiceResult = document.getElementById("invoiceResult");
     const clientForm = document.getElementById("clientForm");
     const saveClientButton = document.getElementById("saveClientButton");
+    const cancelClientEditButton = document.getElementById("cancelClientEditButton");
     const clientList = document.getElementById("clientList");
     const clientResult = document.getElementById("clientResult");
     const refreshClientsButton = document.getElementById("refreshClientsButton");
@@ -727,6 +758,7 @@ function pageHtml() {
     let preparedCreativeFile = null;
     let preparedCreativeNotice = "";
     let currentInvoices = [];
+    let currentClients = [];
 
     creativeInput.addEventListener("change", () => {
       currentPreview = null;
@@ -1272,17 +1304,19 @@ function pageHtml() {
     }
 
     function renderClientList(clients, registryStatus) {
+      currentClients = clients || [];
       dashboardClientCount.textContent = String(clients.length);
       dashboardRegistryStatus.textContent = registryStatus?.ok ? "OK" : "Setup";
 
       if (!clients.length) {
+        currentClients = [];
         clientList.innerHTML = "";
         setMessage(clientResult, "err", "Belum ada pelanggan.");
         return;
       }
 
       const rows = clients.map((client) => \`
-        <div class="client-row">
+        <div class="client-row" data-client-code="\${escapeHtml(client.code)}">
           <div>
             <span class="invoice-client">\${escapeHtml(client.brandClient || client.name)}</span>
             <span class="invoice-muted">\${escapeHtml(client.code)}</span>
@@ -1299,6 +1333,9 @@ function pageHtml() {
             \${escapeHtml(formatMoneyValue(client.monthlyRetainer || 0))}
             <span class="invoice-muted">\${escapeHtml(client.source || "config")}</span>
           </div>
+          <div class="client-actions">
+            <button class="secondary edit-client-button" type="button" data-client-code="\${escapeHtml(client.code)}">Edit</button>
+          </div>
         </div>
       \`).join("");
 
@@ -1308,6 +1345,7 @@ function pageHtml() {
           <div>Nama / Syarikat</div>
           <div>Contact</div>
           <div>Harga</div>
+          <div>Action</div>
         </div>
         \${rows}
       \`;
@@ -1315,6 +1353,40 @@ function pageHtml() {
         ? \`Senarai pelanggan dimuat. Registry Drive: \${registryStatus.loaded ? "loaded" : "belum ada file"}.\`
         : \`Senarai config dimuat. \${registryStatus?.error || "Registry Drive belum tersedia."}\`;
       setMessage(clientResult, registryStatus?.ok ? "ok" : "err", statusLine);
+    }
+
+    function resetClientFormMode() {
+      clientForm.dataset.mode = "create";
+      clientForm.reset();
+      clientForm.elements.clientCode.value = "";
+      clientForm.querySelector("h2").textContent = "Tambah Pelanggan";
+      saveClientButton.textContent = "Save Client & Create Drive Folders";
+      cancelClientEditButton.hidden = true;
+    }
+
+    function editClient(clientCode) {
+      const client = currentClients.find((item) => item.code === clientCode);
+      if (!client) {
+        showClientError(new Error("Client tidak dijumpai dalam senarai semasa."));
+        return;
+      }
+
+      clientForm.dataset.mode = "edit";
+      clientForm.elements.clientCode.value = client.code || "";
+      clientForm.elements.brandClient.value = client.brandClient || client.name || "";
+      clientForm.elements.contactName.value = client.contactName || "";
+      clientForm.elements.email.value = client.email || "";
+      clientForm.elements.phone.value = client.phone || "";
+      clientForm.elements.companyName.value = client.companyName || client.billingName || "";
+      clientForm.elements.registrationNumber.value = client.registrationNumber || "";
+      clientForm.elements.monthlyRetainer.value = Number(client.monthlyRetainer || 0) ? client.monthlyRetainer : "";
+      clientForm.elements.billingAddress.value = client.billingAddress || "";
+      clientForm.querySelector("h2").textContent = \`Edit Pelanggan: \${client.brandClient || client.name || client.code}\`;
+      saveClientButton.textContent = "Update Client";
+      cancelClientEditButton.hidden = false;
+      setMessage(clientResult, "", "");
+      activateSubtab("client", "client-add-panel");
+      clientForm.elements.brandClient.focus();
     }
 
     async function loadClients() {
@@ -1529,9 +1601,10 @@ function pageHtml() {
       saveClientButton.textContent = "Saving...";
 
       try {
+        const isEditMode = clientForm.dataset.mode === "edit";
         const payload = Object.fromEntries(new FormData(clientForm).entries());
         const response = await fetch("/api/clients", {
-          method: "POST",
+          method: isEditMode ? "PUT" : "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(payload)
         });
@@ -1542,12 +1615,17 @@ function pageHtml() {
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Save client failed.");
 
-        const savedMessage = [
-          \`Client saved: \${json.client?.brandClient || "-"}\`,
-          \`Folder: \${json.client?.driveFolderName || "-"}\`,
-          "Subfolder siap: Weekly Report, Invoice & Receipt"
-        ].join("\\n");
-        clientForm.reset();
+        const savedMessage = isEditMode
+          ? [
+            \`Client updated: \${json.client?.brandClient || "-"}\`,
+            "Detail pelanggan sudah disimpan dalam registry Drive."
+          ].join("\\n")
+          : [
+            \`Client saved: \${json.client?.brandClient || "-"}\`,
+            \`Folder: \${json.client?.driveFolderName || "-"}\`,
+            "Subfolder siap: Weekly Report, Invoice & Receipt"
+          ].join("\\n");
+        resetClientFormMode();
         await loadClients();
         if (currentInvoices.length) await generateInvoices();
         setMessage(clientResult, "ok", \`\${savedMessage}\\nSenarai pelanggan sudah dikemas kini.\`);
@@ -1556,7 +1634,7 @@ function pageHtml() {
         showClientError(error);
       } finally {
         saveClientButton.disabled = false;
-        saveClientButton.textContent = "Save Client & Create Drive Folders";
+        saveClientButton.textContent = clientForm.dataset.mode === "edit" ? "Update Client" : "Save Client & Create Drive Folders";
       }
     }
 
@@ -1618,7 +1696,18 @@ function pageHtml() {
     invoicePeriod.value = defaultInvoicePeriod();
     setupTabs();
     setupPanels();
+    resetClientFormMode();
     clientForm.addEventListener("submit", saveClient);
+    cancelClientEditButton.addEventListener("click", () => {
+      resetClientFormMode();
+      setMessage(clientResult, "", "");
+      activateSubtab("client", "client-list-panel");
+    });
+    clientList.addEventListener("click", (event) => {
+      const editButton = event.target.closest(".edit-client-button");
+      if (!editButton) return;
+      editClient(editButton.dataset.clientCode);
+    });
     settingsForm.addEventListener("submit", saveSettings);
     refreshClientsButton.addEventListener("click", loadClients);
     generateInvoicesButton.addEventListener("click", generateInvoices);

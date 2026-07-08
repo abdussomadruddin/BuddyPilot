@@ -2,6 +2,7 @@ const { requireAuth } = require("../lib/auth");
 const {
   createClientWithDriveFolders,
   getMergedClientsWithStatus,
+  updateClientDetails,
 } = require("../lib/invoices");
 const { readJsonBody } = require("../lib/postpilot");
 
@@ -52,6 +53,18 @@ module.exports = async function handler(req, res) {
         ok: true,
         client: publicClient(saved.client),
         folders: saved.folders,
+        registryFile: saved.registryFile,
+      }));
+      return;
+    }
+
+    if (req.method === "PUT" || req.method === "PATCH") {
+      const body = await readJsonBody(req);
+      const saved = await updateClientDetails(body);
+      res.statusCode = 200;
+      res.end(JSON.stringify({
+        ok: true,
+        client: publicClient(saved.client),
         registryFile: saved.registryFile,
       }));
       return;
