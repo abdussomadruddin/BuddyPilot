@@ -151,11 +151,21 @@ function pageHtml() {
 
     .client-row {
       display: grid;
-      grid-template-columns: minmax(130px, 1fr) minmax(135px, 1fr) minmax(135px, 1fr) minmax(95px, 0.65fr) minmax(88px, auto);
-      gap: 12px;
-      padding: 12px 14px;
+      grid-template-columns: minmax(150px, 1.05fr) minmax(180px, 1.15fr) minmax(220px, 1.3fr) minmax(120px, 0.72fr) minmax(300px, 1.45fr);
+      gap: 16px;
+      padding: 14px 16px;
       border-top: 1px solid #e5e7eb;
       align-items: start;
+    }
+
+    .client-row > div {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .client-row > div:nth-child(4) {
+      overflow-wrap: normal;
+      white-space: nowrap;
     }
 
     .client-row:first-child {
@@ -167,6 +177,16 @@ function pageHtml() {
       color: #475569;
       font-weight: 800;
       font-size: 13px;
+      align-items: center;
+    }
+
+    .client-row.header > div {
+      overflow-wrap: normal;
+      white-space: nowrap;
+    }
+
+    .client-row.header > div:last-child {
+      text-align: right;
     }
 
     .bank-list,
@@ -283,12 +303,14 @@ function pageHtml() {
       justify-content: flex-end;
       align-items: center;
       gap: 8px;
+      min-width: 0;
     }
 
     .client-actions button {
       margin-top: 0;
       padding: 9px 12px;
       width: auto;
+      flex: 0 0 auto;
       white-space: nowrap;
     }
 
@@ -374,6 +396,26 @@ function pageHtml() {
       color: #fff;
       font-weight: 800;
       cursor: pointer;
+      transition: transform 120ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+      transform-origin: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:not(:disabled):active {
+      transform: scale(0.97);
+    }
+
+    button.button-success {
+      animation: buttonSuccessPulse 700ms ease;
+      background: #16a34a !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.14);
+    }
+
+    @keyframes buttonSuccessPulse {
+      0% { transform: scale(0.97); }
+      45% { transform: scale(1.04); }
+      100% { transform: scale(1); }
     }
 
     button.secondary {
@@ -629,6 +671,33 @@ function pageHtml() {
       .bank-row,
       .invoice-row {
         grid-template-columns: 1fr;
+      }
+
+      .client-row {
+        gap: 10px;
+        padding: 16px;
+      }
+
+      .client-row:not(.header) > div::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 4px;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .client-actions {
+        justify-content: flex-start;
+      }
+
+      .client-actions::before {
+        flex: 0 0 100%;
+      }
+
+      .client-actions button {
+        flex: 1 1 130px;
       }
 
       .client-row.header,
@@ -1094,6 +1163,39 @@ function pageHtml() {
     function setMessage(node, type, message) {
       node.className = type ? \`result \${type}\` : "result";
       node.textContent = message || "";
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+
+    function markButtonSuccess(button, label = "Done", restoreText) {
+      if (!button) return;
+      const originalText = restoreText || button.textContent;
+      button.disabled = false;
+      button.textContent = label;
+      button.classList.add("button-success");
+      window.setTimeout(() => {
+        if (!button.isConnected) return;
+        button.classList.remove("button-success");
+        button.textContent = originalText;
+      }, 900);
+    }
+
+    function setButtonBusy(button, label) {
+      if (!button) return () => {};
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = label;
+      return (successLabel) => {
+        if (!button.isConnected) return;
+        if (successLabel) {
+          markButtonSuccess(button, successLabel, originalText);
+          return;
+        }
+        button.disabled = false;
+        button.textContent = originalText;
+      };
     }
 
     function showClientError(error) {
@@ -1632,24 +1734,24 @@ function pageHtml() {
 
       const rows = clients.map((client) => \`
         <div class="client-row" data-client-code="\${escapeHtml(client.code)}">
-          <div>
+          <div data-label="Brand">
             <span class="invoice-client">\${escapeHtml(client.brandClient || client.name)}</span>
             <span class="invoice-muted">\${escapeHtml(client.code)}</span>
             \${client.serviceStatus === "paused" ? '<span class="qr-pill">Stopped</span>' : '<span class="default-pill">Active</span>'}
           </div>
-          <div>
+          <div data-label="Nama / Syarikat">
             \${escapeHtml(client.contactName || "-")}
             <span class="invoice-muted">\${escapeHtml(client.companyName || client.billingName || "-")}</span>
           </div>
-          <div>
+          <div data-label="Contact">
             \${escapeHtml(client.email || "-")}
             <span class="invoice-muted">\${escapeHtml(client.phone || "-")}</span>
           </div>
-          <div>
+          <div data-label="Harga">
             \${escapeHtml(formatMoneyValue(client.monthlyRetainer || 0))}
             <span class="invoice-muted">\${escapeHtml(client.source || "config")}</span>
           </div>
-          <div class="client-actions">
+          <div class="client-actions" data-label="Action">
             <button class="secondary copy-drive-link-button" type="button" data-client-code="\${escapeHtml(client.code)}">Copy Drive Link</button>
             <button class="secondary edit-client-button" type="button" data-client-code="\${escapeHtml(client.code)}">Edit</button>
             <button class="secondary service-client-button" type="button" data-client-code="\${escapeHtml(client.code)}" data-next-status="\${client.serviceStatus === "paused" ? "active" : "paused"}">\${client.serviceStatus === "paused" ? "Recover" : "Stop Service"}</button>
@@ -1709,12 +1811,13 @@ function pageHtml() {
       clientForm.elements.brandClient.focus();
     }
 
-    async function setClientService(clientCode, nextStatus) {
+    async function setClientService(clientCode, nextStatus, triggerButton) {
       const client = currentClients.find((item) => item.code === clientCode);
       const label = client?.brandClient || client?.name || clientCode;
       const action = nextStatus === "active" ? "recover service" : "stop service";
       if (!window.confirm(\`\${action} untuk \${label}? Folder Google Drive tidak akan dipadam.\`)) return;
 
+      const finishButton = setButtonBusy(triggerButton, "Updating...");
       setMessage(clientResult, "", "");
       try {
         const response = await fetch("/api/clients", {
@@ -1728,6 +1831,8 @@ function pageHtml() {
           return;
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Update service status failed.");
+        finishButton("Done");
+        await sleep(350);
         resetClientFormMode();
         await loadClients();
         await loadActivity();
@@ -1741,13 +1846,15 @@ function pageHtml() {
           ? \`Service disambung semula: \${label}. Client akan muncul semula dalam invoice/receipt.\`
           : \`Service dihentikan: \${label}. Client disimpan untuk recover akan datang dan tidak masuk invoice/receipt.\`);
       } catch (error) {
+        finishButton();
         showClientError(error);
       }
     }
 
-    async function copyClientDriveLink(clientCode) {
+    async function copyClientDriveLink(clientCode, triggerButton) {
       const client = currentClients.find((item) => item.code === clientCode);
       const label = client?.brandClient || client?.name || clientCode;
+      const finishButton = setButtonBusy(triggerButton, "Copying...");
       setMessage(clientResult, "", "");
 
       try {
@@ -1776,11 +1883,13 @@ function pageHtml() {
         if (!copied) {
           window.prompt("Copy template WhatsApp ini:", text);
         }
+        finishButton(copied ? "Copied" : "Ready");
         setMessage(clientResult, "ok", copied
           ? \`Link WhatsApp copied untuk \${label}. Folder sudah set Anyone with link = Editor.\`
           : \`Template WhatsApp siap untuk \${label}. Folder sudah set Anyone with link = Editor.\`);
         await loadActivity();
       } catch (error) {
+        finishButton();
         showClientError(error);
       }
     }
@@ -2611,18 +2720,19 @@ function pageHtml() {
     clientList.addEventListener("click", (event) => {
       const copyDriveButton = event.target.closest(".copy-drive-link-button");
       if (copyDriveButton) {
-        copyClientDriveLink(copyDriveButton.dataset.clientCode);
+        copyClientDriveLink(copyDriveButton.dataset.clientCode, copyDriveButton);
         return;
       }
       const editButton = event.target.closest(".edit-client-button");
       if (editButton) {
+        markButtonSuccess(editButton, "Open");
         editClient(editButton.dataset.clientCode);
         return;
       }
       const deleteButton = event.target.closest(".delete-client-button");
-      if (deleteButton) setClientService(deleteButton.dataset.clientCode, "paused");
+      if (deleteButton) setClientService(deleteButton.dataset.clientCode, "paused", deleteButton);
       const serviceButton = event.target.closest(".service-client-button");
-      if (serviceButton) setClientService(serviceButton.dataset.clientCode, serviceButton.dataset.nextStatus);
+      if (serviceButton) setClientService(serviceButton.dataset.clientCode, serviceButton.dataset.nextStatus, serviceButton);
     });
     settingsForm.addEventListener("submit", saveSettings);
     businessLogoImage.addEventListener("change", () => {
