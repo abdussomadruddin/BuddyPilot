@@ -708,7 +708,7 @@ function pageHtml() {
 
     .invoice-row {
       display: grid;
-      grid-template-columns: minmax(145px, 1.2fr) minmax(128px, 1fr) minmax(105px, 0.75fr) minmax(95px, 0.65fr) minmax(100px, 0.75fr) minmax(110px, auto);
+      grid-template-columns: minmax(92px, 0.62fr) minmax(145px, 1.15fr) minmax(128px, 1fr) minmax(105px, 0.75fr) minmax(95px, 0.65fr) minmax(100px, 0.75fr) minmax(110px, auto);
       gap: 12px;
       align-items: center;
       padding: 12px 14px;
@@ -1187,17 +1187,8 @@ function pageHtml() {
               <label for="invoicePeriod">Bulan invoice</label>
               <input id="invoicePeriod" type="month">
             </div>
-            <div>
-              <label for="defaultServicePrice">Default Harga Service</label>
-              <input id="defaultServicePrice" class="money-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
-            </div>
-            <div>
-              <label for="defaultDiscount">Default Diskaun</label>
-              <input id="defaultDiscount" class="money-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
-            </div>
-            <button id="applyInvoiceDefaultsButton" class="secondary" type="button" disabled>Apply to All</button>
             <button id="generateInvoicesButton" type="button">Generate Invoices</button>
-            <button id="uploadInvoicesButton" class="approve" type="button" disabled>Upload All to Google Drive</button>
+            <button id="uploadInvoicesButton" class="approve" type="button" disabled>Upload Selected Invoices</button>
           </div>
 
           <div id="invoiceList" class="invoice-list"></div>
@@ -1236,9 +1227,6 @@ function pageHtml() {
     const regenerateButton = document.getElementById("regenerateButton");
     const creativeInput = document.getElementById("creative");
     const invoicePeriod = document.getElementById("invoicePeriod");
-    const defaultServicePrice = document.getElementById("defaultServicePrice");
-    const defaultDiscount = document.getElementById("defaultDiscount");
-    const applyInvoiceDefaultsButton = document.getElementById("applyInvoiceDefaultsButton");
     const generateInvoicesButton = document.getElementById("generateInvoicesButton");
     const uploadInvoicesButton = document.getElementById("uploadInvoicesButton");
     const invoiceList = document.getElementById("invoiceList");
@@ -2581,8 +2569,24 @@ function pageHtml() {
       return [...invoiceList.querySelectorAll(".invoice-row[data-client-code]")].map((row) => ({
         clientCode: row.dataset.clientCode,
         servicePrice: numericValue(row.querySelector(".service-price-input")?.value),
-        discount: numericValue(row.querySelector(".discount-input")?.value)
+        discount: numericValue(row.querySelector(".discount-input")?.value),
+        selected: Boolean(row.querySelector(".invoice-upload-input")?.checked)
       }));
+    }
+
+    function selectedInvoiceDrafts() {
+      return collectInvoiceDrafts().filter((draft) => draft.selected);
+    }
+
+    function selectedInvoiceHasMissingDrive(drafts = selectedInvoiceDrafts()) {
+      const selectedCodes = new Set(drafts.map((draft) => draft.clientCode));
+      return currentInvoices.some((invoice) => selectedCodes.has(invoice.clientCode) && !invoice.hasDriveFolder);
+    }
+
+    function updateUploadInvoicesButtonState() {
+      const bankMissing = currentBankStatus && currentBankStatus.source === "supabase" && !currentBankStatus.loaded;
+      const selected = selectedInvoiceDrafts();
+      uploadInvoicesButton.disabled = bankMissing || !selected.length || selectedInvoiceHasMissingDrive(selected);
     }
 
     function collectReceiptDrafts() {
@@ -2661,7 +2665,6 @@ function pageHtml() {
         invoiceList.className = "invoice-list";
         invoiceList.innerHTML = "";
         uploadInvoicesButton.disabled = true;
-        applyInvoiceDefaultsButton.disabled = true;
         invoiceResult.className = "result err";
         invoiceResult.textContent = "Belum ada client. Tambah pelanggan dahulu di tab Client.";
         return;
@@ -2674,6 +2677,12 @@ function pageHtml() {
         const total = invoiceTotal(servicePrice, discount);
         return \`
           <div class="invoice-row" data-client-code="\${escapeHtml(invoice.clientCode)}">
+            <div>
+              <label class="check-row">
+                <input class="invoice-upload-input" type="checkbox">
+                Upload
+              </label>
+            </div>
             <div>
               <span class="invoice-client">\${escapeHtml(invoice.clientName)}</span>
               <span class="invoice-muted">\${escapeHtml(invoice.billingName || invoice.clientCode)}</span>
@@ -2699,6 +2708,7 @@ function pageHtml() {
 
       invoiceList.innerHTML = \`
         <div class="invoice-row header">
+          <div>Pilih</div>
           <div>Client</div>
           <div>Invoice</div>
           <div>Harga Service</div>
@@ -2710,14 +2720,13 @@ function pageHtml() {
       \`;
       invoiceList.className = "invoice-list show";
       const bankMissing = currentBankStatus && currentBankStatus.source === "supabase" && !currentBankStatus.loaded;
-      uploadInvoicesButton.disabled = invoices.some((invoice) => !invoice.hasDriveFolder) || bankMissing;
-      applyInvoiceDefaultsButton.disabled = false;
+      updateUploadInvoicesButtonState();
       invoiceResult.className = "result ok";
       invoiceResult.textContent = bankMissing
         ? "Invoice draft siap. Tambah atau set default akaun bank dahulu sebelum review/upload PDF."
-        : uploadInvoicesButton.disabled
+        : invoices.some((invoice) => !invoice.hasDriveFolder)
         ? "Invoice siap untuk review, tapi ada client yang belum ada Drive folder ID."
-        : "Invoice siap untuk review. Edit harga/diskaun jika perlu, buka PDF dahulu, kemudian klik Upload All bila sudah puas hati.";
+        : "Invoice siap untuk review. Tick client yang mahu diupload, edit harga/diskaun jika perlu, kemudian upload selected invoices.";
     }
 
     async function generateInvoices() {
@@ -2864,6 +2873,15 @@ function pageHtml() {
     async function uploadInvoices() {
       invoiceResult.className = "result";
       invoiceResult.textContent = "";
+      const drafts = collectInvoiceDrafts().filter((draft) => draft.selected);
+      if (!drafts.length) {
+        showInvoiceError(new Error("Tick sekurang-kurangnya satu invoice untuk upload ke Google Drive."));
+        return;
+      }
+      if (selectedInvoiceHasMissingDrive(drafts)) {
+        showInvoiceError(new Error("Invoice yang dipilih ada client tanpa folder Drive. Pilih client yang foldernya sudah siap."));
+        return;
+      }
       uploadInvoicesButton.disabled = true;
       generateInvoicesButton.disabled = true;
       uploadInvoicesButton.textContent = "Uploading...";
@@ -2874,7 +2892,7 @@ function pageHtml() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             period: invoicePeriod.value,
-            drafts: collectInvoiceDrafts()
+            drafts
           })
         });
         const json = await readApiJson(response);
@@ -2894,9 +2912,9 @@ function pageHtml() {
       } catch (error) {
         showInvoiceError(error);
       } finally {
-        uploadInvoicesButton.disabled = false;
         generateInvoicesButton.disabled = false;
-        uploadInvoicesButton.textContent = "Upload All to Google Drive";
+        uploadInvoicesButton.textContent = "Upload Selected Invoices";
+        updateUploadInvoicesButtonState();
       }
     }
 
@@ -3013,19 +3031,14 @@ function pageHtml() {
     refreshClientsButton.addEventListener("click", loadClients);
     generateInvoicesButton.addEventListener("click", generateInvoices);
     generateReceiptsButton.addEventListener("click", generateReceipts);
-    applyInvoiceDefaultsButton.addEventListener("click", () => {
-      invoiceList.querySelectorAll(".invoice-row[data-client-code]").forEach((row) => {
-        const serviceInput = row.querySelector(".service-price-input");
-        const discountInput = row.querySelector(".discount-input");
-        if (defaultServicePrice.value !== "" && serviceInput) serviceInput.value = defaultServicePrice.value;
-        if (defaultDiscount.value !== "" && discountInput) discountInput.value = defaultDiscount.value;
-        updateInvoiceRowTotal(row);
-      });
-    });
     invoiceList.addEventListener("input", (event) => {
       if (!event.target.matches(".service-price-input, .discount-input")) return;
       const row = event.target.closest(".invoice-row[data-client-code]");
       if (row) updateInvoiceRowTotal(row);
+    });
+    invoiceList.addEventListener("change", (event) => {
+      if (!event.target.matches(".invoice-upload-input")) return;
+      updateUploadInvoicesButtonState();
     });
     invoiceList.addEventListener("click", (event) => {
       const button = event.target.closest(".review-pdf-button");
