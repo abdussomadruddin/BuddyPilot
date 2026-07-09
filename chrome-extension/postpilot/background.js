@@ -69,16 +69,33 @@ async function openThreadsAndRunAutomation(automationId = "", command = "POSTPIL
 
   try {
     const isTextOnly = command === "POSTPILOT_THREADS_TEXT_ONLY_POST";
+    const isTextBatch = command === "POSTPILOT_THREADS_TEXT_BATCH_POST";
     await chrome.storage.local.set({
       [THREADS_LAUNCH_KEY]: automationId || `threads-${Date.now()}`,
-      postpilotAutomationStatus: isTextOnly ? "Opening Threads viral post..." : "Facebook post live. Opening Threads...",
+      postpilotAutomationStatus: isTextBatch
+        ? "Opening Threads viral batch..."
+        : isTextOnly
+          ? "Opening Threads viral post..."
+          : "Facebook post live. Opening Threads...",
       postpilotLastError: "",
     });
     const tab = await chrome.tabs.create({ url: THREADS_HOME_URL, active: true });
     if (!tab?.id) throw new Error("Gagal buka tab Threads.");
-    await chrome.storage.local.set({ postpilotAutomationStatus: isTextOnly ? "Starting Threads text-only flow..." : "Starting auto flow in Threads..." });
+    await chrome.storage.local.set({
+      postpilotAutomationStatus: isTextBatch
+        ? "Starting Threads batch flow..."
+        : isTextOnly
+          ? "Starting Threads text-only flow..."
+          : "Starting auto flow in Threads...",
+    });
     const response = await sendToThreadsTabWithRetry(tab.id, command);
-    await chrome.storage.local.set({ postpilotAutomationStatus: isTextOnly ? "Threads text-only flow started." : "Threads auto flow started." });
+    await chrome.storage.local.set({
+      postpilotAutomationStatus: isTextBatch
+        ? "Threads batch flow started."
+        : isTextOnly
+          ? "Threads text-only flow started."
+          : "Threads auto flow started.",
+    });
     return response;
   } catch (error) {
     await chrome.storage.local.remove(THREADS_LAUNCH_KEY).catch(() => {});
@@ -134,6 +151,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return;
     }
 
+    if (message?.type === "SAVE_THREADS_TEXT_BATCH_AND_OPEN_THREADS") {
+      const posts = Array.isArray(message.draft?.posts) ? message.draft.posts.slice(0, 10) : [];
+      if (posts.length !== 10) throw new Error("Threads batch needs exactly 10 posts.");
+      if (posts.some((post) => !post?.postText)) throw new Error("Threads batch has empty post text.");
+      const draft = {
+        ...message.draft,
+        posts,
+        postText: posts[0].postText,
+        automationId: message.draft?.automationId || `postpilot-threads-batch-${Date.now()}`,
+        autoPublish: true,
+        threadsTextBatch: true,
+        batchDelayMs: Number(message.draft?.batchDelayMs) || 30000,
+      };
+      await chrome.storage.local.set({
+        currentDraft: draft,
+        [THREADS_LAUNCH_KEY]: "",
+        [THREADS_STARTED_KEY]: "",
+        [THREADS_COMPLETED_KEY]: "",
+        [THREADS_RUN_LOCK_KEY]: null,
+        postpilotLastError: "",
+        postpilotAutomationStatus: "Draft batch saved. Preparing Threads...",
+      });
+      const response = await openThreadsAndRunAutomation(draft.automationId, "POSTPILOT_THREADS_TEXT_BATCH_POST");
+      sendResponse(response || { ok: true });
+      return;
+    }
+
     if (message?.type === "POSTPILOT_FACEBOOK_DONE") {
       const response = await openThreadsAndRunAutomation(message.automationId || "");
       sendResponse(response || { ok: true });
@@ -143,7 +187,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message?.type === "POSTPILOT_THREADS_DONE") {
       await chrome.storage.local.set({
         [THREADS_COMPLETED_KEY]: message.automationId || "",
-        postpilotAutomationStatus: message.threadsTextOnly ? "Threads viral post selesai." : "Facebook + Threads flow selesai.",
+        postpilotAutomationStatus: message.threadsTextBatch
+          ? "Threads viral batch selesai."
+          : message.threadsTextOnly
+            ? "Threads viral post selesai."
+            : "Facebook + Threads flow selesai.",
       });
       sendResponse({ ok: true });
       return;

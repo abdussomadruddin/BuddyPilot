@@ -294,7 +294,8 @@ function showPanel(status, draft) {
       try {
         const nextDraft = { ...(draft || await getDraft()), autoPublish: true };
         await chrome.storage.local.set({ currentDraft: nextDraft, [STARTED_AUTOMATION_KEY]: "", [COMPLETED_AUTOMATION_KEY]: "" });
-        if (nextDraft.threadsTextOnly) await runThreadsTextOnlyAutomation({ manual: true });
+        if (nextDraft.threadsTextBatch) await runThreadsTextBatchAutomation({ manual: true });
+        else if (nextDraft.threadsTextOnly) await runThreadsTextOnlyAutomation({ manual: true });
         else await runThreadsAutomation({ manual: true });
       } catch (error) {
         showPanel(error.message, draft);
@@ -466,9 +467,9 @@ async function waitThreadsPosted(draft) {
   }).catch(() => {});
 }
 
-function notifyThreadsDone(automationId, threadsTextOnly = false) {
+function notifyThreadsDone(automationId, threadsTextOnly = false, threadsTextBatch = false) {
   try {
-    chrome.runtime.sendMessage({ type: "POSTPILOT_THREADS_DONE", automationId, threadsTextOnly }, () => {
+    chrome.runtime.sendMessage({ type: "POSTPILOT_THREADS_DONE", automationId, threadsTextOnly, threadsTextBatch }, () => {
       void chrome.runtime.lastError;
     });
   } catch {
@@ -552,6 +553,72 @@ async function runThreadsTextOnlyAutomation({ manual = false } = {}) {
   }
 }
 
+async function waitBeforeNextBatchPost(delayMs, index, total, draft) {
+  const started = now();
+  while (now() - started < delayMs) {
+    const remainingSeconds = Math.max(0, Math.ceil((delayMs - (now() - started)) / 1000));
+    showPanel(`${index}/${total} posted. Next in ${remainingSeconds}s.`, draft);
+    await sleep(Math.min(STEP_RETRY_INTERVAL_MS, Math.max(250, delayMs - (now() - started))));
+  }
+}
+
+async function runThreadsTextBatchAutomation({ manual = false } = {}) {
+  const draft = await getDraft();
+  const automationId = draft.automationId || draft.id || `postpilot-threads-batch-${Date.now()}`;
+  const posts = (Array.isArray(draft.posts) ? draft.posts : [])
+    .slice(0, 10)
+    .filter((post) => String(post?.postText || "").trim());
+  if (posts.length !== 10) throw new Error("Threads batch perlu ada 10 post.");
+
+  const batchDelayMs = Math.max(0, Number(draft.batchDelayMs) || 30000);
+  await acquireRunLock("threads-text-batch-flow", automationId, manual);
+  const steps = [];
+  try {
+    showPanel("Threads batch 0/10 Buka page Threads...", draft);
+    await waitStep(() => document.readyState === "complete" || document.readyState === "interactive", {
+      label: "Threads page",
+      draft,
+    });
+
+    for (let index = 0; index < posts.length; index += 1) {
+      const postNumber = index + 1;
+      const postDraft = {
+        ...draft,
+        postText: posts[index].postText,
+      };
+
+      showPanel(`Threads batch ${postNumber}/10 Buka New thread...`, postDraft);
+      await openNewThread(postDraft);
+
+      showPanel(`Threads batch ${postNumber}/10 Isi caption sekali sahaja...`, postDraft);
+      await fillCaptionOnce(postDraft);
+
+      showPanel(`Threads batch ${postNumber}/10 Tekan Post...`, postDraft);
+      await clickThreadsPost(postDraft);
+
+      showPanel(`Threads batch ${postNumber}/10 Tunggu post selesai...`, postDraft);
+      await waitThreadsPosted(postDraft);
+
+      steps.push(`${postNumber}/10 posted.`);
+      showPanel(steps.join("\n"), draft);
+      if (postNumber < posts.length && batchDelayMs > 0) {
+        await waitBeforeNextBatchPost(batchDelayMs, postNumber, posts.length, draft);
+      }
+    }
+
+    await chrome.storage.local.set({ [COMPLETED_AUTOMATION_KEY]: automationId });
+    notifyThreadsDone(automationId, false, true);
+    steps.push("Threads batch flow selesai.");
+    showPanel(steps.join("\n"), draft);
+    return { ok: true, message: steps.join("\n") };
+  } catch (error) {
+    showPanel(`Threads batch gagal: ${error?.message || error}`, draft);
+    throw error;
+  } finally {
+    await releaseRunLock();
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     if (message?.type === "POSTPILOT_THREADS_AUTO_POST") {
@@ -580,6 +647,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ ok: true, message: "Threads text-only flow started." });
       return;
     }
+    if (message?.type === "POSTPILOT_THREADS_TEXT_BATCH_POST") {
+      const draft = await getDraft().catch(() => null);
+      const autoBlocked = draft?.autoPublish && !(await shouldAutoStartDraft(draft));
+      if (inPageRun || autoBlocked) {
+        sendResponse({ ok: true, message: "Threads batch flow already running." });
+        return;
+      }
+      runThreadsTextBatchAutomation({ manual: true }).catch((error) => {
+        showPanel(error?.message || String(error), null);
+      });
+      sendResponse({ ok: true, message: "Threads batch flow started." });
+      return;
+    }
     sendResponse({ ok: false, error: "Unknown message." });
   })().catch((error) => {
     showPanel(error?.message || String(error), null);
@@ -597,9 +677,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         shouldAutoStartDraft(draft)
           .then((ready) => {
             if (!ready) return null;
-            return draft.threadsTextOnly
-              ? runThreadsTextOnlyAutomation({ manual: false })
-              : runThreadsAutomation({ manual: false });
+            if (draft.threadsTextBatch) return runThreadsTextBatchAutomation({ manual: false });
+            if (draft.threadsTextOnly) return runThreadsTextOnlyAutomation({ manual: false });
+            return runThreadsAutomation({ manual: false });
           })
           .catch((error) => {
             showPanel(error?.message || String(error), draft);

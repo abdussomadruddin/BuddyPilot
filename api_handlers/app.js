@@ -1265,6 +1265,7 @@ function pageHtml() {
               <button id="generateViralOneButton" type="button">Generate 1 Post</button>
               <button id="generateViralTenButton" class="secondary" type="button">Generate 10 Posts</button>
               <button id="generateViralHundredButton" class="secondary" type="button">Generate 100 Posts</button>
+              <button id="autoPostViralTenButton" class="approve" type="button">Auto Post 10 to Threads</button>
               <button id="exportViralCsvButton" class="secondary" type="button">Export CSV</button>
             </div>
             <div id="viralResult" class="result"></div>
@@ -1643,6 +1644,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     const generateViralOneButton = document.getElementById("generateViralOneButton");
     const generateViralTenButton = document.getElementById("generateViralTenButton");
     const generateViralHundredButton = document.getElementById("generateViralHundredButton");
+    const autoPostViralTenButton = document.getElementById("autoPostViralTenButton");
     const exportViralCsvButton = document.getElementById("exportViralCsvButton");
     const viralResult = document.getElementById("viralResult");
     const viralOutput = document.getElementById("viralOutput");
@@ -2749,6 +2751,16 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       setMessage(viralResult, "ok", count + " Threads viral post generated.");
     }
 
+    function ensureViralPostCount(count) {
+      const posts = [...viralGeneratedPosts];
+      while (posts.length < count) {
+        posts.push(makeViralPost(posts));
+      }
+      viralGeneratedPosts = posts;
+      renderViralPosts();
+      return viralGeneratedPosts.slice(0, count);
+    }
+
     function csvEscape(value) {
       return '"' + String(value || "").replace(/"/g, '""') + '"';
     }
@@ -2831,6 +2843,32 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
         }
       }, window.location.origin);
       setMessage(viralResult, "ok", "Draft Threads viral dihantar. Extension akan buka Threads dan post text sahaja.");
+    }
+
+    function postViralBatchToThreads() {
+      const posts = ensureViralPostCount(10);
+      window.postMessage({
+        source: "postpilot-webapp",
+        type: "POSTPILOT_THREADS_TEXT_BATCH_DRAFT",
+        draft: {
+          id: "threads-viral-batch-" + Date.now(),
+          createdAt: new Date().toISOString(),
+          postText: posts[0]?.postText || "",
+          posts: posts.map((post, index) => ({
+            index: index + 1,
+            postText: post.postText,
+            characterCount: post.characterCount,
+            category: post.category,
+            tone: post.tone,
+            structure: post.structure,
+            createdAt: post.createdAt,
+          })),
+          threadsTextBatch: true,
+          autoPublish: true,
+          batchDelayMs: 30000,
+        }
+      }, window.location.origin);
+      setMessage(viralResult, "ok", "10 Threads posts dihantar ke extension.");
     }
 
     function viralCard(post, options = {}) {
@@ -3230,6 +3268,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     generateViralOneButton.addEventListener("click", () => generateViralPosts(1));
     generateViralTenButton.addEventListener("click", () => generateViralPosts(10));
     generateViralHundredButton.addEventListener("click", () => generateViralPosts(100));
+    autoPostViralTenButton.addEventListener("click", postViralBatchToThreads);
     exportViralCsvButton.addEventListener("click", () => exportViralCsv(viralGeneratedPosts, "threads-viral-posts.csv"));
     exportSavedViralButton.addEventListener("click", () => exportViralCsv(filteredSavedViralPosts(), "threads-viral-saved-posts.csv"));
     clearSavedViralButton.addEventListener("click", () => {
