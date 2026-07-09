@@ -26,6 +26,8 @@ const routes = {
   "reports/upload": require("../api_handlers/reports/upload"),
   settings: require("../api_handlers/settings"),
   "settings/logo": require("../api_handlers/settings/logo"),
+  "personal-post-preview": require("../api_handlers/personal-post-preview"),
+  "personal-post-regenerate": require("../api_handlers/personal-post-regenerate"),
 };
 
 function routeKeyFromRequest(req) {

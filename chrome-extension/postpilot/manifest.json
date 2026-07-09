@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "PostPilot Assist",
+  "version": "0.1.0",
+  "description": "Assist-click helper for PostPilot Facebook personal drafts from BuddyPilot.",
+  "permissions": ["storage", "tabs", "clipboardWrite", "unlimitedStorage"],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://facebook.com/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "PostPilot",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*", "https://*/*"],
+      "js": ["webapp-content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.facebook.com/*", "https://facebook.com/*"],
+      "js": ["facebook-content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

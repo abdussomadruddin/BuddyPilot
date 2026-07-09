@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostPilot</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      width: 340px;
+      margin: 0;
+      padding: 14px;
+      font: 14px/1.45 Arial, Helvetica, sans-serif;
+      color: #111827;
+      background: #f9fafb;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+    p {
+      margin: 8px 0;
+      color: #4b5563;
+    }
+    textarea {
+      width: 100%;
+      min-height: 86px;
+      resize: vertical;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 10px;
+      font: inherit;
+      color: #111827;
+      background: #fff;
+    }
+    .actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 12px;
+      background: #111827;
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #ecfdf5;
+      color: #14532d;
+      white-space: pre-wrap;
+    }
+    .status.err {
+      background: #fef2f2;
+      color: #7f1d1d;
+    }
+  </style>
+</head>
+<body>
+  <h1>PostPilot</h1>
+  <p id="meta">Loading draft...</p>
+
+  <label for="postText"><strong>Post</strong></label>
+  <textarea id="postText" readonly></textarea>
+
+  <label for="commentCta"><strong>Komen CTA</strong></label>
+  <textarea id="commentCta" readonly></textarea>
+
+  <div class="actions">
+    <button id="openFacebookButton" type="button">Open Facebook</button>
+    <button id="fillPostButton" type="button">Fill Personal Post</button>
+    <button id="copyCtaButton" class="secondary" type="button">Copy CTA</button>
+    <button id="fillCommentButton" class="secondary" type="button">Fill CTA Comment</button>
+  </div>
+
+  <div id="status" class="status" hidden></div>
+  <script src="popup.js"></script>
+</body>
+</html>

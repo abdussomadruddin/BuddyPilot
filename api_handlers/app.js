@@ -913,6 +913,7 @@ function pageHtml() {
     <nav class="tabs" aria-label="Main tabs">
       <button class="tab-button active" type="button" data-tab-target="dashboard">Dashboard</button>
       <button class="tab-button" type="button" data-tab-target="postpilot">Page Pilot</button>
+      <button class="tab-button" type="button" data-tab-target="personalpostpilot">PostPilot</button>
       <button class="tab-button" type="button" data-tab-target="reportpilot">Report Pilot</button>
       <button class="tab-button" type="button" data-tab-target="invoicepilot">Invoice Pilot</button>
     </nav>
@@ -928,6 +929,7 @@ function pageHtml() {
         </div>
         <div class="quick-grid">
           <button class="quick-card" type="button" data-go-tab="postpilot">Buat Post</button>
+          <button class="quick-card" type="button" data-go-tab="personalpostpilot">Buat Post Personal</button>
           <button class="quick-card" type="button" data-go-tab="reportpilot">Buat Weekly Report</button>
           <button class="quick-card" type="button" data-go-tab="invoicepilot" data-go-subtab="document-panel" data-go-document-subtab="invoice-panel">Buat Invois</button>
           <button class="quick-card" type="button" data-go-tab="invoicepilot" data-go-subtab="document-panel" data-go-document-subtab="receipt-panel">Buat Resit</button>
@@ -985,6 +987,80 @@ function pageHtml() {
         </section>
 
         <div id="result" class="result"></div>
+      </section>
+    </section>
+
+    <section id="tab-personalpostpilot" class="tab-panel" data-tab-panel="personalpostpilot">
+      <section class="card app-panel" data-panel="personalpostpilot">
+        <div class="hero">
+          <div>
+            <h1>PostPilot</h1>
+            <p>Jana post Facebook personal pendek, gambar hook, dan CTA komen. Chrome extension bantu isi composer; anda klik Post sendiri.</p>
+          </div>
+        </div>
+
+        <form id="threadsForm" class="client-form">
+          <div class="client-grid">
+            <div>
+              <label for="threadsProductLink">Product / salespage link</label>
+              <input id="threadsProductLink" name="product_link" type="url" value="https://digitaldominate.com/" required>
+            </div>
+            <div>
+              <label for="threadsAffiliateLink">Affiliate / comment link</label>
+              <input id="threadsAffiliateLink" name="affiliate_link" type="url" placeholder="Link yang nak letak di komen">
+            </div>
+            <div>
+              <label for="threadsPostMode">Mode post</label>
+              <select id="threadsPostMode" name="post_mode">
+                <option value="soft">Soft story</option>
+                <option value="hard">Hard sell</option>
+                <option value="proof">Proof</option>
+                <option value="engagement">Engagement question</option>
+                <option value="objection">Objection</option>
+              </select>
+            </div>
+            <div>
+              <label for="threadsHookImage">Gambar hook</label>
+              <input id="threadsHookImage" name="hook_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+            </div>
+            <div class="full">
+              <label for="threadsPersonalBackground">Personal background ringkas</label>
+              <textarea id="threadsPersonalBackground" name="personal_background" placeholder="Contoh: sebagai orang yang pernah tangguh side income bertahun-tahun"></textarea>
+            </div>
+            <div class="full">
+              <label for="threadsAngleNote">Angle / konteks gambar (optional)</label>
+              <textarea id="threadsAngleNote" name="angle_note" placeholder="Contoh: gambar hook tunjuk proof/testimoni, angle: orang skeptikal mula percaya bila nampak bukti."></textarea>
+            </div>
+            <div class="full">
+              <label for="threadsCustomPost">Custom post utama (optional)</label>
+              <textarea id="threadsCustomPost" name="custom_post" placeholder="Kalau isi, sistem akan guna post ini dan buang link supaya post utama kekal clean."></textarea>
+            </div>
+            <div class="full">
+              <label for="threadsCustomComment">Custom komen CTA (optional)</label>
+              <textarea id="threadsCustomComment" name="custom_comment" placeholder="Kosongkan untuk auto-generate komen CTA."></textarea>
+            </div>
+          </div>
+          <button id="threadsPreviewButton" type="submit">Preview PostPilot</button>
+        </form>
+
+        <section id="threadsPreviewPanel" class="preview">
+          <h2>Preview PostPilot</h2>
+          <p class="note" id="threadsPreviewMeta"></p>
+
+          <label for="threadsPostPreview">Post utama</label>
+          <textarea id="threadsPostPreview"></textarea>
+
+          <label for="threadsCommentPreview">Komen CTA</label>
+          <textarea id="threadsCommentPreview"></textarea>
+
+          <div class="actions">
+            <button class="approve" id="sendThreadsExtensionButton" type="button">Control Chrome: Post Facebook Personal</button>
+            <button class="regenerate" id="regenerateThreadsButton" type="button">Jana Semula Post</button>
+            <button class="secondary" id="copyThreadsCtaButton" type="button">Copy CTA</button>
+          </div>
+        </section>
+
+        <div id="threadsResult" class="result"></div>
       </section>
     </section>
 
@@ -1307,6 +1383,17 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     const approveButton = document.getElementById("approveButton");
     const regenerateButton = document.getElementById("regenerateButton");
     const creativeInput = document.getElementById("creative");
+    const threadsForm = document.getElementById("threadsForm");
+    const threadsPreviewButton = document.getElementById("threadsPreviewButton");
+    const threadsPreviewPanel = document.getElementById("threadsPreviewPanel");
+    const threadsPreviewMeta = document.getElementById("threadsPreviewMeta");
+    const threadsPostPreview = document.getElementById("threadsPostPreview");
+    const threadsCommentPreview = document.getElementById("threadsCommentPreview");
+    const sendThreadsExtensionButton = document.getElementById("sendThreadsExtensionButton");
+    const regenerateThreadsButton = document.getElementById("regenerateThreadsButton");
+    const copyThreadsCtaButton = document.getElementById("copyThreadsCtaButton");
+    const threadsHookImage = document.getElementById("threadsHookImage");
+    const threadsResult = document.getElementById("threadsResult");
     const invoicePeriod = document.getElementById("invoicePeriod");
     const generateInvoicesButton = document.getElementById("generateInvoicesButton");
     const uploadInvoicesButton = document.getElementById("uploadInvoicesButton");
@@ -1359,6 +1446,10 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     let seenVariations = [];
     let preparedCreativeFile = null;
     let preparedCreativeNotice = "";
+    let currentThreadsPreview = null;
+    let seenThreadsVariations = [];
+    let preparedThreadsImageFile = null;
+    let preparedThreadsImageNotice = "";
     let currentInvoices = [];
     let currentReceipts = [];
     let currentClients = [];
@@ -1376,9 +1467,21 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       result.textContent = "";
     });
 
+    threadsHookImage.addEventListener("change", () => {
+      preparedThreadsImageFile = null;
+      preparedThreadsImageNotice = "";
+      threadsResult.className = "result";
+      threadsResult.textContent = "";
+    });
+
     function showError(error) {
       result.className = "result err";
       result.textContent = error.message || String(error);
+    }
+
+    function showThreadsError(error) {
+      threadsResult.className = "result err";
+      threadsResult.textContent = error.message || String(error);
     }
 
     function showInvoiceError(error) {
@@ -1546,6 +1649,19 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
 
     function fileFromBlob(blob, filename) {
       return new File([blob], filename, { type: blob.type || "application/octet-stream", lastModified: Date.now() });
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          resolve("");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Gagal baca gambar hook."));
+        reader.readAsDataURL(file);
+      });
     }
 
     function uploadLimitMessage(file) {
@@ -1768,6 +1884,88 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       return compressed;
     }
 
+    async function prepareThreadsImageFile(file) {
+      preparedThreadsImageFile = null;
+      preparedThreadsImageNotice = "";
+      if (!file) return null;
+      if (!file.type.startsWith("image/")) throw new Error("PostPilot buat masa ini support gambar hook sahaja.");
+      if (file.size <= TARGET_UPLOAD_BYTES) {
+        preparedThreadsImageFile = file;
+        return file;
+      }
+
+      const compressed = await compressImageFile(file);
+      preparedThreadsImageFile = compressed;
+      preparedThreadsImageNotice = \`Auto-compress gambar hook: \${formatMb(file.size)}MB -> \${formatMb(compressed.size)}MB (\${compressed.name}).\`;
+      return compressed;
+    }
+
+    function threadsPayloadFromForm() {
+      return {
+        product_link: document.getElementById("threadsProductLink").value,
+        affiliate_link: document.getElementById("threadsAffiliateLink").value,
+        personal_background: document.getElementById("threadsPersonalBackground").value,
+        angle_note: document.getElementById("threadsAngleNote").value,
+        post_mode: document.getElementById("threadsPostMode").value,
+        custom_post: document.getElementById("threadsCustomPost").value,
+        custom_comment: document.getElementById("threadsCustomComment").value
+      };
+    }
+
+    function showThreadsPreview(json) {
+      currentThreadsPreview = json.preview;
+      seenThreadsVariations = [Number(currentThreadsPreview.variation || 0)];
+      threadsPostPreview.value = currentThreadsPreview.post_text || "";
+      threadsCommentPreview.value = currentThreadsPreview.comment_cta || "";
+      threadsPreviewMeta.textContent = [
+        \`Product context: \${currentThreadsPreview.product_context?.product_name || "-"}\`,
+        \`Concept: \${Number(currentThreadsPreview.variation || 0) + 1}/120\`,
+        \`Style: \${currentThreadsPreview.style || "-"}\`
+      ].join(" | ");
+      threadsPreviewPanel.className = "preview show";
+      threadsResult.className = "result ok";
+      threadsResult.textContent = [
+        "Preview PostPilot siap. Post utama kekal tanpa link; CTA berada di komen.",
+        preparedThreadsImageNotice || ""
+      ].filter(Boolean).join("\\n\\n");
+    }
+
+    async function buildThreadsExtensionDraft() {
+      if (!currentThreadsPreview) throw new Error("Preview PostPilot belum dijana.");
+      const selectedImage = preparedThreadsImageFile || threadsHookImage.files[0] || null;
+      let imageDataUrl = "";
+      let imageNotice = "";
+      if (selectedImage) {
+        const imageForExtension = await prepareThreadsImageFile(selectedImage);
+        if (imageForExtension && imageForExtension.size <= TARGET_UPLOAD_BYTES) {
+          imageDataUrl = await readFileAsDataUrl(imageForExtension);
+        } else if (imageForExtension) {
+          imageNotice = "Gambar terlalu besar untuk dihantar ke extension. Pilih gambar secara manual di Facebook.";
+        }
+      }
+
+      return {
+        source: "postpilot-webapp",
+        type: "POSTPILOT_SAVE_DRAFT",
+        draft: {
+          id: \`postpilot-\${Date.now()}\`,
+          createdAt: new Date().toISOString(),
+          postText: threadsPostPreview.value.trim(),
+          commentCta: threadsCommentPreview.value.trim(),
+          productLink: currentThreadsPreview.product_link || "",
+          affiliateLink: currentThreadsPreview.affiliate_link || "",
+          postMode: currentThreadsPreview.post_mode || "soft",
+          style: currentThreadsPreview.style || "",
+          image: imageDataUrl ? {
+            name: (preparedThreadsImageFile || selectedImage)?.name || "post-hook.jpg",
+            type: (preparedThreadsImageFile || selectedImage)?.type || "image/jpeg",
+            dataUrl: imageDataUrl
+          } : null,
+          imageNotice
+        }
+      };
+    }
+
     function showPreview(json) {
       currentPreview = json.preview;
       seenVariations = [Number(currentPreview.variation || 0)];
@@ -1967,6 +2165,132 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
         approveButton.disabled = false;
         regenerateButton.disabled = false;
         approveButton.textContent = "Approve & Post ke Facebook";
+      }
+    });
+
+    threadsForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      threadsResult.className = "result";
+      threadsResult.textContent = "";
+      threadsPreviewPanel.className = "preview";
+      threadsPreviewButton.disabled = true;
+      threadsPreviewButton.textContent = "Generating preview...";
+
+      try {
+        const hookFile = threadsHookImage.files[0];
+        if (hookFile) {
+          threadsPreviewButton.textContent = "Preparing image...";
+          await prepareThreadsImageFile(hookFile);
+        }
+
+        const response = await fetch("/api/personal-post-preview", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(threadsPayloadFromForm())
+        });
+        const json = await readApiJson(response);
+        if (response.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        if (!response.ok || !json.ok) throw new Error(json.error || "PostPilot preview failed.");
+        showThreadsPreview(json);
+      } catch (error) {
+        showThreadsError(error);
+      } finally {
+        threadsPreviewButton.disabled = false;
+        threadsPreviewButton.textContent = "Preview PostPilot";
+      }
+    });
+
+    regenerateThreadsButton.addEventListener("click", async () => {
+      if (!currentThreadsPreview) return;
+      threadsResult.className = "result";
+      threadsResult.textContent = "";
+      regenerateThreadsButton.disabled = true;
+      regenerateThreadsButton.textContent = "Generating...";
+
+      try {
+        const response = await fetch("/api/personal-post-regenerate", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            product_link: currentThreadsPreview.product_link,
+            affiliate_link: currentThreadsPreview.affiliate_link,
+            personal_background: currentThreadsPreview.personal_background,
+            angle_note: currentThreadsPreview.angle_note,
+            post_mode: currentThreadsPreview.post_mode,
+            product_context: currentThreadsPreview.product_context?.raw,
+            custom_comment: document.getElementById("threadsCustomComment").value,
+            variation: currentThreadsPreview.variation,
+            seen_variations: seenThreadsVariations
+          })
+        });
+        const json = await readApiJson(response);
+        if (response.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        if (!response.ok || !json.ok) throw new Error(json.error || "PostPilot regenerate failed.");
+
+        currentThreadsPreview = {
+          ...currentThreadsPreview,
+          post_text: json.preview.post_text,
+          comment_cta: json.preview.comment_cta,
+          product_context: json.preview.product_context,
+          variation: json.preview.variation,
+          style: json.preview.style
+        };
+        seenThreadsVariations.push(Number(currentThreadsPreview.variation || 0));
+        threadsPostPreview.value = currentThreadsPreview.post_text || "";
+        threadsCommentPreview.value = currentThreadsPreview.comment_cta || "";
+        threadsPreviewMeta.textContent = [
+          \`Product context: \${currentThreadsPreview.product_context?.product_name || "-"}\`,
+          \`Concept: \${Number(currentThreadsPreview.variation || 0) + 1}/120\`,
+          \`Style: \${currentThreadsPreview.style || "-"}\`
+        ].join(" | ");
+        threadsResult.className = "result ok";
+        threadsResult.textContent = "Variasi post baru sudah dijana.";
+      } catch (error) {
+        showThreadsError(error);
+      } finally {
+        regenerateThreadsButton.disabled = false;
+        regenerateThreadsButton.textContent = "Jana Semula Post";
+      }
+    });
+
+    copyThreadsCtaButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(threadsCommentPreview.value || "");
+        threadsResult.className = "result ok";
+        threadsResult.textContent = "CTA komen sudah dicopy.";
+      } catch (error) {
+        showThreadsError(error);
+      }
+    });
+
+    sendThreadsExtensionButton.addEventListener("click", async () => {
+      sendThreadsExtensionButton.disabled = true;
+      sendThreadsExtensionButton.textContent = "Sending...";
+      threadsResult.className = "result";
+      threadsResult.textContent = "";
+
+      try {
+        const message = await buildThreadsExtensionDraft();
+        if (!message.draft.postText) throw new Error("Post utama kosong.");
+        if (!message.draft.commentCta) throw new Error("Komen CTA kosong.");
+        window.postMessage(message, window.location.origin);
+        threadsResult.className = "result ok";
+        threadsResult.textContent = [
+          "Draft dihantar ke PostPilot extension.",
+          "Kalau extension sudah install, Facebook akan dibuka dan composer personal post akan diisi.",
+          message.draft.imageNotice || preparedThreadsImageNotice || ""
+        ].filter(Boolean).join("\\n");
+      } catch (error) {
+        showThreadsError(error);
+      } finally {
+        sendThreadsExtensionButton.disabled = false;
+        sendThreadsExtensionButton.textContent = "Control Chrome: Post Facebook Personal";
       }
     });
 
