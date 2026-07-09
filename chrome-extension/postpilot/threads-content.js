@@ -250,44 +250,9 @@ function attachmentReadyStatus(scope, initialMediaCount, input, uploadedAt) {
 function dispatchFileToThreads(input, file) {
   const transfer = new DataTransfer();
   transfer.items.add(file);
-  try {
-    input.files = transfer.files;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  } catch {
-    // Keep going with drop/paste events below.
-  }
-
-  const targets = [
-    input,
-    input.parentElement,
-    activeComposerScope(),
-    findTextboxIn(activeComposerScope()),
-    document.body,
-  ].filter(Boolean);
-
-  for (const target of targets) {
-    try {
-      for (const eventName of ["dragenter", "dragover", "drop"]) {
-        target.dispatchEvent(new DragEvent(eventName, {
-          bubbles: true,
-          cancelable: true,
-          dataTransfer: transfer,
-        }));
-      }
-    } catch {
-      // Synthetic drag/drop may be rejected by the page.
-    }
-    try {
-      target.dispatchEvent(new ClipboardEvent("paste", {
-        bubbles: true,
-        cancelable: true,
-        clipboardData: transfer,
-      }));
-    } catch {
-      // Synthetic clipboard payload is best-effort.
-    }
-  }
+  input.files = transfer.files;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function showPanel(status, draft) {
@@ -443,6 +408,7 @@ async function attachHookImage(draft) {
   const baselineMediaCount = visibleMediaCount(activeComposerScope());
   let lastInput = null;
   let uploadedAt = 0;
+  let uploadCount = 0;
 
   await waitStep(() => {
     const scope = activeComposerScope();
@@ -458,7 +424,9 @@ async function attachHookImage(draft) {
     }
 
     if (lastInput === input && input.files?.length) return null;
+    if (uploadCount >= 2) return input.files?.length ? true : null;
     dispatchFileToThreads(input, file);
+    uploadCount += 1;
     lastInput = input;
     uploadedAt = now();
     return null;
