@@ -1,6 +1,6 @@
-# PostPilot
+# BuddyPilot
 
-PostPilot is a simple Vercel webapp for uploading a creative, previewing Malay copywriting, and publishing it directly to a Facebook Page after approval.
+BuddyPilot is a simple Vercel webapp for managing business workflows, creatives, reports, invoices, receipts, and direct Facebook Page publishing.
 
 Copywriting is generated from the uploaded creative note plus the supplied salespage URL. The app fetches the salespage title, meta description, headings, and visible text snippets so it is not locked to one product.
 

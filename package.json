@@ -1,8 +1,8 @@
 {
-  "name": "post-pilot",
+  "name": "buddy-pilot",
   "version": "1.0.0",
   "private": true,
-  "description": "Upload a creative and publish it directly to a Facebook Page.",
+  "description": "Manage business workflows, creatives, reports, invoices, and receipts in one app.",
   "scripts": {
     "check": "find api api_handlers lib scripts -name '*.js' -print0 | xargs -0 -n1 node --check",
     "ip": "node scripts/invoice-pilot-cli.js",

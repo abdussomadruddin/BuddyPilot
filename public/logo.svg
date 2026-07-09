@@ -1,17 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PostPilot logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BuddyPilot logo">
   <defs>
     <linearGradient id="bg" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#2563eb"/>
-      <stop offset="0.52" stop-color="#0f172a"/>
+      <stop offset="0.48" stop-color="#0f172a"/>
       <stop offset="1" stop-color="#14b8a6"/>
     </linearGradient>
-    <linearGradient id="paper" x1="150" y1="130" x2="370" y2="370" gradientUnits="userSpaceOnUse">
+    <linearGradient id="bp" x1="116" y1="130" x2="380" y2="390" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#dbeafe"/>
     </linearGradient>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#020617" flood-opacity="0.28"/>
+    </filter>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <path d="M154 154h128c66 0 106 34 106 90s-40 90-106 90h-54v72h-74V154Zm74 62v58h50c22 0 36-10 36-29s-14-29-36-29h-50Z" fill="url(#paper)"/>
-  <path d="M330 312l74-34-74-34v42h-70v52h70v-26Z" fill="#5eead4"/>
-  <circle cx="390" cy="136" r="22" fill="#facc15"/>
+  <g filter="url(#soft-shadow)">
+    <path d="M124 132h122c57 0 92 30 92 78 0 30-15 54-40 66 34 11 54 39 54 76 0 55-42 90-108 90H124V132Zm74 62v57h42c17 0 29-11 29-28s-12-29-30-29h-41Zm0 113v73h49c22 0 36-14 36-36s-14-37-37-37h-48Z" fill="url(#bp)"/>
+    <path d="M300 132h74c58 0 94 33 94 86s-36 87-94 87h-28v137h-46V132Zm46 48v77h25c31 0 50-14 50-39s-19-38-50-38h-25Z" fill="#e0f2fe"/>
+    <path d="M341 323l70-32-70-32v39h-86v50h86v-25Z" fill="#5eead4"/>
+    <circle cx="391" cy="125" r="22" fill="#facc15"/>
+  </g>
 </svg>

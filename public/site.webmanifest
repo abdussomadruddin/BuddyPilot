@@ -1,7 +1,7 @@
 {
-  "name": "PostPilot",
-  "short_name": "PostPilot",
-  "description": "Upload creatives and publish directly to a Facebook Page.",
+  "name": "BuddyPilot",
+  "short_name": "BuddyPilot",
+  "description": "Manage business workflows, creatives, reports, invoices, and receipts in one app.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f4f5f7",

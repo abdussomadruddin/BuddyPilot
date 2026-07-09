@@ -6,7 +6,7 @@ function loginHtml({ error, setupMissing } = {}) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login - PostPilot</title>
+  <title>Login - BuddyPilot</title>
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -102,8 +102,8 @@ function loginHtml({ error, setupMissing } = {}) {
 <body>
   <main>
     <section class="card">
-      <img class="logo" src="/logo.svg" alt="PostPilot" width="72" height="72">
-      <h1>PostPilot</h1>
+      <img class="logo" src="/logo.svg" alt="BuddyPilot" width="72" height="72">
+      <h1>BuddyPilot</h1>
       <p>Masukkan password untuk akses uploader Facebook Page.</p>
       <form method="post" action="/api/login">
         <label for="password">Password</label>

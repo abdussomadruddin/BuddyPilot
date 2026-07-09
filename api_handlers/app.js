@@ -6,7 +6,7 @@ function pageHtml() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PostPilot</title>
+  <title>BuddyPilot</title>
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -903,7 +903,7 @@ function pageHtml() {
     <div class="topbar">
       <div class="brand">
         <img src="/logo.svg" alt="" width="34" height="34">
-        <span>PostPilot</span>
+        <span>BuddyPilot</span>
       </div>
       <form method="post" action="/api/logout">
         <button class="secondary" type="submit">Logout</button>
@@ -912,7 +912,7 @@ function pageHtml() {
 
     <nav class="tabs" aria-label="Main tabs">
       <button class="tab-button active" type="button" data-tab-target="dashboard">Dashboard</button>
-      <button class="tab-button" type="button" data-tab-target="postpilot">Post Pilot</button>
+      <button class="tab-button" type="button" data-tab-target="postpilot">BuddyPilot</button>
       <button class="tab-button" type="button" data-tab-target="reportpilot">Report Pilot</button>
       <button class="tab-button" type="button" data-tab-target="invoicepilot">Invoice Pilot</button>
     </nav>
@@ -945,7 +945,7 @@ function pageHtml() {
         <div class="hero">
           <img src="/logo.svg" alt="" width="64" height="64">
           <div>
-            <h1>Post Pilot</h1>
+            <h1>BuddyPilot</h1>
             <p>Upload creative, review ayat, kemudian post ke Facebook Page.</p>
           </div>
         </div>

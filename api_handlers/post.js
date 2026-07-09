@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
     });
     await recordActivity({
       type: "facebook_posted",
-      title: "PostPilot posted ke Facebook",
+      title: "BuddyPilot posted ke Facebook",
       description: result.permalink_url || result.post_id || "Post berjaya dipublish.",
       entityType: "facebook_post",
       entityId: result.post_id || "",
