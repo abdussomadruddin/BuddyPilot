@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "PostPilot Assist",
+  "name": "Post Pilot Assist",
   "version": "0.1.0",
-  "description": "Assist-click helper for PostPilot Facebook personal drafts from BuddyPilot.",
+  "description": "Assist-click helper for Post Pilot Facebook personal drafts from BuddyPilot.",
   "permissions": ["storage", "tabs", "clipboardWrite", "unlimitedStorage"],
   "host_permissions": [
     "https://www.facebook.com/*",
@@ -15,7 +15,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "PostPilot",
+    "default_title": "Post Pilot",
     "default_popup": "popup.html"
   },
   "content_scripts": [

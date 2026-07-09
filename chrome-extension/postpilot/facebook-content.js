@@ -105,7 +105,7 @@ async function attachImage(image) {
 
 async function getDraft() {
   const { currentDraft } = await chrome.storage.local.get("currentDraft");
-  if (!currentDraft?.postText) throw new Error("Tiada draft PostPilot. Hantar draft dari webapp dahulu.");
+  if (!currentDraft?.postText) throw new Error("Tiada draft Post Pilot. Hantar draft dari webapp dahulu.");
   return currentDraft;
 }
 
@@ -165,7 +165,7 @@ function showPanel(status, draft) {
   ].join(";");
 
   const title = document.createElement("strong");
-  title.textContent = "PostPilot Assist";
+  title.textContent = "Post Pilot Assist";
   title.style.display = "block";
 
   const body = document.createElement("p");

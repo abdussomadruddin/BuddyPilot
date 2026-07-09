@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
     requireAuth(req);
     const body = await readJsonBody(req);
     const { preview } = await buildPersonalPostPreview({
-      productLink: body.product_link,
+      productName: body.product_name,
       affiliateLink: body.affiliate_link,
       personalBackground: body.personal_background,
       angleNote: body.angle_note,
@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
       preview: {
         post_text: preview.post_text,
         comment_cta: preview.comment_cta,
-        product_link: preview.product_link,
+        product_name: preview.product_name,
         affiliate_link: preview.affiliate_link,
         personal_background: preview.personal_background,
         angle_note: preview.angle_note,

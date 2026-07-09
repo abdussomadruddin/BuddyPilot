@@ -1,6 +1,6 @@
-# PostPilot Assist Extension
+# Post Pilot Assist Extension
 
-Chrome desktop helper untuk draft Facebook personal dari tab PostPilot dalam BuddyPilot.
+Chrome desktop helper untuk draft Facebook personal dari tab Post Pilot dalam BuddyPilot.
 
 ## Install
 
@@ -11,7 +11,7 @@ Chrome desktop helper untuk draft Facebook personal dari tab PostPilot dalam Bud
 
 ## Flow
 
-1. Di webapp, buka tab PostPilot.
+1. Di webapp, buka tab Post Pilot.
 2. Generate preview dan semak post + komen CTA.
 3. Klik Control Chrome: Post Facebook Personal.
 4. Extension buka Facebook dan cuba isi composer personal post.

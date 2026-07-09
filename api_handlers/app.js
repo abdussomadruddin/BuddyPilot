@@ -913,7 +913,7 @@ function pageHtml() {
     <nav class="tabs" aria-label="Main tabs">
       <button class="tab-button active" type="button" data-tab-target="dashboard">Dashboard</button>
       <button class="tab-button" type="button" data-tab-target="postpilot">Page Pilot</button>
-      <button class="tab-button" type="button" data-tab-target="personalpostpilot">PostPilot</button>
+      <button class="tab-button" type="button" data-tab-target="personalpostpilot">Post Pilot</button>
       <button class="tab-button" type="button" data-tab-target="reportpilot">Report Pilot</button>
       <button class="tab-button" type="button" data-tab-target="invoicepilot">Invoice Pilot</button>
     </nav>
@@ -994,7 +994,7 @@ function pageHtml() {
       <section class="card app-panel" data-panel="personalpostpilot">
         <div class="hero">
           <div>
-            <h1>PostPilot</h1>
+            <h1>Post Pilot</h1>
             <p>Jana post Facebook personal pendek, gambar hook, dan CTA komen. Chrome extension bantu isi composer; anda klik Post sendiri.</p>
           </div>
         </div>
@@ -1002,12 +1002,12 @@ function pageHtml() {
         <form id="threadsForm" class="client-form">
           <div class="client-grid">
             <div>
-              <label for="threadsProductLink">Product / salespage link</label>
-              <input id="threadsProductLink" name="product_link" type="url" value="https://digitaldominate.com/" required>
+              <label for="threadsProductName">Nama produk</label>
+              <input id="threadsProductName" name="product_name" type="text" value="K-Method" placeholder="Contoh: K-Method" required>
             </div>
             <div>
               <label for="threadsAffiliateLink">Affiliate / comment link</label>
-              <input id="threadsAffiliateLink" name="affiliate_link" type="url" placeholder="Link yang nak letak di komen">
+              <input id="threadsAffiliateLink" name="affiliate_link" type="url" value="https://swiy.co/kmethod" placeholder="Link yang nak letak di komen">
             </div>
             <div>
               <label for="threadsPostMode">Mode post</label>
@@ -1023,28 +1023,12 @@ function pageHtml() {
               <label for="threadsHookImage">Gambar hook</label>
               <input id="threadsHookImage" name="hook_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
             </div>
-            <div class="full">
-              <label for="threadsPersonalBackground">Personal background ringkas</label>
-              <textarea id="threadsPersonalBackground" name="personal_background" placeholder="Contoh: sebagai orang yang pernah tangguh side income bertahun-tahun"></textarea>
-            </div>
-            <div class="full">
-              <label for="threadsAngleNote">Angle / konteks gambar (optional)</label>
-              <textarea id="threadsAngleNote" name="angle_note" placeholder="Contoh: gambar hook tunjuk proof/testimoni, angle: orang skeptikal mula percaya bila nampak bukti."></textarea>
-            </div>
-            <div class="full">
-              <label for="threadsCustomPost">Custom post utama (optional)</label>
-              <textarea id="threadsCustomPost" name="custom_post" placeholder="Kalau isi, sistem akan guna post ini dan buang link supaya post utama kekal clean."></textarea>
-            </div>
-            <div class="full">
-              <label for="threadsCustomComment">Custom komen CTA (optional)</label>
-              <textarea id="threadsCustomComment" name="custom_comment" placeholder="Kosongkan untuk auto-generate komen CTA."></textarea>
-            </div>
           </div>
-          <button id="threadsPreviewButton" type="submit">Preview PostPilot</button>
+          <button id="threadsPreviewButton" type="submit">Preview Post Pilot</button>
         </form>
 
         <section id="threadsPreviewPanel" class="preview">
-          <h2>Preview PostPilot</h2>
+          <h2>Preview Post Pilot</h2>
           <p class="note" id="threadsPreviewMeta"></p>
 
           <label for="threadsPostPreview">Post utama</label>
@@ -1442,6 +1426,9 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     const reportResult = document.getElementById("reportResult");
     const MAX_DIRECT_UPLOAD_BYTES = 4 * 1024 * 1024;
     const TARGET_UPLOAD_BYTES = Math.floor(3.75 * 1024 * 1024);
+    const POSTPILOT_INPUT_STORAGE_KEY = "postpilot-last-input-v1";
+    const POSTPILOT_IMAGE_STORAGE_KEY = "postpilot-last-hook-image-v1";
+    const POSTPILOT_SAVED_IMAGE_MAX_BYTES = 900 * 1024;
     let currentPreview = null;
     let seenVariations = [];
     let preparedCreativeFile = null;
@@ -1450,6 +1437,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     let seenThreadsVariations = [];
     let preparedThreadsImageFile = null;
     let preparedThreadsImageNotice = "";
+    let savedThreadsImage = null;
     let currentInvoices = [];
     let currentReceipts = [];
     let currentClients = [];
@@ -1472,6 +1460,10 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       preparedThreadsImageNotice = "";
       threadsResult.className = "result";
       threadsResult.textContent = "";
+      const file = threadsHookImage.files[0];
+      if (file) {
+        savePostPilotImageInput(file).catch(showThreadsError);
+      }
     });
 
     function showError(error) {
@@ -1888,7 +1880,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       preparedThreadsImageFile = null;
       preparedThreadsImageNotice = "";
       if (!file) return null;
-      if (!file.type.startsWith("image/")) throw new Error("PostPilot buat masa ini support gambar hook sahaja.");
+      if (!file.type.startsWith("image/")) throw new Error("Post Pilot buat masa ini support gambar hook sahaja.");
       if (file.size <= TARGET_UPLOAD_BYTES) {
         preparedThreadsImageFile = file;
         return file;
@@ -1902,14 +1894,102 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
 
     function threadsPayloadFromForm() {
       return {
-        product_link: document.getElementById("threadsProductLink").value,
+        product_name: document.getElementById("threadsProductName").value,
         affiliate_link: document.getElementById("threadsAffiliateLink").value,
-        personal_background: document.getElementById("threadsPersonalBackground").value,
-        angle_note: document.getElementById("threadsAngleNote").value,
-        post_mode: document.getElementById("threadsPostMode").value,
-        custom_post: document.getElementById("threadsCustomPost").value,
-        custom_comment: document.getElementById("threadsCustomComment").value
+        post_mode: document.getElementById("threadsPostMode").value
       };
+    }
+
+    function restorePostPilotInputs() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(POSTPILOT_INPUT_STORAGE_KEY) || "{}");
+        const fields = {
+          product_name: "threadsProductName",
+          affiliate_link: "threadsAffiliateLink",
+          post_mode: "threadsPostMode"
+        };
+        Object.entries(fields).forEach(([key, id]) => {
+          const node = document.getElementById(id);
+          if (node && typeof saved[key] === "string") node.value = saved[key];
+        });
+      } catch {
+        localStorage.removeItem(POSTPILOT_INPUT_STORAGE_KEY);
+      }
+
+      try {
+        const image = JSON.parse(localStorage.getItem(POSTPILOT_IMAGE_STORAGE_KEY) || "null");
+        savedThreadsImage = image?.dataUrl ? image : null;
+      } catch {
+        localStorage.removeItem(POSTPILOT_IMAGE_STORAGE_KEY);
+        savedThreadsImage = null;
+      }
+    }
+
+    function savePostPilotInputs() {
+      try {
+        localStorage.setItem(POSTPILOT_INPUT_STORAGE_KEY, JSON.stringify(threadsPayloadFromForm()));
+      } catch {
+        // Ignore private browsing/quota issues; the current form still works.
+      }
+    }
+
+    function setupPostPilotInputStorage() {
+      restorePostPilotInputs();
+      threadsForm.querySelectorAll("input:not([type='file']), textarea, select").forEach((node) => {
+        node.addEventListener("input", savePostPilotInputs);
+        node.addEventListener("change", savePostPilotInputs);
+      });
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Gagal simpan gambar hook."));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function compressImageForPostPilotStorage(file) {
+      if (!file || !file.type.startsWith("image/")) throw new Error("Gambar hook mesti image.");
+      if (file.size <= POSTPILOT_SAVED_IMAGE_MAX_BYTES) return file;
+
+      const image = await imageBitmapFromFile(file);
+      const maxDims = [1200, 960, 720, 540];
+      const qualities = [0.82, 0.74, 0.66, 0.58, 0.5, 0.42];
+
+      for (const maxDim of maxDims) {
+        const scale = Math.min(1, maxDim / Math.max(image.width, image.height));
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+
+        for (const quality of qualities) {
+          const blob = await canvasToBlob(canvas, "image/jpeg", quality);
+          if (blob.size <= POSTPILOT_SAVED_IMAGE_MAX_BYTES) {
+            return fileFromBlob(blob, file.name.replace(/\.[^.]+$/, "") + "-saved.jpg");
+          }
+        }
+      }
+
+      throw new Error("Gambar hook terlalu besar untuk disimpan. Pilih gambar lebih kecil.");
+    }
+
+    async function savePostPilotImageInput(file) {
+      const storedFile = await compressImageForPostPilotStorage(file);
+      const image = {
+        name: storedFile.name || "post-hook.jpg",
+        type: storedFile.type || "image/jpeg",
+        dataUrl: await blobToDataUrl(storedFile),
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(POSTPILOT_IMAGE_STORAGE_KEY, JSON.stringify(image));
+      savedThreadsImage = image;
+      threadsResult.className = "result ok";
+      threadsResult.textContent = "Gambar hook last key in sudah disimpan untuk Post Pilot.";
     }
 
     function showThreadsPreview(json) {
@@ -1918,20 +1998,21 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       threadsPostPreview.value = currentThreadsPreview.post_text || "";
       threadsCommentPreview.value = currentThreadsPreview.comment_cta || "";
       threadsPreviewMeta.textContent = [
-        \`Product context: \${currentThreadsPreview.product_context?.product_name || "-"}\`,
+        \`Produk: \${currentThreadsPreview.product_context?.product_name || currentThreadsPreview.product_name || "-"}\`,
         \`Concept: \${Number(currentThreadsPreview.variation || 0) + 1}/120\`,
         \`Style: \${currentThreadsPreview.style || "-"}\`
       ].join(" | ");
       threadsPreviewPanel.className = "preview show";
       threadsResult.className = "result ok";
       threadsResult.textContent = [
-        "Preview PostPilot siap. Post utama kekal tanpa link; CTA berada di komen.",
+        "Preview Post Pilot siap. Post utama kekal tanpa link; CTA berada di komen.",
+        savedThreadsImage && !threadsHookImage.files[0] ? "Gambar hook last key in tersedia untuk extension." : "",
         preparedThreadsImageNotice || ""
       ].filter(Boolean).join("\\n\\n");
     }
 
     async function buildThreadsExtensionDraft() {
-      if (!currentThreadsPreview) throw new Error("Preview PostPilot belum dijana.");
+      if (!currentThreadsPreview) throw new Error("Preview Post Pilot belum dijana.");
       const selectedImage = preparedThreadsImageFile || threadsHookImage.files[0] || null;
       let imageDataUrl = "";
       let imageNotice = "";
@@ -1942,6 +2023,8 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
         } else if (imageForExtension) {
           imageNotice = "Gambar terlalu besar untuk dihantar ke extension. Pilih gambar secara manual di Facebook.";
         }
+      } else if (savedThreadsImage?.dataUrl) {
+        imageDataUrl = savedThreadsImage.dataUrl;
       }
 
       return {
@@ -1952,13 +2035,13 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
           createdAt: new Date().toISOString(),
           postText: threadsPostPreview.value.trim(),
           commentCta: threadsCommentPreview.value.trim(),
-          productLink: currentThreadsPreview.product_link || "",
+          productName: currentThreadsPreview.product_name || currentThreadsPreview.product_context?.product_name || "",
           affiliateLink: currentThreadsPreview.affiliate_link || "",
           postMode: currentThreadsPreview.post_mode || "soft",
           style: currentThreadsPreview.style || "",
           image: imageDataUrl ? {
-            name: (preparedThreadsImageFile || selectedImage)?.name || "post-hook.jpg",
-            type: (preparedThreadsImageFile || selectedImage)?.type || "image/jpeg",
+            name: (preparedThreadsImageFile || selectedImage)?.name || savedThreadsImage?.name || "post-hook.jpg",
+            type: (preparedThreadsImageFile || selectedImage)?.type || savedThreadsImage?.type || "image/jpeg",
             dataUrl: imageDataUrl
           } : null,
           imageNotice
@@ -2193,13 +2276,13 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
           window.location.href = "/login";
           return;
         }
-        if (!response.ok || !json.ok) throw new Error(json.error || "PostPilot preview failed.");
+        if (!response.ok || !json.ok) throw new Error(json.error || "Post Pilot preview failed.");
         showThreadsPreview(json);
       } catch (error) {
         showThreadsError(error);
       } finally {
         threadsPreviewButton.disabled = false;
-        threadsPreviewButton.textContent = "Preview PostPilot";
+        threadsPreviewButton.textContent = "Preview Post Pilot";
       }
     });
 
@@ -2215,13 +2298,10 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            product_link: currentThreadsPreview.product_link,
+            product_name: currentThreadsPreview.product_name,
             affiliate_link: currentThreadsPreview.affiliate_link,
-            personal_background: currentThreadsPreview.personal_background,
-            angle_note: currentThreadsPreview.angle_note,
             post_mode: currentThreadsPreview.post_mode,
             product_context: currentThreadsPreview.product_context?.raw,
-            custom_comment: document.getElementById("threadsCustomComment").value,
             variation: currentThreadsPreview.variation,
             seen_variations: seenThreadsVariations
           })
@@ -2231,7 +2311,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
           window.location.href = "/login";
           return;
         }
-        if (!response.ok || !json.ok) throw new Error(json.error || "PostPilot regenerate failed.");
+        if (!response.ok || !json.ok) throw new Error(json.error || "Post Pilot regenerate failed.");
 
         currentThreadsPreview = {
           ...currentThreadsPreview,
@@ -2245,7 +2325,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
         threadsPostPreview.value = currentThreadsPreview.post_text || "";
         threadsCommentPreview.value = currentThreadsPreview.comment_cta || "";
         threadsPreviewMeta.textContent = [
-          \`Product context: \${currentThreadsPreview.product_context?.product_name || "-"}\`,
+          \`Produk: \${currentThreadsPreview.product_context?.product_name || currentThreadsPreview.product_name || "-"}\`,
           \`Concept: \${Number(currentThreadsPreview.variation || 0) + 1}/120\`,
           \`Style: \${currentThreadsPreview.style || "-"}\`
         ].join(" | ");
@@ -2282,7 +2362,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
         window.postMessage(message, window.location.origin);
         threadsResult.className = "result ok";
         threadsResult.textContent = [
-          "Draft dihantar ke PostPilot extension.",
+          "Draft dihantar ke Post Pilot extension.",
           "Kalau extension sudah install, Facebook akan dibuka dan composer personal post akan diisi.",
           message.draft.imageNotice || preparedThreadsImageNotice || ""
         ].filter(Boolean).join("\\n");
@@ -3615,6 +3695,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     reportEndDate.value = reportWeek.end;
     setupTabs();
     setupPanels();
+    setupPostPilotInputStorage();
     resetClientFormMode();
     resetBankFormMode();
     document.querySelectorAll("[data-go-tab]").forEach((button) => {

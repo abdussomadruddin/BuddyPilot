@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
     requireAuth(req);
     const body = await readJsonBody(req);
     const nextPreview = regeneratePersonalPostPreview({
-      productLink: body.product_link,
+      productName: body.product_name,
       affiliateLink: body.affiliate_link,
       personalBackground: body.personal_background,
       angleNote: body.angle_note,
