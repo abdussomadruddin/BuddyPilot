@@ -184,6 +184,14 @@ function visibleLargeImageCount(scope) {
   }).length;
 }
 
+function visibleBlobImageCount(scope) {
+  return [...scope.querySelectorAll("img")].filter((node) => {
+    if (!visible(node)) return false;
+    const src = String(node.currentSrc || node.src || "");
+    return /^blob:|^data:image\//i.test(src);
+  }).length;
+}
+
 function visibleBackgroundImageCount(scope) {
   return [...scope.querySelectorAll("div, span")].filter((node) => {
     if (!visible(node) || node.closest(`#${PANEL_ID}`)) return false;
@@ -194,14 +202,79 @@ function visibleBackgroundImageCount(scope) {
 }
 
 function visibleMediaCount(scope) {
-  return visibleLargeImageCount(scope) + visibleBackgroundImageCount(scope);
+  return visibleLargeImageCount(scope) + visibleBlobImageCount(scope) + visibleBackgroundImageCount(scope);
+}
+
+function findAttachmentControl(scope) {
+  return [...scope.querySelectorAll("button, div[role='button'], span[role='button'], a")]
+    .filter((node) => visible(node) && !node.closest(`#${PANEL_ID}`))
+    .find((node) => /remove.*(photo|image|attachment)|edit.*(photo|image)|buang.*(gambar|lampiran)|edit.*gambar|remove all/i
+      .test(`${textOf(node)} ${node.getAttribute("aria-label") || ""}`));
+}
+
+function uploadTextSeen(scope) {
+  return /uploading|processing|preparing|memuat naik|sedang diproses|menyediakan/i.test(textOf(scope));
 }
 
 function composerHasAttachment(scope, initialImageCount) {
   const text = textOf(scope).toLowerCase();
   if (text.includes("remove post attachment") || text.includes("remove all")) return true;
   if (text.includes("edit") && (text.includes("photo") || text.includes("image") || text.includes("gambar"))) return true;
+  if (findAttachmentControl(scope)) return true;
+  if (uploadTextSeen(scope)) return true;
   return visibleMediaCount(scope) > initialImageCount;
+}
+
+function attachmentReadyStatus(scope, initialImageCount, input, uploadedAt) {
+  if (composerHasAttachment(scope, initialImageCount)) return "preview";
+  if (input?.files?.length && now() - uploadedAt >= 6_000) return "file-input";
+  return "";
+}
+
+function dispatchFileToFacebook(input, file) {
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+
+  try {
+    input.files = transfer.files;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  } catch (error) {
+    // Keep going with drop/paste events. Some Facebook inputs are wrapped by custom upload UI.
+  }
+
+  const targets = [
+    input,
+    input.parentElement,
+    activeComposerScope(),
+    findTextboxIn(activeComposerScope(), "post"),
+    document.body,
+  ].filter(Boolean);
+
+  for (const target of targets) {
+    try {
+      for (const eventName of ["dragenter", "dragover", "drop"]) {
+        target.dispatchEvent(new DragEvent(eventName, {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: transfer,
+        }));
+      }
+    } catch (error) {
+      // File input/change is still the main route; drag/drop is best-effort.
+    }
+    try {
+      target.dispatchEvent(new ClipboardEvent("paste", {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: transfer,
+      }));
+    } catch (error) {
+      // Some Chrome builds reject synthetic clipboard payloads. File input remains the primary path.
+    }
+  }
+
+  return transfer;
 }
 
 function findActionInComposer(scope, labels) {
@@ -414,17 +487,18 @@ async function attachHookImageFromDraft(draft) {
         });
       }
 
-      const transfer = new DataTransfer();
-      transfer.items.add(file);
-      input.files = transfer.files;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
+      const uploadedAt = now();
+      dispatchFileToFacebook(input, file);
 
-      await waitUntil(() => composerHasAttachment(activeComposerScope(), baselineMediaCount), {
-        timeout: 18_000,
+      const readyStatus = await waitUntil(() => attachmentReadyStatus(activeComposerScope(), baselineMediaCount, input, uploadedAt), {
+        timeout: 24_000,
         interval: 300,
-        label: "Preview gambar hook",
+        label: "Upload gambar hook Facebook",
       });
+      if (readyStatus === "file-input") {
+        showPanel("2/8 Gambar hook sudah dihantar ke Facebook.\nPreview visual tidak dapat dibaca, teruskan tunggu button Next/Post ready.", draft);
+        await sleep(1_000);
+      }
       return;
     } catch (error) {
       lastError = error?.message || String(error);
