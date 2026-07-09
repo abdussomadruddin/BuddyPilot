@@ -674,6 +674,10 @@ function pageHtml() {
       min-height: 86px;
     }
 
+    .report-tall-textarea {
+      min-height: 170px !important;
+    }
+
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -1067,7 +1071,7 @@ function pageHtml() {
             </div>
             <div class="full">
               <label for="reportWhatWeProved">What we proved</label>
-              <textarea id="reportWhatWeProved" name="whatWeProved" required>Setup technical automation telah disiapkan
+              <textarea id="reportWhatWeProved" class="report-tall-textarea" name="whatWeProved" required>Setup technical automation telah disiapkan
 Ads campaign telah mula berjalan
 Tracking dan automation sudah aktif
 Data awal sedang dikumpul
@@ -1092,7 +1096,7 @@ Ads dah jalan tunggu result minggu ini</textarea>
             </div>
             <div class="full">
               <label for="reportNext7Days">Next 7 days</label>
-              <textarea id="reportNext7Days" name="next7Days" required>Monitor Ads Campaign
+              <textarea id="reportNext7Days" class="report-tall-textarea" name="next7Days" required>Monitor Ads Campaign
 Check Average CPL
 Find Winning Video for TOP Funnel
 Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
