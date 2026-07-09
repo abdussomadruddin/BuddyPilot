@@ -2164,7 +2164,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
         json = await readApiJson(response);
       } catch (error) {
         threadsResult.className = "result ok";
-        threadsResult.textContent = \`Gambar hook sudah disimpan dalam browser untuk Post Pilot. Supabase belum ready: \${error.message || String(error)}\`;
+        threadsResult.textContent = "Gambar hook sudah disimpan untuk Post Pilot. Extension akan guna gambar terakhir ini.";
         return;
       }
       if (response.status === 401) {
@@ -2173,7 +2173,16 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       }
       if (!response.ok || !json.ok) {
         threadsResult.className = "result ok";
-        threadsResult.textContent = \`Gambar hook sudah disimpan dalam browser untuk Post Pilot. Supabase belum ready: \${json.error || "Upload gambar hook failed."}\`;
+        threadsResult.textContent = "Gambar hook sudah disimpan untuk Post Pilot. Extension akan guna gambar terakhir ini.";
+        return;
+      }
+      if (json.storage === "browser") {
+        setPostPilotSavedImage({
+          ...localImage,
+          savedAt: json.draft?.hookImageUpdatedAt || localImage.savedAt
+        });
+        threadsResult.className = "result ok";
+        threadsResult.textContent = "Gambar hook sudah disimpan untuk Post Pilot. Extension akan guna gambar terakhir ini.";
         return;
       }
       const image = {

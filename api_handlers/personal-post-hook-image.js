@@ -8,6 +8,26 @@ const {
   readRequestBody,
 } = require("../lib/postpilot");
 
+function isSupabaseSetupError(error) {
+  return /Supabase table belum setup|schema\.sql|relation .* does not exist|bucket .* not found|Bucket not found/i
+    .test(error?.message || String(error || ""));
+}
+
+function browserFallbackDraft(file) {
+  return {
+    productName: "K-Method",
+    affiliateLink: "https://swiy.co/kmethod",
+    postMode: "soft",
+    hookImagePath: "",
+    hookImageName: file?.filename || "post-hook.jpg",
+    hookImageMime: file?.contentType || "image/jpeg",
+    hookImageSize: file?.data?.length || 0,
+    hookImageUpdatedAt: new Date().toISOString(),
+    hasHookImage: false,
+    storage: "browser",
+  };
+}
+
 module.exports = async function handler(req, res) {
   try {
     requireAuth(req);
@@ -26,10 +46,18 @@ module.exports = async function handler(req, res) {
     if (req.method === "POST") {
       const body = await readRequestBody(req);
       const { files } = parseMultipart(req, body);
-      const draft = await uploadPostPilotHookImage(files.hookImage);
+      let draft;
+      let storage = "supabase";
+      try {
+        draft = await uploadPostPilotHookImage(files.hookImage);
+      } catch (error) {
+        if (!isSupabaseSetupError(error)) throw error;
+        storage = "browser";
+        draft = browserFallbackDraft(files.hookImage);
+      }
       res.statusCode = 200;
       res.setHeader("content-type", "application/json; charset=utf-8");
-      res.end(JSON.stringify({ ok: true, draft }));
+      res.end(JSON.stringify({ ok: true, storage, draft }));
       return;
     }
 
