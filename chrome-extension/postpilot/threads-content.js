@@ -294,7 +294,8 @@ function showPanel(status, draft) {
       try {
         const nextDraft = { ...(draft || await getDraft()), autoPublish: true };
         await chrome.storage.local.set({ currentDraft: nextDraft, [STARTED_AUTOMATION_KEY]: "", [COMPLETED_AUTOMATION_KEY]: "" });
-        await runThreadsAutomation({ manual: true });
+        if (nextDraft.threadsTextOnly) await runThreadsTextOnlyAutomation({ manual: true });
+        else await runThreadsAutomation({ manual: true });
       } catch (error) {
         showPanel(error.message, draft);
       }
@@ -465,9 +466,9 @@ async function waitThreadsPosted(draft) {
   }).catch(() => {});
 }
 
-function notifyThreadsDone(automationId) {
+function notifyThreadsDone(automationId, threadsTextOnly = false) {
   try {
-    chrome.runtime.sendMessage({ type: "POSTPILOT_THREADS_DONE", automationId }, () => {
+    chrome.runtime.sendMessage({ type: "POSTPILOT_THREADS_DONE", automationId, threadsTextOnly }, () => {
       void chrome.runtime.lastError;
     });
   } catch {
@@ -506,8 +507,44 @@ async function runThreadsAutomation({ manual = false } = {}) {
     steps.push("Threads 5/6 Threads post selesai.");
 
     await chrome.storage.local.set({ [COMPLETED_AUTOMATION_KEY]: automationId });
-    notifyThreadsDone(automationId);
+    notifyThreadsDone(automationId, false);
     steps.push("Facebook + Threads flow selesai.");
+    showPanel(steps.join("\n"), draft);
+    return { ok: true, message: steps.join("\n") };
+  } finally {
+    await releaseRunLock();
+  }
+}
+
+async function runThreadsTextOnlyAutomation({ manual = false } = {}) {
+  const draft = await getDraft();
+  const automationId = draft.automationId || draft.id || `postpilot-threads-text-${Date.now()}`;
+  await acquireRunLock("threads-text-only-flow", automationId, manual);
+  const steps = [];
+  try {
+    showPanel(progress(steps, "Threads text 1/4 Buka New thread..."), draft);
+    await waitStep(() => document.readyState === "complete" || document.readyState === "interactive", {
+      label: "Threads page",
+      draft,
+    });
+    await openNewThread(draft);
+    steps.push("Threads text 1/4 New thread dibuka.");
+
+    showPanel(progress(steps, "Threads text 2/4 Isi caption sekali sahaja..."), draft);
+    await fillCaptionOnce(draft);
+    steps.push("Threads text 2/4 Caption clean, tiada duplicate.");
+
+    showPanel(progress(steps, "Threads text 3/4 Tekan Post..."), draft);
+    await clickThreadsPost(draft);
+    steps.push("Threads text 3/4 Post ditekan.");
+
+    showPanel(progress(steps, "Threads text 4/4 Tunggu composer tutup..."), draft);
+    await waitThreadsPosted(draft);
+    steps.push("Threads text 4/4 Threads post selesai.");
+
+    await chrome.storage.local.set({ [COMPLETED_AUTOMATION_KEY]: automationId });
+    notifyThreadsDone(automationId, true);
+    steps.push("Threads text-only flow selesai.");
     showPanel(steps.join("\n"), draft);
     return { ok: true, message: steps.join("\n") };
   } finally {
@@ -530,6 +567,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ ok: true, message: "Threads auto flow started." });
       return;
     }
+    if (message?.type === "POSTPILOT_THREADS_TEXT_ONLY_POST") {
+      const draft = await getDraft().catch(() => null);
+      const autoBlocked = draft?.autoPublish && !(await shouldAutoStartDraft(draft));
+      if (inPageRun || autoBlocked) {
+        sendResponse({ ok: true, message: "Threads text-only flow already running." });
+        return;
+      }
+      runThreadsTextOnlyAutomation({ manual: true }).catch((error) => {
+        showPanel(error?.message || String(error), null);
+      });
+      sendResponse({ ok: true, message: "Threads text-only flow started." });
+      return;
+    }
     sendResponse({ ok: false, error: "Unknown message." });
   })().catch((error) => {
     showPanel(error?.message || String(error), null);
@@ -547,7 +597,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         shouldAutoStartDraft(draft)
           .then((ready) => {
             if (!ready) return null;
-            return runThreadsAutomation({ manual: false });
+            return draft.threadsTextOnly
+              ? runThreadsTextOnlyAutomation({ manual: false })
+              : runThreadsAutomation({ manual: false });
           })
           .catch((error) => {
             showPanel(error?.message || String(error), draft);

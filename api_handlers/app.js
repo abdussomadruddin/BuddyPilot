@@ -1,6 +1,8 @@
 const { requireAuth } = require("../lib/auth");
+const threadsViralTemplates = require("../lib/threads-viral-templates");
 
 function pageHtml() {
+  const threadsViralTemplatesJson = JSON.stringify(threadsViralTemplates).replace(/</g, "\\u003c");
   return `<!doctype html>
 <html lang="ms">
 <head>
@@ -678,6 +680,66 @@ function pageHtml() {
       margin-top: 0;
     }
 
+    .viral-post-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .viral-post-card {
+      border: 3px solid #e4edff;
+      border-radius: 20px;
+      padding: 16px;
+      background: #ffffff;
+    }
+
+    .viral-post-card.favorite {
+      border-color: #ffd23f;
+      background: #fffdf2;
+    }
+
+    .viral-post-text {
+      white-space: pre-wrap;
+      line-height: 1.55;
+      margin: 0 0 12px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .viral-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .viral-meta span {
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: var(--blue-soft);
+    }
+
+    .viral-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .viral-toolbar > div {
+      flex: 1 1 170px;
+    }
+
+    .saved-viral-panel {
+      margin-top: 28px;
+      border-top: 3px solid #e4edff;
+      padding-top: 22px;
+    }
+
     .tool-card {
       margin-top: 22px;
     }
@@ -1109,56 +1171,134 @@ function pageHtml() {
           </div>
         </div>
 
-        <form id="threadsForm" class="client-form">
-          <div class="client-grid">
-            <div>
-              <label for="threadsProductName">Nama produk</label>
-              <input id="threadsProductName" name="product_name" type="text" value="K-Method" placeholder="Contoh: K-Method" required>
-            </div>
-            <div>
-              <label for="threadsAffiliateLink">Affiliate / comment link</label>
-              <input id="threadsAffiliateLink" name="affiliate_link" type="url" value="https://swiy.co/kmethod" placeholder="Link yang nak letak di komen">
-            </div>
-            <div>
-              <label for="threadsPostMode">Mode post</label>
-              <select id="threadsPostMode" name="post_mode">
-                <option value="soft">Soft story</option>
-                <option value="hard">Hard sell</option>
-                <option value="proof">Proof</option>
-                <option value="engagement">Engagement question</option>
-                <option value="objection">Objection</option>
-              </select>
-            </div>
-            <div>
-              <label for="threadsHookImage">Gambar hook</label>
-              <input id="threadsHookImage" name="hook_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
-              <div class="hook-image-preview">
-                <img id="threadsHookImagePreview" alt="Preview gambar hook terakhir" hidden>
-                <p class="note" id="threadsHookImageStatus">Belum ada gambar hook tersimpan.</p>
+        <div class="subtabs">
+          <button class="subtab-button active" type="button" data-subtab-group="post-pilot" data-subtab-target="postpilot-auto-panel">Auto Post</button>
+          <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="threads-viral-panel">Threads Viral</button>
+        </div>
+
+        <div id="postpilot-auto-panel" class="subtab-panel active" data-subtab-panel="post-pilot">
+          <form id="threadsForm" class="client-form">
+            <div class="client-grid">
+              <div>
+                <label for="threadsProductName">Nama produk</label>
+                <input id="threadsProductName" name="product_name" type="text" value="K-Method" placeholder="Contoh: K-Method" required>
+              </div>
+              <div>
+                <label for="threadsAffiliateLink">Affiliate / comment link</label>
+                <input id="threadsAffiliateLink" name="affiliate_link" type="url" value="https://swiy.co/kmethod" placeholder="Link yang nak letak di komen">
+              </div>
+              <div>
+                <label for="threadsPostMode">Mode post</label>
+                <select id="threadsPostMode" name="post_mode">
+                  <option value="soft">Soft story</option>
+                  <option value="hard">Hard sell</option>
+                  <option value="proof">Proof</option>
+                  <option value="engagement">Engagement question</option>
+                  <option value="objection">Objection</option>
+                </select>
+              </div>
+              <div>
+                <label for="threadsHookImage">Gambar hook</label>
+                <input id="threadsHookImage" name="hook_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+                <div class="hook-image-preview">
+                  <img id="threadsHookImagePreview" alt="Preview gambar hook terakhir" hidden>
+                  <p class="note" id="threadsHookImageStatus">Belum ada gambar hook tersimpan.</p>
+                </div>
               </div>
             </div>
-          </div>
-          <button id="threadsPreviewButton" type="submit">POST NOW</button>
-        </form>
+            <button id="threadsPreviewButton" type="submit">POST NOW</button>
+          </form>
 
-        <section id="threadsPreviewPanel" class="preview">
-          <h2>Preview Post Pilot</h2>
-          <p class="note" id="threadsPreviewMeta"></p>
+          <section id="threadsPreviewPanel" class="preview">
+            <h2>Preview Post Pilot</h2>
+            <p class="note" id="threadsPreviewMeta"></p>
 
-          <label for="threadsPostPreview">Post utama</label>
-          <textarea id="threadsPostPreview"></textarea>
+            <label for="threadsPostPreview">Post utama</label>
+            <textarea id="threadsPostPreview"></textarea>
 
-          <label for="threadsCommentPreview">Komen CTA</label>
-          <textarea id="threadsCommentPreview"></textarea>
+            <label for="threadsCommentPreview">Komen CTA</label>
+            <textarea id="threadsCommentPreview"></textarea>
 
-          <div class="actions">
-            <button class="approve" id="sendThreadsExtensionButton" type="button">POST NOW</button>
-            <button class="regenerate" id="regenerateThreadsButton" type="button">Jana Semula Post</button>
-            <button class="secondary" id="copyThreadsCtaButton" type="button">Copy CTA</button>
-          </div>
-        </section>
+            <div class="actions">
+              <button class="approve" id="sendThreadsExtensionButton" type="button">POST NOW</button>
+              <button class="regenerate" id="regenerateThreadsButton" type="button">Jana Semula Post</button>
+              <button class="secondary" id="copyThreadsCtaButton" type="button">Copy CTA</button>
+            </div>
+          </section>
 
-        <div id="threadsResult" class="result"></div>
+          <div id="threadsResult" class="result"></div>
+        </div>
+
+        <div id="threads-viral-panel" class="subtab-panel" data-subtab-panel="post-pilot">
+          <section class="client-form">
+            <div class="section-heading">
+              <div>
+                <h2>Threads Viral Post Generator</h2>
+                <p class="note">Generate text-only Threads posts. Review dulu, kemudian post satu-satu ke Threads.</p>
+              </div>
+            </div>
+            <div class="client-grid">
+              <div>
+                <label for="viralTopic">Niche / topic</label>
+                <input id="viralTopic" type="text" placeholder="Contoh: small business, AI automation, parenting">
+              </div>
+              <div>
+                <label for="viralCategory">Post category</label>
+                <select id="viralCategory"></select>
+              </div>
+              <div>
+                <label for="viralTone">Tone</label>
+                <select id="viralTone"></select>
+              </div>
+              <div>
+                <label for="viralAudience">Audience</label>
+                <select id="viralAudience"></select>
+              </div>
+              <div class="full">
+                <label class="check-row" for="viralHashtags">
+                  <input id="viralHashtags" type="checkbox">
+                  Include hashtags
+                </label>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="generateViralOneButton" type="button">Generate 1 Post</button>
+              <button id="generateViralTenButton" class="secondary" type="button">Generate 10 Posts</button>
+              <button id="generateViralHundredButton" class="secondary" type="button">Generate 100 Posts</button>
+              <button id="exportViralCsvButton" class="secondary" type="button">Export CSV</button>
+            </div>
+            <div id="viralResult" class="result"></div>
+            <div id="viralOutput" class="viral-post-grid"></div>
+          </section>
+
+          <section class="saved-viral-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Saved posts</h2>
+                <p class="note">Favorites disimpan dalam browser.</p>
+              </div>
+            </div>
+            <div class="viral-toolbar">
+              <div>
+                <label for="viralSavedSearch">Search saved posts</label>
+                <input id="viralSavedSearch" type="search" placeholder="Search text">
+              </div>
+              <div>
+                <label for="viralSavedCategoryFilter">Filter category</label>
+                <select id="viralSavedCategoryFilter"></select>
+              </div>
+              <div>
+                <label for="viralSavedToneFilter">Filter tone</label>
+                <select id="viralSavedToneFilter"></select>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="exportSavedViralButton" class="secondary" type="button">Export Saved CSV</button>
+              <button id="clearSavedViralButton" class="secondary" type="button">Clear Saved Posts</button>
+            </div>
+            <div id="viralSavedOutput" class="viral-post-grid"></div>
+          </section>
+        </div>
       </section>
     </section>
 
@@ -1494,6 +1634,24 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     const threadsHookImagePreview = document.getElementById("threadsHookImagePreview");
     const threadsHookImageStatus = document.getElementById("threadsHookImageStatus");
     const threadsResult = document.getElementById("threadsResult");
+    const viralTemplates = ${threadsViralTemplatesJson};
+    const viralTopic = document.getElementById("viralTopic");
+    const viralCategory = document.getElementById("viralCategory");
+    const viralTone = document.getElementById("viralTone");
+    const viralAudience = document.getElementById("viralAudience");
+    const viralHashtags = document.getElementById("viralHashtags");
+    const generateViralOneButton = document.getElementById("generateViralOneButton");
+    const generateViralTenButton = document.getElementById("generateViralTenButton");
+    const generateViralHundredButton = document.getElementById("generateViralHundredButton");
+    const exportViralCsvButton = document.getElementById("exportViralCsvButton");
+    const viralResult = document.getElementById("viralResult");
+    const viralOutput = document.getElementById("viralOutput");
+    const viralSavedSearch = document.getElementById("viralSavedSearch");
+    const viralSavedCategoryFilter = document.getElementById("viralSavedCategoryFilter");
+    const viralSavedToneFilter = document.getElementById("viralSavedToneFilter");
+    const exportSavedViralButton = document.getElementById("exportSavedViralButton");
+    const clearSavedViralButton = document.getElementById("clearSavedViralButton");
+    const viralSavedOutput = document.getElementById("viralSavedOutput");
     const invoicePeriod = document.getElementById("invoicePeriod");
     const generateInvoicesButton = document.getElementById("generateInvoicesButton");
     const uploadInvoicesButton = document.getElementById("uploadInvoicesButton");
@@ -1556,6 +1714,11 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
     let savedThreadsImage = null;
     let postPilotSaveTimer = null;
     let currentThreadsImagePreviewUrl = "";
+    let viralGeneratedPosts = [];
+    let viralSavedPosts = [];
+    const VIRAL_SAVED_STORAGE_KEY = "postpilot-threads-viral-saved-v1";
+    const VIRAL_BANNED_WORDS = [...(viralTemplates.bannedWords || [])];
+    const VIRAL_PROMO_PHRASES = [...(viralTemplates.promotionalPhrases || [])];
     let currentInvoices = [];
     let currentReceipts = [];
     let currentClients = [];
@@ -1607,8 +1770,9 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       if (event.source !== window) return;
       const data = event.data;
       if (!data || data.source !== "postpilot-extension" || data.type !== "POSTPILOT_DRAFT_STATUS") return;
-      threadsResult.className = data.ok ? "result ok" : "result err";
-      threadsResult.textContent = data.ok
+      const statusTarget = document.getElementById("threads-viral-panel")?.classList.contains("active") ? viralResult : threadsResult;
+      statusTarget.className = data.ok ? "result ok" : "result err";
+      statusTarget.textContent = data.ok
         ? (data.message || "Post Pilot extension sudah start. Facebook dibuka dahulu, kemudian Threads.")
         : (data.error || "Post Pilot extension tidak respond. Reload extension dan refresh webapp.");
     });
@@ -1749,9 +1913,10 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
 
       const subtabDefaults = {
         "invoice-pilot": "invoice-panel",
-        client: "client-list-panel"
+        client: "client-list-panel",
+        "post-pilot": "postpilot-auto-panel"
       };
-      ["invoice-pilot", "client"].forEach((group) => {
+      ["invoice-pilot", "client", "post-pilot"].forEach((group) => {
         const fallback = subtabDefaults[group] || document.querySelector(\`.subtab-button[data-subtab-group="\${group}"]\`)?.dataset.subtabTarget;
         const saved = group === "invoice-pilot" ? "" : localStorage.getItem(\`active-subtab-\${group}\`);
         const savedPanel = saved ? document.getElementById(saved) : null;
@@ -2404,6 +2569,362 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       return message;
     }
 
+    function pickRandom(list) {
+      return list[Math.floor(Math.random() * list.length)] || "";
+    }
+
+    function fillSelectOptions(select, values, includeAllLabel) {
+      if (!select) return;
+      select.innerHTML = "";
+      if (includeAllLabel) {
+        const allOption = document.createElement("option");
+        allOption.value = "";
+        allOption.textContent = includeAllLabel;
+        select.appendChild(allOption);
+      }
+      values.forEach((value) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+    }
+
+    function normalizeWords(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/https?:\\/\\/\\S+/g, " ")
+        .replace(/[^a-z0-9\\u00c0-\\u024f\\u1e00-\\u1eff\\s-]/gi, " ")
+        .split(/\\s+/)
+        .map((word) => word.trim())
+        .filter((word) => word.length >= 3);
+    }
+
+    function similarityScore(a, b) {
+      const aWords = new Set(normalizeWords(a));
+      const bWords = new Set(normalizeWords(b));
+      if (!aWords.size || !bWords.size) return 0;
+      const intersection = [...aWords].filter((word) => bWords.has(word)).length;
+      const union = new Set([...aWords, ...bWords]).size;
+      return intersection / union;
+    }
+
+    function tooSimilarToBatch(text, posts) {
+      return posts.some((post) => similarityScore(text, post.postText || post.post_text || "") > 0.72);
+    }
+
+    function containsAnyPhrase(text, phrases) {
+      const lower = String(text || "").toLowerCase();
+      return phrases.some((phrase) => lower.includes(String(phrase || "").toLowerCase()));
+    }
+
+    function cleanViralText(value) {
+      return String(value || "")
+        .replace(/\\s+([?.!,])/g, "$1")
+        .replace(/[ \\t]+/g, " ")
+        .replace(/\\n{3,}/g, "\\n\\n")
+        .trim();
+    }
+
+    function withTopic(template, topic) {
+      return String(template || "").replace(/\\{topic\\}/g, topic);
+    }
+
+    function maybeHashtags(category, topic) {
+      if (!viralHashtags.checked) return "";
+      const raw = [category, topic, "ThreadsMY"]
+        .map((item) => String(item || "").replace(/[^a-z0-9]/gi, ""))
+        .filter(Boolean)
+        .slice(0, 3);
+      return raw.length ? "\\n\\n" + raw.map((item) => "#" + item).join(" ") : "";
+    }
+
+    function viralContextFor(category) {
+      if (["Business", "Marketing", "Sales", "Side Income", "AI Automation", "TikTok Ads", "Facebook Ads", "Local Brand"].includes(category)) {
+        return pickRandom(viralTemplates.businessContextPhrases);
+      }
+      return pickRandom(viralTemplates.malaysianContextPhrases);
+    }
+
+    function buildViralText(parts) {
+      const structure = parts.structure;
+      const topic = parts.topic;
+      const hook = withTopic(parts.hook, topic);
+      const opening = withTopic(parts.opening, topic);
+      const angle = parts.angle;
+      const pain = parts.pain;
+      const emotion = parts.emotion;
+      const middle = parts.middle;
+      const context = parts.context;
+      const cta = parts.cta;
+
+      if (structure === "Hot Take") return [hook + ".", angle + ".", middle + ".", cta].join("\\n\\n");
+      if (structure === "Relatable Pain") return [pain + ".", emotion + ".", middle + ".", cta].join("\\n\\n");
+      if (structure === "Contrarian") return ["ramai fikir " + topic + " kena complicated.", "aku tak rasa macam tu.", angle + ".", cta].join("\\n\\n");
+      if (structure === "List Style") return ["3 benda aku belajar pasal " + topic + ":", "1. " + angle, "2. " + middle, "3. " + context, cta].join("\\n");
+      if (structure === "Story Style") return [opening + ".", "lepas tu aku perasan: " + middle + ".", cta].join("\\n\\n");
+      if (structure === "Comparison") return ["cara lama: overthink sampai tak post.", "cara baru: " + angle + ".", middle + ".", cta].join("\\n\\n");
+      if (structure === "Warning") return ["mistake ramai orang buat: " + pain + ".", "kesannya, " + emotion + ".", "better move: " + angle + ".", cta].join("\\n\\n");
+      if (structure === "Recommendation") return ["kalau kau tengah explore " + topic + ", cuba " + angle + ".", middle + ".", cta].join("\\n\\n");
+      if (structure === "Local Malaysian Angle") return [context + ".", opening + ".", middle + ".", cta].join("\\n\\n");
+      return [context + ".", "dalam business, " + middle + ".", angle + ".", cta].join("\\n\\n");
+    }
+
+    function validateViralPost(text, existingPosts) {
+      const safe = cleanViralText(text);
+      if (!safe) return { ok: false, reason: "empty" };
+      if (safe.length > 500) return { ok: false, reason: "over_500" };
+      if (!/[?？]$/.test(safe)) return { ok: false, reason: "no_question" };
+      if (!viralHashtags.checked && /(^|\\s)#\\w+/i.test(safe)) return { ok: false, reason: "hashtag_disabled" };
+      if (containsAnyPhrase(safe, VIRAL_BANNED_WORDS)) return { ok: false, reason: "banned_word" };
+      if (containsAnyPhrase(safe, VIRAL_PROMO_PHRASES)) return { ok: false, reason: "too_promotional" };
+      if (tooSimilarToBatch(safe, existingPosts)) return { ok: false, reason: "too_similar" };
+      return { ok: true, text: safe };
+    }
+
+    function makeViralPost(existingPosts = [], override = {}) {
+      const category = override.category || viralCategory.value || "Business";
+      const tone = override.tone || viralTone.value || "Casual";
+      const audience = override.audience || viralAudience.value || pickRandom(viralTemplates.audienceTypes);
+      const topic = (override.topic || viralTopic.value || category).trim();
+
+      for (let attempt = 0; attempt < 160; attempt += 1) {
+        const structure = pickRandom(viralTemplates.structures);
+        const parts = {
+          angle: pickRandom(viralTemplates.contentAngles),
+          audience,
+          category,
+          context: viralContextFor(category),
+          cta: pickRandom(viralTemplates.ctaQuestions),
+          emotion: pickRandom(viralTemplates.emotionalTriggers),
+          hook: pickRandom(viralTemplates.hooks),
+          middle: pickRandom(viralTemplates.middleSentencePatterns),
+          opening: pickRandom(viralTemplates.openingStyles),
+          pain: pickRandom(viralTemplates.painPoints),
+          structure,
+          tone,
+          topic,
+        };
+        let text = buildViralText(parts) + maybeHashtags(category, topic);
+        text = cleanViralText(text);
+        const validation = validateViralPost(text, existingPosts);
+        if (validation.ok) {
+          return {
+            id: "viral-" + Date.now() + "-" + Math.random().toString(16).slice(2),
+            postText: validation.text,
+            characterCount: validation.text.length,
+            category,
+            tone,
+            audience,
+            structure,
+            createdAt: new Date().toISOString(),
+          };
+        }
+      }
+
+      const fallbackText = cleanViralText([
+        "aku rasa " + topic + " tak perlu complicated.",
+        "mula dengan satu step yang jelas dulu.",
+        "kau akan mula kecil dulu atau tunggu ready?"
+      ].join("\\n\\n") + maybeHashtags(category, topic));
+      return {
+        id: "viral-" + Date.now() + "-" + Math.random().toString(16).slice(2),
+        postText: fallbackText.slice(0, 500),
+        characterCount: Math.min(fallbackText.length, 500),
+        category,
+        tone,
+        audience,
+        structure: "Recommendation",
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    function generateViralPosts(count) {
+      const posts = [];
+      for (let index = 0; index < count; index += 1) {
+        posts.push(makeViralPost(posts));
+      }
+      viralGeneratedPosts = posts;
+      renderViralPosts();
+      setMessage(viralResult, "ok", count + " Threads viral post generated.");
+    }
+
+    function csvEscape(value) {
+      return '"' + String(value || "").replace(/"/g, '""') + '"';
+    }
+
+    function exportViralCsv(posts, filename) {
+      if (!posts.length) {
+        setMessage(viralResult, "err", "Tiada post untuk export.");
+        return;
+      }
+      const rows = [["post_text", "character_count", "category", "tone", "structure", "created_at"]];
+      posts.forEach((post) => {
+        rows.push([post.postText, post.characterCount, post.category, post.tone, post.structure, post.createdAt]);
+      });
+      const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function copyText(text, button) {
+      await navigator.clipboard.writeText(text);
+      if (button) markButtonSuccess(button, "Copied");
+    }
+
+    function isViralSaved(post) {
+      return viralSavedPosts.some((saved) => saved.postText === post.postText);
+    }
+
+    function saveViralPosts() {
+      localStorage.setItem(VIRAL_SAVED_STORAGE_KEY, JSON.stringify(viralSavedPosts));
+    }
+
+    function loadViralPosts() {
+      try {
+        viralSavedPosts = JSON.parse(localStorage.getItem(VIRAL_SAVED_STORAGE_KEY) || "[]");
+      } catch {
+        viralSavedPosts = [];
+        localStorage.removeItem(VIRAL_SAVED_STORAGE_KEY);
+      }
+    }
+
+    function toggleViralFavorite(post) {
+      if (isViralSaved(post)) {
+        viralSavedPosts = viralSavedPosts.filter((saved) => saved.postText !== post.postText);
+      } else {
+        viralSavedPosts.unshift({ ...post, savedAt: new Date().toISOString() });
+      }
+      saveViralPosts();
+      renderViralPosts();
+      renderSavedViralPosts();
+    }
+
+    function regenerateViralPost(postId) {
+      const index = viralGeneratedPosts.findIndex((post) => post.id === postId);
+      if (index < 0) return;
+      const existing = viralGeneratedPosts.filter((post) => post.id !== postId);
+      viralGeneratedPosts[index] = makeViralPost(existing);
+      renderViralPosts();
+    }
+
+    function postViralToThreads(post) {
+      window.postMessage({
+        source: "postpilot-webapp",
+        type: "POSTPILOT_THREADS_TEXT_ONLY_DRAFT",
+        draft: {
+          id: "threads-viral-" + Date.now(),
+          createdAt: new Date().toISOString(),
+          postText: post.postText,
+          category: post.category,
+          tone: post.tone,
+          structure: post.structure,
+          threadsTextOnly: true,
+          autoPublish: true,
+        }
+      }, window.location.origin);
+      setMessage(viralResult, "ok", "Draft Threads viral dihantar. Extension akan buka Threads dan post text sahaja.");
+    }
+
+    function viralCard(post, options = {}) {
+      const card = document.createElement("article");
+      card.className = "viral-post-card" + (isViralSaved(post) ? " favorite" : "");
+
+      const text = document.createElement("p");
+      text.className = "viral-post-text";
+      text.textContent = post.postText;
+
+      const meta = document.createElement("div");
+      meta.className = "viral-meta";
+      [post.characterCount + " chars", post.structure, post.tone, post.category].forEach((item) => {
+        const span = document.createElement("span");
+        span.textContent = item;
+        meta.appendChild(span);
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const copyButton = document.createElement("button");
+      copyButton.className = "secondary";
+      copyButton.type = "button";
+      copyButton.textContent = "Copy";
+      copyButton.addEventListener("click", () => copyText(post.postText, copyButton).catch(showThreadsError));
+      actions.appendChild(copyButton);
+
+      if (!options.savedOnly) {
+        const regenerateButton = document.createElement("button");
+        regenerateButton.className = "regenerate";
+        regenerateButton.type = "button";
+        regenerateButton.textContent = "Regenerate";
+        regenerateButton.addEventListener("click", () => regenerateViralPost(post.id));
+        actions.appendChild(regenerateButton);
+      }
+
+      const favoriteButton = document.createElement("button");
+      favoriteButton.className = "secondary";
+      favoriteButton.type = "button";
+      favoriteButton.textContent = isViralSaved(post) ? "Saved" : "Favorite";
+      favoriteButton.addEventListener("click", () => toggleViralFavorite(post));
+      actions.appendChild(favoriteButton);
+
+      const postButton = document.createElement("button");
+      postButton.className = "approve";
+      postButton.type = "button";
+      postButton.textContent = "Post to Threads";
+      postButton.addEventListener("click", () => postViralToThreads(post));
+      actions.appendChild(postButton);
+
+      card.append(text, meta, actions);
+      return card;
+    }
+
+    function renderViralPosts() {
+      viralOutput.innerHTML = "";
+      viralGeneratedPosts.forEach((post) => viralOutput.appendChild(viralCard(post)));
+    }
+
+    function filteredSavedViralPosts() {
+      const query = String(viralSavedSearch.value || "").toLowerCase();
+      const category = viralSavedCategoryFilter.value;
+      const tone = viralSavedToneFilter.value;
+      return viralSavedPosts.filter((post) => {
+        if (query && !post.postText.toLowerCase().includes(query)) return false;
+        if (category && post.category !== category) return false;
+        if (tone && post.tone !== tone) return false;
+        return true;
+      });
+    }
+
+    function renderSavedViralPosts() {
+      viralSavedOutput.innerHTML = "";
+      const posts = filteredSavedViralPosts();
+      posts.forEach((post) => viralSavedOutput.appendChild(viralCard(post, { savedOnly: true })));
+      if (!posts.length) {
+        const empty = document.createElement("p");
+        empty.className = "note";
+        empty.textContent = "Belum ada saved posts.";
+        viralSavedOutput.appendChild(empty);
+      }
+    }
+
+    function setupThreadsViralGenerator() {
+      fillSelectOptions(viralCategory, viralTemplates.categories || [], "");
+      fillSelectOptions(viralTone, viralTemplates.toneOptions || [], "");
+      fillSelectOptions(viralAudience, viralTemplates.audienceTypes || [], "");
+      fillSelectOptions(viralSavedCategoryFilter, viralTemplates.categories || [], "All categories");
+      fillSelectOptions(viralSavedToneFilter, viralTemplates.toneOptions || [], "All tones");
+      loadViralPosts();
+      renderSavedViralPosts();
+    }
+
     function showPreview(json) {
       currentPreview = json.preview;
       seenVariations = [Number(currentPreview.variation || 0)];
@@ -2705,6 +3226,21 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
         showThreadsError(error);
       }
     });
+
+    generateViralOneButton.addEventListener("click", () => generateViralPosts(1));
+    generateViralTenButton.addEventListener("click", () => generateViralPosts(10));
+    generateViralHundredButton.addEventListener("click", () => generateViralPosts(100));
+    exportViralCsvButton.addEventListener("click", () => exportViralCsv(viralGeneratedPosts, "threads-viral-posts.csv"));
+    exportSavedViralButton.addEventListener("click", () => exportViralCsv(filteredSavedViralPosts(), "threads-viral-saved-posts.csv"));
+    clearSavedViralButton.addEventListener("click", () => {
+      viralSavedPosts = [];
+      saveViralPosts();
+      renderViralPosts();
+      renderSavedViralPosts();
+    });
+    viralSavedSearch.addEventListener("input", renderSavedViralPosts);
+    viralSavedCategoryFilter.addEventListener("change", renderSavedViralPosts);
+    viralSavedToneFilter.addEventListener("change", renderSavedViralPosts);
 
     sendThreadsExtensionButton.addEventListener("click", async () => {
       sendThreadsExtensionButton.disabled = true;
@@ -4150,6 +4686,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
       reviewReceiptPdf(button.dataset.clientCode).catch(showReceiptError);
     });
     uploadReceiptsButton.addEventListener("click", uploadReceipts);
+    setupThreadsViralGenerator();
     loadClients();
     loadSettings();
     loadBankAccounts();

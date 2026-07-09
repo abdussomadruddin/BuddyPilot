@@ -61,23 +61,24 @@ async function openFacebookAndRunAutomation() {
   return response;
 }
 
-async function openThreadsAndRunAutomation(automationId = "") {
+async function openThreadsAndRunAutomation(automationId = "", command = "POSTPILOT_THREADS_AUTO_POST") {
   const state = await chrome.storage.local.get([THREADS_LAUNCH_KEY, THREADS_COMPLETED_KEY]);
   if (automationId && (state[THREADS_LAUNCH_KEY] === automationId || state[THREADS_COMPLETED_KEY] === automationId)) {
     return { ok: true, message: "Threads flow already started or completed." };
   }
 
   try {
+    const isTextOnly = command === "POSTPILOT_THREADS_TEXT_ONLY_POST";
     await chrome.storage.local.set({
       [THREADS_LAUNCH_KEY]: automationId || `threads-${Date.now()}`,
-      postpilotAutomationStatus: "Facebook post live. Opening Threads...",
+      postpilotAutomationStatus: isTextOnly ? "Opening Threads viral post..." : "Facebook post live. Opening Threads...",
       postpilotLastError: "",
     });
     const tab = await chrome.tabs.create({ url: THREADS_HOME_URL, active: true });
     if (!tab?.id) throw new Error("Gagal buka tab Threads.");
-    await chrome.storage.local.set({ postpilotAutomationStatus: "Starting auto flow in Threads..." });
-    const response = await sendToThreadsTabWithRetry(tab.id, "POSTPILOT_THREADS_AUTO_POST");
-    await chrome.storage.local.set({ postpilotAutomationStatus: "Threads auto flow started." });
+    await chrome.storage.local.set({ postpilotAutomationStatus: isTextOnly ? "Starting Threads text-only flow..." : "Starting auto flow in Threads..." });
+    const response = await sendToThreadsTabWithRetry(tab.id, command);
+    await chrome.storage.local.set({ postpilotAutomationStatus: isTextOnly ? "Threads text-only flow started." : "Threads auto flow started." });
     return response;
   } catch (error) {
     await chrome.storage.local.remove(THREADS_LAUNCH_KEY).catch(() => {});
@@ -111,6 +112,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return;
     }
 
+    if (message?.type === "SAVE_THREADS_TEXT_ONLY_AND_OPEN_THREADS") {
+      const draft = {
+        ...message.draft,
+        automationId: message.draft?.automationId || `postpilot-threads-text-${Date.now()}`,
+        autoPublish: true,
+        threadsTextOnly: true,
+      };
+      if (!draft?.postText) throw new Error("Draft is missing Threads post text.");
+      await chrome.storage.local.set({
+        currentDraft: draft,
+        [THREADS_LAUNCH_KEY]: "",
+        [THREADS_STARTED_KEY]: "",
+        [THREADS_COMPLETED_KEY]: "",
+        [THREADS_RUN_LOCK_KEY]: null,
+        postpilotLastError: "",
+        postpilotAutomationStatus: "Draft saved. Preparing Threads...",
+      });
+      const response = await openThreadsAndRunAutomation(draft.automationId, "POSTPILOT_THREADS_TEXT_ONLY_POST");
+      sendResponse(response || { ok: true });
+      return;
+    }
+
     if (message?.type === "POSTPILOT_FACEBOOK_DONE") {
       const response = await openThreadsAndRunAutomation(message.automationId || "");
       sendResponse(response || { ok: true });
@@ -120,7 +143,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message?.type === "POSTPILOT_THREADS_DONE") {
       await chrome.storage.local.set({
         [THREADS_COMPLETED_KEY]: message.automationId || "",
-        postpilotAutomationStatus: "Facebook + Threads flow selesai.",
+        postpilotAutomationStatus: message.threadsTextOnly ? "Threads viral post selesai." : "Facebook + Threads flow selesai.",
       });
       sendResponse({ ok: true });
       return;
