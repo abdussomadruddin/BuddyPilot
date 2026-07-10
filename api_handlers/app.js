@@ -1161,9 +1161,9 @@ function pageHtml() {
         </div>
 
         <div class="subtabs">
-          <button class="subtab-button active" type="button" data-subtab-group="post-pilot" data-subtab-target="postpilot-auto-panel">Auto Post</button>
-          <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="pagepilot-panel">Page Pilot</button>
-          <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="threads-viral-panel">Threads Viral</button>
+          <button class="subtab-button active" type="button" data-subtab-group="post-pilot" data-subtab-target="postpilot-auto-panel">Facebook + Threads Promote</button>
+          <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="pagepilot-panel">Facebook Page Promote</button>
+          <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="threads-viral-panel">Threads General</button>
         </div>
 
         <div id="pagepilot-panel" class="subtab-panel" data-subtab-panel="post-pilot">
