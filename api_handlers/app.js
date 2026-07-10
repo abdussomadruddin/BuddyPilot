@@ -2810,6 +2810,7 @@ Create Retargeting MIDDLE & BOTTOM Funnel Campaign if audience ready</textarea>
 
     function cleanViralText(value) {
       return String(value || "")
+        .replace(/:/g, ",")
         .replace(/\\s+([?.!,])/g, "$1")
         .replace(/[ \\t]+/g, " ")
         .replace(/\\n{3,}/g, "\\n\\n")
