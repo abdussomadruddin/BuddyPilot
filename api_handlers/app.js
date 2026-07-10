@@ -1137,8 +1137,9 @@ function pageHtml() {
           <button id="refreshActivityButton" class="secondary" type="button">Refresh</button>
         </div>
         <div class="quick-grid">
-          <button class="quick-card" type="button" data-go-tab="personalpostpilot" data-go-subtab="pagepilot-panel">Buat Post</button>
+          <button class="quick-card" type="button" data-go-tab="personalpostpilot" data-go-subtab="pagepilot-panel">Buat Post Page</button>
           <button class="quick-card" type="button" data-go-tab="personalpostpilot" data-go-subtab="postpilot-auto-panel">Buat Post Personal</button>
+          <button class="quick-card" type="button" data-go-tab="personalpostpilot" data-go-subtab="threads-viral-panel">Buat Post Threads</button>
           <button class="quick-card" type="button" data-go-tab="reportpilot">Buat Weekly Report</button>
           <button class="quick-card" type="button" data-go-tab="invoicepilot" data-go-subtab="invoice-panel">Buat Invois</button>
           <button class="quick-card" type="button" data-go-tab="invoicepilot" data-go-subtab="receipt-panel">Buat Resit</button>
