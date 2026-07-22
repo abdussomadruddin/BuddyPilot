@@ -12,9 +12,12 @@ const POSTPILOT_BATCH_FACEBOOK_TAB_KEY = "postpilotCrossBatchFacebookTabId";
 const POSTPILOT_BATCH_THREADS_TAB_KEY = "postpilotCrossBatchThreadsTabId";
 const REMOTE_CONFIG_KEY = "postpilotRemoteConfig";
 const REMOTE_ACTIVE_JOB_KEY = "postpilotRemoteActiveJob";
-const REMOTE_POLL_ALARM = "postpilotRemotePoll";
+const REMOTE_RECOVERY_KEY = "postpilotRemoteRecovery";
+const REMOTE_RECOVERY_ALARM = "postpilotRemoteRecoveryAlarm";
+const LEGACY_REMOTE_POLL_ALARM = "postpilotRemotePoll";
 const REMOTE_RUN_SESSION_KEY = "postpilotRemoteRunSession";
 const REMOTE_RUN_LEASE_MS = 7 * 60_000;
+const REMOTE_RECOVERY_DELAYS_MS = [5_000, 15_000];
 const DEFAULT_API_BASE_URL = "https://buddypilot.vercel.app";
 
 let remoteClaimInFlight = false;
@@ -96,7 +99,7 @@ async function pairRemoteExtension(code, name = "Mac Chrome") {
     postpilotAutomationStatus: "Mac extension berjaya dipasangkan. Menunggu arahan phone.",
     postpilotLastError: "",
   });
-  await ensureRemotePolling();
+  await chrome.alarms.clear(LEGACY_REMOTE_POLL_ALARM);
   connectRemoteRealtime().catch(() => {});
   processRemoteQueue().catch(() => {});
   return remote;
@@ -133,6 +136,7 @@ async function connectRemoteRealtime() {
       ref,
       join_ref: ref,
     }));
+    processRemoteQueue().catch(() => {});
     remoteHeartbeatTimer = setInterval(() => {
       if (socket.readyState !== WebSocket.OPEN) return;
       socket.send(JSON.stringify({ topic: "phoenix", event: "heartbeat", payload: {}, ref: String(remoteSocketRef++) }));
@@ -155,14 +159,8 @@ async function connectRemoteRealtime() {
   };
 }
 
-async function ensureRemotePolling() {
-  const remote = await getRemoteConfig();
-  if (!remote?.token) {
-    await chrome.alarms.clear(REMOTE_POLL_ALARM);
-    return;
-  }
-  const alarm = await chrome.alarms.get(REMOTE_POLL_ALARM);
-  if (!alarm) chrome.alarms.create(REMOTE_POLL_ALARM, { delayInMinutes: 0.5, periodInMinutes: 0.5 });
+async function clearLegacyRemotePolling() {
+  await chrome.alarms.clear(LEGACY_REMOTE_POLL_ALARM);
 }
 
 function arrayBufferToBase64(buffer) {
@@ -199,6 +197,7 @@ async function updateRemoteProgress(jobId, progress) {
 
 async function completeRemoteJob(jobId, progress = {}) {
   await remoteFetch("/api/postpilot-extension/complete", { body: { job_id: jobId, status: "completed", progress } });
+  await clearRemoteRecovery();
   await chrome.storage.local.remove(REMOTE_ACTIVE_JOB_KEY);
   await clearRemoteRunSession();
 }
@@ -208,8 +207,86 @@ async function failRemoteJob(jobId, error, progress = {}) {
   await remoteFetch("/api/postpilot-extension/fail", {
     body: { job_id: jobId, error: error?.message || String(error), progress },
   }).catch(() => {});
+  await clearRemoteRecovery();
   await chrome.storage.local.remove(REMOTE_ACTIVE_JOB_KEY);
   await clearRemoteRunSession();
+}
+
+function remoteFailureClass(error) {
+  const message = String(error?.message || error || "");
+  if (/unauthori[sz]ed|forbidden|permission|login|log in|selector|composer|button|caption.*duplicate|caption.*clean|gambar.*ready|belum siap|tidak dijumpai|not found/i.test(message)) {
+    return "manual";
+  }
+  if (/timeout|timed out|fetch failed|network|socket|ECONN|ENOTFOUND|EAI_AGAIN|HTTP (408|425|429|5\d\d)|Remote API failed \((408|425|429|5\d\d)\)|Receiving end does not exist|tab.*closed|frame.*removed/i.test(message)) {
+    return "transient";
+  }
+  return "manual";
+}
+
+async function clearRemoteRecovery() {
+  await chrome.alarms.clear(REMOTE_RECOVERY_ALARM);
+  await chrome.storage.local.remove(REMOTE_RECOVERY_KEY);
+}
+
+async function scheduleRemoteRecovery({ jobId, error, progress = {}, kind }) {
+  if (!jobId || remoteFailureClass(error) !== "transient") return false;
+  const state = await chrome.storage.local.get(REMOTE_RECOVERY_KEY);
+  const previous = state[REMOTE_RECOVERY_KEY];
+  const identity = `${jobId}:${Number(progress.itemIndex) || 0}:${progress.resumePhase || progress.phase || kind}`;
+  const attempt = previous?.identity === identity ? Number(previous.attempt || 0) + 1 : 1;
+  if (attempt > REMOTE_RECOVERY_DELAYS_MS.length) return false;
+  const waitMs = REMOTE_RECOVERY_DELAYS_MS[attempt - 1];
+  const recovery = {
+    identity,
+    jobId,
+    kind,
+    attempt,
+    progress,
+    error: error?.message || String(error),
+    nextRetryAt: Date.now() + waitMs,
+  };
+  await chrome.storage.local.set({
+    [REMOTE_RECOVERY_KEY]: recovery,
+    postpilotLastError: "",
+    postpilotAutomationStatus: `Auto recovery ${attempt}/2 dalam ${Math.ceil(waitMs / 1000)}s...`,
+  });
+  await updateRemoteProgress(jobId, {
+    ...progress,
+    recoveryAttempt: attempt,
+    failureClass: "transient",
+    nextRetryAt: new Date(recovery.nextRetryAt).toISOString(),
+    message: `Auto recovery ${attempt}/2 dijadualkan.`,
+  }).catch(() => {});
+  await chrome.alarms.clear(REMOTE_RECOVERY_ALARM);
+  chrome.alarms.create(REMOTE_RECOVERY_ALARM, { when: recovery.nextRetryAt });
+  return true;
+}
+
+async function resumeRemoteRecovery() {
+  const state = await chrome.storage.local.get([REMOTE_RECOVERY_KEY, "currentDraft"]);
+  const recovery = state[REMOTE_RECOVERY_KEY];
+  if (!recovery?.jobId) return;
+  await chrome.storage.local.set({ postpilotAutomationStatus: `Auto recovery ${recovery.attempt}/2 sedang berjalan...` });
+  if (recovery.kind === "cross-platform") {
+    const batch = await getPostPilotBatch();
+    if (!batch?.remoteJobId || batch.remoteJobId !== recovery.jobId) throw new Error("State batch recovery tidak dijumpai.");
+    batch.phase = recovery.progress.resumePhase === "threads" ? "threads" : "facebook";
+    await chrome.storage.local.set({ [POSTPILOT_BATCH_KEY]: batch });
+    if (batch.phase === "threads") await startBatchThreads();
+    else await startBatchFacebook();
+    return;
+  }
+  const draft = state.currentDraft;
+  if (!draft?.remoteJobId || draft.remoteJobId !== recovery.jobId) throw new Error("State Threads recovery tidak dijumpai.");
+  draft.resumeIndex = Math.max(0, Number(recovery.progress.itemIndex) || 0);
+  await chrome.storage.local.set({
+    currentDraft: draft,
+    [THREADS_LAUNCH_KEY]: "",
+    [THREADS_STARTED_KEY]: "",
+    [THREADS_COMPLETED_KEY]: "",
+    [THREADS_RUN_LOCK_KEY]: null,
+  });
+  await openThreadsAndRunAutomation(draft.automationId, "POSTPILOT_THREADS_TEXT_BATCH_POST");
 }
 
 async function startRemoteFacebookThreads(job) {
@@ -287,8 +364,28 @@ async function processRemoteQueue() {
     else if (job.type === "threads_text") await startRemoteThreadsText(job);
   } catch (error) {
     const state = await chrome.storage.local.get(REMOTE_ACTIVE_JOB_KEY);
-    await failRemoteJob(state[REMOTE_ACTIVE_JOB_KEY]?.id, error);
-    await chrome.storage.local.set({ postpilotLastError: error?.message || String(error), postpilotAutomationStatus: "Remote automation gagal." });
+    const activeJob = state[REMOTE_ACTIVE_JOB_KEY];
+    if (activeJob?.id) {
+      const progress = {
+        ...(activeJob.progress || {}),
+        itemIndex: Number(activeJob.progress?.itemIndex) || 0,
+        resumePhase: activeJob.progress?.resumePhase || activeJob.progress?.phase || (activeJob.type === "threads_text" ? "threads" : "facebook"),
+      };
+      const recovering = await scheduleRemoteRecovery({
+        jobId: activeJob.id,
+        error,
+        progress,
+        kind: activeJob.type === "threads_text" ? "threads-text" : "cross-platform",
+      });
+      if (!recovering) {
+        const failureClass = remoteFailureClass(error);
+        await failRemoteJob(activeJob.id, error, { ...progress, failureClass, recoveryAttempt: failureClass === "transient" ? 2 : 0 });
+      }
+    }
+    await chrome.storage.local.set({
+      postpilotLastError: activeJob ? "" : error?.message || String(error),
+      postpilotAutomationStatus: activeJob ? "Remote automation sedang cuba pulih." : "Remote queue tidak dapat diperiksa. Realtime akan cuba semasa reconnect.",
+    });
   } finally {
     remoteClaimInFlight = false;
   }
@@ -533,7 +630,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message?.type === "UNPAIR_REMOTE_EXTENSION") {
       clearRemoteSocket();
-      await chrome.alarms.clear(REMOTE_POLL_ALARM);
+      await clearLegacyRemotePolling();
+      await clearRemoteRecovery();
       await chrome.storage.local.remove([REMOTE_CONFIG_KEY, REMOTE_ACTIVE_JOB_KEY]);
       await clearRemoteRunSession();
       sendResponse({ ok: true, message: "Extension dibuang daripada pairing lokal." });
@@ -554,6 +652,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         phase: "threads",
         message: message.message || `${message.index}/${message.total} Threads post selesai.`,
       });
+      draft.resumeIndex = Math.max(0, Number(message.index) || 0);
+      await chrome.storage.local.set({ currentDraft: draft });
+      await clearRemoteRecovery();
       sendResponse({ ok: true, cancelRequested });
       return;
     }
@@ -655,6 +756,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const batch = await getPostPilotBatch();
       const expectedId = batch ? `${batch.automationId}-${batch.index + 1}` : "";
       if (batch && batch.phase === "facebook" && message.automationId === expectedId) {
+        await clearRemoteRecovery();
         await startBatchThreads();
         sendResponse({ ok: true, message: "Facebook siap. Teruskan Threads untuk item semasa." });
         return;
@@ -668,6 +770,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const batch = await getPostPilotBatch();
       const expectedId = batch ? `${batch.automationId}-${batch.index + 1}` : "";
       if (batch && batch.phase === "threads" && message.automationId === expectedId) {
+        await clearRemoteRecovery();
         await scheduleNextBatchPost(batch);
         sendResponse({ ok: true, message: "Threads siap. Batch dikemaskini." });
         return;
@@ -683,6 +786,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           message: `${total}/${total} Threads post selesai.`,
         });
       }
+      await clearRemoteRecovery();
       await chrome.storage.local.set({
         [THREADS_COMPLETED_KEY]: message.automationId || "",
         postpilotAutomationStatus: message.threadsTextBatch
@@ -708,24 +812,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           postpilotAutomationStatus: `Post Pilot ${batch.index + 1}/${batch.posts.length} gagal. Tekan retry di extension.`,
         });
         if (batch.remoteJobId) {
-          await failRemoteJob(batch.remoteJobId, new Error(message.error || "Batch item gagal."), {
+          const error = new Error(message.error || "Batch item gagal.");
+          const progress = {
             index: batch.index + 1,
             itemIndex: batch.index,
             total: batch.posts.length,
             resumePhase: failedPhase,
             message: message.error || "Batch item gagal.",
-          });
+          };
+          const recovering = await scheduleRemoteRecovery({ jobId: batch.remoteJobId, error, progress, kind: "cross-platform" });
+          if (!recovering) {
+            const failureClass = remoteFailureClass(error);
+            await failRemoteJob(batch.remoteJobId, error, { ...progress, failureClass, recoveryAttempt: failureClass === "transient" ? 2 : 0 });
+          }
         }
       } else {
         const state = await chrome.storage.local.get("currentDraft");
         if (state.currentDraft?.remoteJobId && message.automationId === state.currentDraft.automationId) {
-          await failRemoteJob(state.currentDraft.remoteJobId, new Error(message.error || "Threads batch gagal."), {
+          const error = new Error(message.error || "Threads batch gagal.");
+          const progress = {
             index: Number(message.index) || 0,
             itemIndex: Number(message.index) || 0,
             total: state.currentDraft.posts?.length || 1,
             resumePhase: "threads",
             message: message.error || "Threads batch gagal.",
-          });
+          };
+          state.currentDraft.resumeIndex = progress.itemIndex;
+          await chrome.storage.local.set({ currentDraft: state.currentDraft });
+          const recovering = await scheduleRemoteRecovery({ jobId: state.currentDraft.remoteJobId, error, progress, kind: "threads-text" });
+          if (!recovering) {
+            const failureClass = remoteFailureClass(error);
+            await failRemoteJob(state.currentDraft.remoteJobId, error, { ...progress, failureClass, recoveryAttempt: failureClass === "transient" ? 2 : 0 });
+          }
         }
       }
       sendResponse({ ok: true });
@@ -787,8 +905,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === REMOTE_POLL_ALARM) {
-    processRemoteQueue().catch(() => {});
+  if (alarm.name === REMOTE_RECOVERY_ALARM) {
+    resumeRemoteRecovery().catch(async (error) => {
+      const state = await chrome.storage.local.get(REMOTE_RECOVERY_KEY);
+      const recovery = state[REMOTE_RECOVERY_KEY];
+      if (!recovery?.jobId) return;
+      const recovering = await scheduleRemoteRecovery({
+        jobId: recovery.jobId,
+        error,
+        progress: recovery.progress,
+        kind: recovery.kind,
+      });
+      if (!recovering) {
+        const failureClass = remoteFailureClass(error);
+        await failRemoteJob(recovery.jobId, error, {
+          ...recovery.progress,
+          failureClass,
+          recoveryAttempt: failureClass === "transient" ? Math.max(2, Number(recovery.attempt) || 0) : Number(recovery.attempt) || 0,
+        });
+      }
+    });
     return;
   }
   if (alarm.name !== POSTPILOT_BATCH_ALARM) return;
@@ -824,11 +960,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.runtime.onInstalled.addListener(() => {
-  ensureRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
+  clearLegacyRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  ensureRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
+  clearLegacyRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
 });
 
-ensureRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
+clearLegacyRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});

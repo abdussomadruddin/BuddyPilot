@@ -48,3 +48,26 @@ test("service context only requires ad platforms used by active clients", () => 
   assert.equal(context.meta_adflow.required, true);
   assert.equal(context.tiktok.required, false);
 });
+
+test("active automation exposes persisted recovery progress", () => {
+  const overview = buildOperationsOverview({
+    remote: {
+      activeJob: {
+        id: "job-recovery",
+        type: "threads_text",
+        status: "running",
+        progress: {
+          recoveryAttempt: 1,
+          failureClass: "transient",
+          nextRetryAt: "2026-07-22T15:00:00.000Z",
+          message: "Auto recovery 1/2 dijadualkan.",
+        },
+      },
+      jobs: [],
+    },
+    now: new Date("2026-07-22T14:59:00.000Z"),
+  });
+  assert.equal(overview.activeOperations[0].recovery.attempt, 1);
+  assert.equal(overview.activeOperations[0].recovery.maxAttempts, 2);
+  assert.equal(overview.activeOperations[0].recovery.failureClass, "transient");
+});

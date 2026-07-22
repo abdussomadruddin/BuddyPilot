@@ -131,7 +131,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
 3. Enter the eight-character code in the extension popup on the Mac.
 4. Keep Chrome open and stay logged in to Facebook and Threads.
 
-All Post Pilot posting buttons create a private Supabase job. The paired Mac receives a Realtime wake signal, with a 30-second polling fallback. Only one job can run at a time; queued jobs expire after 24 hours if the Mac remains offline.
+All Post Pilot posting buttons create a private Supabase job. The paired Mac receives a Supabase Realtime wake signal and checks once on Chrome startup or Realtime reconnect. There is no periodic Vercel polling while idle; `Check Remote` in the extension popup remains the manual fallback. Transient automation failures retry locally twice before BuddyPilot opens an incident. Only one job can run at a time, and queued jobs expire after 24 hours if the Mac remains offline.
 
 Optional setup env for local schema creation:
 

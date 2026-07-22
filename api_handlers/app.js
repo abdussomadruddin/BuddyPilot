@@ -3904,6 +3904,7 @@ function pageHtml() {
     .health-check-button { width: 34px; min-width: 34px; min-height: 34px; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--muted); box-shadow: none; }
     .health-check-button .icon { width: 15px; height: 15px; }
     .operations-recent { overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .operations-recent-section { margin-top: 24px; margin-bottom: 0; }
     .operations-recent-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px 13px; border-top: 1px solid #ebe8e2; }
     .operations-recent-row:first-child { border-top: 0; }
     .operations-recent-row .operations-item-status[data-status="completed"],
@@ -4114,10 +4115,6 @@ function pageHtml() {
             <div class="dashboard-section-header"><h2>System health</h2><span class="dashboard-section-kicker">Passive monitor</span></div>
             <div id="operationsHealth" class="operations-health-grid"></div>
           </section>
-          <section class="operations-section">
-            <div class="dashboard-section-header"><h2>Recent operations</h2><span class="dashboard-section-kicker">Last 30 days</span></div>
-            <div id="operationsRecent" class="operations-recent"></div>
-          </section>
           <button id="resumeWorkButton" class="resume-work" type="button" hidden>
             <span><small>Sambung kerja</small><strong id="resumeWorkTitle">Kembali ke kerja terakhir</strong></span>
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#arrow-right"></use></svg>
@@ -4164,6 +4161,10 @@ function pageHtml() {
           </section>
 
         </div>
+        <section class="operations-section operations-recent-section">
+          <div class="dashboard-section-header"><h2>Recent operations</h2><span class="dashboard-section-kicker">Last 30 days</span></div>
+          <div id="operationsRecent" class="operations-recent"></div>
+        </section>
       </section>
     </section>
 
@@ -5432,11 +5433,17 @@ Review retargeting when the warm audience is ready</textarea>
 
       const active = overview.activeOperations || [];
       operationsActiveSection.hidden = active.length === 0;
-      operationsActiveList.innerHTML = active.map((job) => renderOperationItem({
-        status: job.status,
-        title: job.type === "threads_text" ? "Threads automation" : "Facebook + Threads automation",
-        detail: job.progress?.message || "Job sedang berjalan.",
-      }, registerOperationsAction({ kind: "automation", operation: "cancel", label: "Cancel", jobId: job.id }))).join("");
+      operationsActiveList.innerHTML = active.map((job) => {
+        const retryAt = new Date(job.recovery?.nextRetryAt || "");
+        const recoveryDetail = job.recovery
+          ? "Auto recovery " + job.recovery.attempt + "/" + job.recovery.maxAttempts + (Number.isFinite(retryAt.getTime()) && retryAt > new Date() ? " · cuba " + formatOperationsTime(retryAt) : " · sedang berjalan")
+          : "";
+        return renderOperationItem({
+          status: job.status,
+          title: job.type === "threads_text" ? "Threads automation" : "Facebook + Threads automation",
+          detail: recoveryDetail || job.progress?.message || "Job sedang berjalan.",
+        }, registerOperationsAction({ kind: "automation", operation: "cancel", label: "Cancel", jobId: job.id }));
+      }).join("");
 
       operationsHealth.innerHTML = (overview.health || []).map((item) => {
         const meta = item.checkedAt ? "Checked " + formatOperationsTime(item.checkedAt) : "Belum diperiksa";
