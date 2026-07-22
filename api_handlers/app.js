@@ -9429,7 +9429,9 @@ Review retargeting when the warm audience is ready</textarea>
           loadTodayDashboard({ silent: true, force: true });
           return;
         }
-        const nextStep = { details: "ads", ads: "drive", drive: "telegram", telegram: "review" }[step] || json.onboarding.step;
+        const nextStep = step === "ads" && json.onboarding?.checks?.drive
+          ? "telegram"
+          : ({ details: "ads", ads: "drive", drive: "telegram", telegram: "review" }[step] || json.onboarding.step);
         showClientOnboardingStep(nextStep);
         setMessage(clientResult, "ok", "Progress onboarding disimpan.");
       } catch (error) {

@@ -54,6 +54,33 @@ async function logStep(client, action) {
   });
 }
 
+async function autoProvisionDrive(client) {
+  try {
+    const provisioned = await provisionClientOnboardingDrive({ clientCode: client.code });
+    try {
+      await logStep(provisioned, "drive");
+      await resolveOperationsIncident(`client-onboarding:${client.code}:drive`);
+    } catch {}
+    return provisioned;
+  } catch (error) {
+    const failed = await markClientOnboardingError({ clientCode: client.code }, "drive", error);
+    try {
+      await openOperationsIncident({
+        fingerprint: `client-onboarding:${client.code}:drive`,
+        severity: "warning",
+        serviceName: "google-drive",
+        entityType: "client",
+        entityId: client.code,
+        clientCode: client.code,
+        title: `Folder onboarding gagal untuk ${client.code}`,
+        detail: error?.message || String(error),
+        action: { kind: "navigate", label: "Continue Setup", tab: "clientpilot", subtab: "client-add-panel", clientCode: client.code },
+      });
+    } catch {}
+    return failed;
+  }
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
   let body = {};
@@ -78,8 +105,12 @@ module.exports = async function handler(req, res) {
       action = action || "start";
       if (action !== "start") throw new Error("Action onboarding tidak sah.");
       client = await startClientOnboarding(body);
+      client = await autoProvisionDrive(client);
     } else if (req.method === "PATCH") {
-      if (action === "details") client = await saveClientOnboardingDetails(body);
+      if (action === "details") {
+        client = await saveClientOnboardingDetails(body);
+        client = await autoProvisionDrive(client);
+      }
       else if (action === "ads") client = await saveClientOnboardingAds(body);
       else if (action === "drive") client = await provisionClientOnboardingDrive(body);
       else if (action === "telegram") client = await updateClientOnboardingTelegram(body);
