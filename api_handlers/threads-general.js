@@ -2,8 +2,8 @@ const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/postpilot");
 const templates = require("../lib/threads-viral-templates");
 const {
-  familyDeck,
   generateAdaptivePost,
+  threadsFamilyDeck,
 } = require("../lib/postpilot-pattern-engine");
 const {
   getPostPilotVoiceProfile,
@@ -40,7 +40,7 @@ module.exports = async function handler(req, res) {
     const randomize = Boolean(body.randomize) || count > 1;
     const history = await listPostPilotCopyHistory({ channel: "threads_general", limit: 500 });
     const voiceProfile = await getPostPilotVoiceProfile("", "threads_general");
-    const families = familyDeck(count, Math.random);
+    const families = threadsFamilyDeck(count, Math.random);
     const posts = [];
 
     for (let index = 0; index < count; index += 1) {

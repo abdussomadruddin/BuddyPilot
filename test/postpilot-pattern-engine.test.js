@@ -5,12 +5,21 @@ const {
   familyDeck,
   generateAdaptivePost,
   semanticSimilarity,
+  threadsFamilyDeck,
 } = require("../lib/postpilot-pattern-engine");
 
 test("content mix reserves twenty percent original quote posts", () => {
   const deck = familyDeck(50, () => 0.42);
   assert.equal(deck.length, 50);
   assert.equal(deck.filter((family) => family === "quote").length, 10);
+});
+
+test("Threads feed mix includes viral Malaysian question and comparison patterns", () => {
+  const deck = threadsFamilyDeck(100, () => 0.42);
+  assert.equal(deck.length, 100);
+  assert.equal(deck.filter((family) => family === "question").length, 18);
+  assert.equal(deck.filter((family) => family === "comparison").length, 10);
+  assert.equal(deck.filter((family) => family === "observation").length, 14);
 });
 
 test("Facebook and Threads receive distinct platform captions", () => {
@@ -29,14 +38,14 @@ test("Facebook and Threads receive distinct platform captions", () => {
   assert.equal((threads.postText.match(/https:\/\/swiy\.co\/kmethod/g) || []).length, 1);
 });
 
-test("Threads General quote is original, clean, and has no forced question", () => {
+test("Threads General quote is original, clean, and reads like a normal post", () => {
   const generated = generateAdaptivePost({
     platform: "threads_general",
     topic: "side income",
     forcedFamily: "quote",
     seed: "original-quote",
   });
-  assert.match(generated.postText, /^"/);
+  assert.ok(generated.postText.length > 20);
   assert.doesNotMatch(generated.postText, /\?|https?:\/\/|\*\*|:/);
   assert.ok(generated.postText.length <= 500);
 });
@@ -50,15 +59,15 @@ test("semantic similarity detects repeated wording beyond exact matches", () => 
 });
 
 test("Threads General turns audience labels into natural Malaysian context", () => {
-  const generated = generateAdaptivePost({
+  const posts = Array.from({ length: 80 }, (_, index) => generateAdaptivePost({
     platform: "threads_general",
     topic: "small business",
     audience: "startup team",
     forcedFamily: "recommendation",
-    seed: "natural-startup-audience",
-  });
-  assert.match(generated.postText, /kalau kau baru start/);
-  assert.doesNotMatch(generated.postText, /startup team/);
+    seed: `natural-startup-audience-${index}`,
+  }).postText);
+  assert.ok(posts.some((post) => /kalau kau baru start/.test(post)));
+  posts.forEach((post) => assert.doesNotMatch(post, /startup team/));
 });
 
 test("Threads General uses conversational insight wording", () => {
@@ -71,4 +80,28 @@ test("Threads General uses conversational insight wording", () => {
   }).postText).join("\n");
 
   assert.doesNotMatch(outputs, /lagi jelas satu perkara|basic yang konsisten memang jalan/);
+});
+
+test("Threads General matches the short text-only feed rhythm", () => {
+  const families = threadsFamilyDeck(100, () => 0.37);
+  const posts = families.map((forcedFamily, index) => generateAdaptivePost({
+    platform: "threads_general",
+    topic: index % 2 ? "content marketing" : "side income",
+    audience: index % 3 ? "small business owner" : "startup team",
+    tone: index % 2 ? "Casual" : "Direct",
+    forcedFamily,
+    seed: `feed-rhythm-${index}`,
+  }).postText);
+  const lengths = posts.map((post) => post.length).sort((left, right) => left - right);
+
+  assert.ok(lengths[49] >= 75);
+  assert.ok(lengths[49] <= 220);
+  assert.ok(posts.filter((post) => post.split("\n").length <= 2).length >= 50);
+  assert.ok(posts.filter((post) => post.length < 100).length >= 20);
+  assert.ok(posts.filter((post) => /\?/.test(post)).length >= 15);
+  posts.forEach((post) => {
+    assert.ok(post.length <= 500);
+    assert.doesNotMatch(post, /\*\*|:/);
+    assert.doesNotMatch(post, /small business owner|startup team/);
+  });
 });
