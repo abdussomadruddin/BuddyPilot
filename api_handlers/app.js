@@ -4486,14 +4486,14 @@ function pageHtml() {
           <section class="client-form">
             <div class="section-heading">
               <div>
-                <h2>Threads Viral Post Generator</h2>
+                <h2>Threads General Post Generator</h2>
                 <p class="note">Generate text-only Threads posts. Review dulu, kemudian post satu-satu ke Threads.</p>
               </div>
             </div>
             <div class="client-grid">
               <div>
-                <label for="viralTopic">Niche / topic</label>
-                <input id="viralTopic" type="text" placeholder="Contoh: small business, AI automation, parenting">
+                <label for="viralPattern">Pattern</label>
+                <select id="viralPattern"></select>
               </div>
               <div>
                 <label for="viralCategory">Post category</label>
@@ -5076,7 +5076,7 @@ Review retargeting when the warm audience is ready</textarea>
     const remoteRetryButton = document.getElementById("remoteRetryButton");
     const viralTemplates = ${threadsViralTemplatesJson};
     const buildThreadsGeneralText = ${threadsGeneralCopySource};
-    const viralTopic = document.getElementById("viralTopic");
+    const viralPattern = document.getElementById("viralPattern");
     const viralCategory = document.getElementById("viralCategory");
     const viralTone = document.getElementById("viralTone");
     const viralAudience = document.getElementById("viralAudience");
@@ -7079,7 +7079,7 @@ Review retargeting when the warm audience is ready</textarea>
       const category = String(override.category || viralCategory.value || "business").toLowerCase();
       const tone = override.tone || viralTone.value || "Casual";
       const audience = override.audience || viralAudience.value || pickRandom(viralTemplates.audienceTypes);
-      const topic = (override.topic || viralTopic.value || category).trim();
+      const topic = (override.topic || category).trim();
 
       for (let attempt = 0; attempt < 160; attempt += 1) {
         const structure = pickRandom(viralTemplates.structures);
@@ -7140,7 +7140,7 @@ Review retargeting when the warm audience is ready</textarea>
         body: JSON.stringify({
           count,
           randomize,
-          topic: viralTopic.value,
+          patternId: count === 1 ? viralPattern.value : "",
           category: viralCategory.value,
           tone: viralTone.value,
           audience: viralAudience.value,
@@ -7157,7 +7157,7 @@ Review retargeting when the warm audience is ready</textarea>
       viralGeneratedPosts = await requestViralPosts(count, false);
       renderViralPosts();
       loadViralHistory().catch(() => {});
-      setMessage(viralResult, "ok", count + " Threads viral post generated.");
+      setMessage(viralResult, "ok", count + " Threads General post generated.");
     }
 
     function shuffledViralValues(values, count) {
@@ -7187,7 +7187,7 @@ Review retargeting when the warm audience is ready</textarea>
       viralGeneratedPosts = await requestViralPosts(count, true);
       renderViralPosts();
       loadViralHistory().catch(() => {});
-      setMessage(viralResult, "ok", count + " random Threads viral post generated.");
+      setMessage(viralResult, "ok", count + " random Threads General post generated.");
     }
 
     async function ensureViralPostCount(count) {
@@ -7207,9 +7207,31 @@ Review retargeting when the warm audience is ready</textarea>
         setMessage(viralResult, "err", "Tiada post untuk export.");
         return;
       }
-      const rows = [["post_text", "character_count", "category", "tone", "structure", "created_at"]];
+      const rows = [[
+        "post_text",
+        "character_count",
+        "category",
+        "tone",
+        "pattern_id",
+        "pattern_label",
+        "angle_id",
+        "rhythm_id",
+        "robot_risk",
+        "created_at"
+      ]];
       posts.forEach((post) => {
-        rows.push([post.postText, post.characterCount, post.category, post.tone, post.structure, post.createdAt]);
+        rows.push([
+          post.postText,
+          post.characterCount,
+          post.category,
+          post.tone,
+          post.patternId,
+          post.patternLabel || post.structure,
+          post.angleId,
+          post.rhythmId,
+          post.robotRisk,
+          post.createdAt
+        ]);
       });
       const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -7282,7 +7304,18 @@ Review retargeting when the warm audience is ready</textarea>
       try {
         await createRemoteAutomationJob({
           type: "threads_text",
-          posts: [{ id: post.id, postText: post.postText, category: post.category, tone: post.tone, structure: post.structure }],
+          posts: [{
+            id: post.id,
+            postText: post.postText,
+            category: post.category,
+            tone: post.tone,
+            structure: post.structure,
+            textHash: post.textHash,
+            patternId: post.patternId,
+            patternLabel: post.patternLabel,
+            angleId: post.angleId,
+            rhythmId: post.rhythmId
+          }],
           batchDelayMs: 30000
         }, viralResult);
         setMessage(viralResult, "ok", "Post Threads masuk queue Chrome Mac.");
@@ -7301,7 +7334,12 @@ Review retargeting when the warm audience is ready</textarea>
             postText: post.postText,
             category: post.category,
             tone: post.tone,
-            structure: post.structure
+            structure: post.structure,
+            textHash: post.textHash,
+            patternId: post.patternId,
+            patternLabel: post.patternLabel,
+            angleId: post.angleId,
+            rhythmId: post.rhythmId
           })),
           batchDelayMs: 30000
         }, viralResult);
@@ -7321,7 +7359,13 @@ Review retargeting when the warm audience is ready</textarea>
 
       const meta = document.createElement("div");
       meta.className = "viral-meta";
-      [post.characterCount + " chars", post.structure, post.tone, post.category].forEach((item) => {
+      [
+        post.characterCount + " chars",
+        post.patternLabel || post.structure,
+        post.tone,
+        post.category,
+        "robot " + Number(post.robotRisk || 0)
+      ].forEach((item) => {
         const span = document.createElement("span");
         span.textContent = item;
         meta.appendChild(span);
@@ -7405,6 +7449,17 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function setupThreadsViralGenerator() {
+      viralPattern.innerHTML = "";
+      const autoPatternOption = document.createElement("option");
+      autoPatternOption.value = "";
+      autoPatternOption.textContent = "Auto rotate 300 patterns";
+      viralPattern.appendChild(autoPatternOption);
+      (viralTemplates.patterns || []).forEach((pattern, index) => {
+        const option = document.createElement("option");
+        option.value = pattern.id;
+        option.textContent = String(index + 1).padStart(3, "0") + " · " + pattern.label;
+        viralPattern.appendChild(option);
+      });
       fillSelectOptions(viralCategory, viralTemplates.categories || [], "");
       fillSelectOptions(viralTone, viralTemplates.toneOptions || [], "");
       fillSelectOptions(viralAudience, viralTemplates.audienceTypes || [], "");
@@ -7428,7 +7483,11 @@ Review retargeting when the warm audience is ready</textarea>
         text.textContent = post.postText;
         const meta = document.createElement("div");
         meta.className = "viral-meta";
-        [post.patternFamily || "pattern", post.rating || "unrated", new Date(post.createdAt).toLocaleDateString("ms-MY")].forEach((value) => {
+        [
+          post.metadata?.patternLabel || post.patternFamily || "pattern",
+          post.metadata?.publishedAt ? "Published" : (post.rating || "unrated"),
+          new Date(post.createdAt).toLocaleDateString("ms-MY")
+        ].forEach((value) => {
           const span = document.createElement("span");
           span.textContent = value;
           meta.appendChild(span);

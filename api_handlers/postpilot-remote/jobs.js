@@ -12,6 +12,11 @@ function threadsPayload(body) {
     category: String(post?.category || ""),
     tone: String(post?.tone || ""),
     structure: String(post?.structure || ""),
+    textHash: String(post?.textHash || ""),
+    patternId: String(post?.patternId || ""),
+    patternLabel: String(post?.patternLabel || post?.structure || ""),
+    angleId: String(post?.angleId || ""),
+    rhythmId: String(post?.rhythmId || ""),
   }));
   return { posts, batchDelayMs: Math.max(30_000, Number(body.batchDelayMs) || 30_000) };
 }

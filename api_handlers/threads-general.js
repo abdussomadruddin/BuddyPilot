@@ -1,20 +1,13 @@
 const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/postpilot");
 const templates = require("../lib/threads-viral-templates");
-const {
-  generateAdaptivePost,
-  threadsFamilyDeck,
-} = require("../lib/postpilot-pattern-engine");
+const { generateThreadsGeneralBatch } = require("../lib/threads-general-engine");
 const {
   getPostPilotVoiceProfile,
   listPostPilotCopyHistory,
   prunePostPilotCopyHistory,
-  recordPostPilotCopyHistory,
+  recordPostPilotCopyHistoryBatch,
 } = require("../lib/supabase-db");
-
-function randomItem(values) {
-  return values[Math.floor(Math.random() * values.length)] || values[0] || "";
-}
 
 function hashtags(category, topic, enabled) {
   if (!enabled) return "";
@@ -37,59 +30,80 @@ module.exports = async function handler(req, res) {
     requireAuth(req);
     const body = await readJsonBody(req);
     const count = [1, 10, 50].includes(Number(body.count)) ? Number(body.count) : 1;
-    const randomize = Boolean(body.randomize) || count > 1;
     const history = await listPostPilotCopyHistory({ channel: "threads_general", limit: 500 });
-    const voiceProfile = await getPostPilotVoiceProfile("", "threads_general");
-    const families = threadsFamilyDeck(count, Math.random);
-    const posts = [];
-
-    for (let index = 0; index < count; index += 1) {
-      const category = randomize ? randomItem(templates.categories) : String(body.category || "business").toLowerCase();
-      const tone = randomize ? randomItem(templates.toneOptions) : String(body.tone || "Casual");
-      const audience = randomize ? randomItem(templates.audienceTypes) : String(body.audience || "orang Malaysia");
-      const topic = randomize
-        ? randomItem(templates.topicOptions || templates.categories)
-        : String(body.topic || category);
-      const generated = generateAdaptivePost({
-        platform: "threads_general",
-        category,
-        topic,
-        tone,
-        audience,
-        history: [...posts, ...history],
-        voiceProfile,
-        forcedFamily: families[index],
-        seed: `${Date.now()}:${index}:${Math.random()}`,
-      });
-      const suffix = hashtags(category, topic, Boolean(body.hashtags));
-      const postText = `${generated.postText.slice(0, 500 - suffix.length)}${suffix}`.trim();
-      const saved = await recordPostPilotCopyHistory({
-        ...generated,
+    const savedVoiceProfile = await getPostPilotVoiceProfile("", "threads_general");
+    const generated = generateThreadsGeneralBatch({
+      count,
+      patternId: count === 1 ? String(body.patternId || "") : "",
+      category: String(body.category || "business").toLowerCase(),
+      tone: String(body.tone || "Casual"),
+      audience: String(body.audience || "orang Malaysia"),
+      categories: templates.categories,
+      tones: templates.toneOptions,
+      audiences: templates.audienceTypes,
+      history,
+      voiceProfile: savedVoiceProfile,
+      seed: `${Date.now()}:${Math.random()}`,
+    });
+    const createdAt = new Date().toISOString();
+    const pending = generated.posts.map((item) => {
+      const suffix = hashtags(item.category, item.topic, Boolean(body.hashtags));
+      const postText = `${item.postText.slice(0, 500 - suffix.length)}${suffix}`.trim();
+      return {
+        ...item,
         channel: "threads_general",
         postText,
-        intentKey: `${category}:${tone}:${audience}`,
-        metadata: { category, tone, audience, topic },
-      });
-      const post = {
-        id: saved?.id || `viral-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`,
-        postText,
-        characterCount: postText.length,
-        category,
-        tone,
-        audience,
-        topic,
-        structure: generated.patternFamily,
-        patternFamily: generated.patternFamily,
-        rating: "",
-        createdAt: new Date().toISOString(),
+        intentKey: `${item.category}:${item.tone}:${item.audience}:${item.angleId}`,
+        metadata: {
+          category: item.category,
+          tone: item.tone,
+          audience: item.audience,
+          topic: item.topic,
+          patternLabel: item.patternLabel,
+          angleId: item.angleId,
+          rhythmId: item.rhythmId,
+          robotRisk: item.robotRisk,
+          voiceActive: item.voiceActive,
+        },
       };
-      posts.push(post);
-      history.unshift({ ...generated, channel: "threads_general", postText });
-    }
+    });
+    const saved = await recordPostPilotCopyHistoryBatch(pending);
+    const savedByHash = new Map(saved.map((item) => [item.textHash, item]));
+    const posts = pending.map((item, index) => {
+      const record = savedByHash.get(item.textHash);
+      return {
+        id: record?.id || `viral-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`,
+        postText: item.postText,
+        characterCount: item.postText.length,
+        category: item.category,
+        tone: item.tone,
+        audience: item.audience,
+        topic: item.topic,
+        structure: item.patternLabel,
+        patternFamily: item.patternFamily,
+        patternId: item.patternId,
+        patternLabel: item.patternLabel,
+        angleId: item.angleId,
+        rhythmId: item.rhythmId,
+        robotRisk: item.robotRisk,
+        textHash: item.textHash,
+        lengthBucket: item.lengthBucket,
+        rating: "",
+        createdAt,
+      };
+    });
 
     await prunePostPilotCopyHistory({ channel: "threads_general", keep: 500 });
     res.statusCode = 200;
-    res.end(JSON.stringify({ ok: true, count, posts }));
+    res.end(JSON.stringify({
+      ok: true,
+      count,
+      posts,
+      voice: {
+        active: Boolean(generated.voiceProfile.active),
+        sampleCount: Number(generated.voiceProfile.sampleCount || 0),
+      },
+    }));
   } catch (error) {
     res.statusCode = error.statusCode || 400;
     res.end(JSON.stringify({ ok: false, error: error?.message || String(error) }));
