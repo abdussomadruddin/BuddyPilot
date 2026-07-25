@@ -122,6 +122,23 @@ test("Malaysia style layer keeps questions and acronyms clean", () => {
   });
 });
 
+test("abstract topics are never used as awkward actions", () => {
+  const posts = ["question", "story", "insight"].flatMap((forcedFamily) =>
+    Array.from({ length: 80 }, (_, index) => generateAdaptivePost({
+      platform: "threads_general",
+      topic: "customer trust",
+      tone: "Casual",
+      forcedFamily,
+      seed: `abstract-topic-${forcedFamily}-${index}`,
+    }).postText)
+  );
+
+  posts.forEach((post) => {
+    assert.doesNotMatch(post, /stop customer trust|customer trust buat aku|customer trust, lepas tu start/i);
+    assert.doesNotMatch(post, /nampak macam senang\.\s+(?:kejar|nak|tunggu|buat|fikir|sibuk)/i);
+  });
+});
+
 test("Malaysia style composer produces varied casing, rhythm, and shorthand", () => {
   const families = threadsFamilyDeck(100, () => 0.61);
   const posts = families.map((forcedFamily, index) => generateAdaptivePost({
