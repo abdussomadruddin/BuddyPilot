@@ -66,8 +66,27 @@ test("Threads General turns audience labels into natural Malaysian context", () 
     forcedFamily: "recommendation",
     seed: `natural-startup-audience-${index}`,
   }).postText);
-  assert.ok(posts.some((post) => /kalau kau baru start/.test(post)));
+  assert.ok(posts.some((post) => /baru nak mula|baru start|first step|belajar dari kosong/.test(post)));
   posts.forEach((post) => assert.doesNotMatch(post, /startup team/));
+});
+
+test("Threads General audience changes the real-life situation in every post", () => {
+  const common = {
+    platform: "threads_general",
+    topic: "content marketing",
+    tone: "Casual",
+    forcedFamily: "insight",
+    seed: "audience-material-change",
+  };
+  const parent = generateAdaptivePost({ ...common, audience: "parent busy" }).postText;
+  const seller = generateAdaptivePost({ ...common, audience: "seller online" }).postText;
+  const creator = generateAdaptivePost({ ...common, audience: "content creator" }).postText;
+
+  assert.notEqual(parent, seller);
+  assert.notEqual(seller, creator);
+  assert.match(parent, /kerja|rumah|masa kosong|tenaga/);
+  assert.match(seller, /follow up|explain|target|beli/);
+  assert.match(creator, /idea|content|konsisten|repeat/);
 });
 
 test("Threads General uses conversational insight wording", () => {
