@@ -35,7 +35,9 @@ module.exports = async function handler(req, res) {
         payload = {
           posts: suppliedPosts.map((post, index) => ({
             id: String(post.id || `postpilot-remote-${Date.now()}-${index}`),
-            postText: String(post.postText || "").trim(),
+            postText: String(post.facebookPostText || post.postText || "").trim(),
+            facebookPostText: String(post.facebookPostText || post.postText || "").trim(),
+            threadsPostText: String(post.threadsPostText || post.postText || "").trim(),
             commentCta: String(post.commentCta || "").trim(),
             postMode: String(post.postMode || "custom"),
             style: String(post.style || "custom"),

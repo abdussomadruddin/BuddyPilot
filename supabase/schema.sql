@@ -247,6 +247,46 @@ on public.postpilot_hook_images (use_count asc, last_used_at asc nulls first, cr
 create index if not exists postpilot_hook_images_product_rotation_idx
 on public.postpilot_hook_images (product_id, use_count asc, last_used_at asc nulls first, created_at asc);
 
+create table if not exists public.postpilot_voice_profiles (
+  scope_key text primary key,
+  product_id uuid references public.postpilot_products(id) on delete cascade,
+  channel text not null check (channel in ('promote', 'threads_general')),
+  profile jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.postpilot_copy_history (
+  id uuid primary key default gen_random_uuid(),
+  channel text not null check (channel in ('facebook', 'threads', 'threads_general')),
+  product_id uuid references public.postpilot_products(id) on delete cascade,
+  pattern_family text not null default '',
+  pattern_id text not null default '',
+  opening_id text not null default '',
+  length_bucket text not null default '',
+  paragraph_shape text not null default '',
+  intent_key text not null default '',
+  text_hash text not null,
+  semantic_fingerprint text not null default '',
+  post_text text not null,
+  seed text not null default '',
+  rating text check (rating is null or rating in ('winner', 'average', 'weak')),
+  metadata jsonb not null default '{}'::jsonb,
+  rated_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists postpilot_copy_history_scope_idx
+on public.postpilot_copy_history (channel, product_id, created_at desc);
+create index if not exists postpilot_copy_history_product_idx
+on public.postpilot_copy_history (product_id);
+create index if not exists postpilot_copy_history_rating_idx
+on public.postpilot_copy_history (channel, product_id, rating, created_at desc);
+create unique index if not exists postpilot_copy_history_text_hash_idx
+on public.postpilot_copy_history (channel, text_hash);
+create index if not exists postpilot_voice_profiles_product_idx
+on public.postpilot_voice_profiles (product_id);
+
 create table if not exists public.postpilot_extension_devices (
   id uuid primary key default gen_random_uuid(),
   device_name text not null default 'Mac Chrome',
@@ -425,6 +465,11 @@ create trigger postpilot_products_touch_updated_at
 before update on public.postpilot_products
 for each row execute function public.touch_updated_at();
 
+drop trigger if exists postpilot_voice_profiles_touch_updated_at on public.postpilot_voice_profiles;
+create trigger postpilot_voice_profiles_touch_updated_at
+before update on public.postpilot_voice_profiles
+for each row execute function public.touch_updated_at();
+
 drop trigger if exists tiktok_mcp_connections_touch_updated_at on public.tiktok_mcp_connections;
 create trigger tiktok_mcp_connections_touch_updated_at
 before update on public.tiktok_mcp_connections
@@ -456,6 +501,8 @@ alter table public.telegram_daily_deliveries enable row level security;
 alter table public.postpilot_drafts enable row level security;
 alter table public.postpilot_hook_images enable row level security;
 alter table public.postpilot_products enable row level security;
+alter table public.postpilot_voice_profiles enable row level security;
+alter table public.postpilot_copy_history enable row level security;
 alter table public.postpilot_extension_devices enable row level security;
 alter table public.postpilot_extension_pair_codes enable row level security;
 alter table public.postpilot_automation_jobs enable row level security;
@@ -465,6 +512,10 @@ alter table public.operations_incidents enable row level security;
 grant select, insert, update, delete on public.postpilot_hook_images to service_role;
 grant select, insert, update, delete on public.postpilot_products to service_role;
 revoke all on public.postpilot_products from anon, authenticated;
+grant select, insert, update, delete on public.postpilot_voice_profiles to service_role;
+grant select, insert, update, delete on public.postpilot_copy_history to service_role;
+revoke all on public.postpilot_voice_profiles from anon, authenticated;
+revoke all on public.postpilot_copy_history from anon, authenticated;
 grant select, insert, update, delete on public.tiktok_mcp_connections to service_role;
 revoke all on public.tiktok_mcp_connections from anon, authenticated;
 grant select, insert, update, delete on public.push_subscriptions to service_role;

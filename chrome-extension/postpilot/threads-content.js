@@ -8,6 +8,10 @@ const STEP_RETRY_INTERVAL_MS = 5_000;
 
 let inPageRun = false;
 
+function threadsCaption(draft) {
+  return String(draft?.threadsPostText || draft?.threads_post_text || draft?.postText || "").trim();
+}
+
 function sleep(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
@@ -354,7 +358,7 @@ async function waitStep(check, { timeout = STEP_RETRY_MS, interval = STEP_RETRY_
 
 async function getDraft() {
   const { currentDraft } = await chrome.storage.local.get("currentDraft");
-  if (!currentDraft?.postText) throw new Error("Tiada draft Post Pilot. Hantar draft dari webapp dahulu.");
+  if (!threadsCaption(currentDraft)) throw new Error("Tiada draft Post Pilot. Hantar draft dari webapp dahulu.");
   return currentDraft;
 }
 
@@ -450,7 +454,7 @@ async function fillCaptionOnce(draft) {
   await waitStep(async () => {
     const textbox = findTextboxIn(activeComposerScope()) || findTextboxIn(document);
     if (!textbox) return null;
-    await fillOnce(textbox, draft.postText, "Threads caption");
+    await fillOnce(textbox, threadsCaption(draft), "Threads caption");
     return textbox;
   }, {
     label: "Threads 3/6 Isi caption sekali sahaja",
@@ -533,7 +537,7 @@ async function runThreadsAutomation({ manual = false } = {}) {
     if (draft.remoteJobId) {
       window.scrollTo({ top: 0, behavior: "instant" });
       await sleep(500);
-      if (findExistingThread(draft.postText)) {
+      if (findExistingThread(threadsCaption(draft))) {
         steps.push("Caption ini sudah live di Threads. Skip supaya tidak duplicate.");
         await chrome.storage.local.set({ [COMPLETED_AUTOMATION_KEY]: automationId });
         notifyThreadsDone(automationId, false);
@@ -587,7 +591,7 @@ async function runThreadsTextOnlyAutomation({ manual = false } = {}) {
     if (draft.remoteJobId) {
       window.scrollTo({ top: 0, behavior: "instant" });
       await sleep(500);
-      if (findExistingThread(draft.postText)) {
+      if (findExistingThread(threadsCaption(draft))) {
         steps.push("Caption ini sudah live di Threads. Skip supaya tidak duplicate.");
         await chrome.storage.local.set({ [COMPLETED_AUTOMATION_KEY]: automationId });
         notifyThreadsDone(automationId, true);

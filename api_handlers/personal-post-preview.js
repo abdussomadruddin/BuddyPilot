@@ -1,6 +1,11 @@
 const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/postpilot");
 const { buildPersonalPostPreview } = require("../lib/personal-postpilot");
+const {
+  getPostPilotVoiceProfile,
+  listPostPilotCopyHistory,
+  recordPostPilotCopyHistory,
+} = require("../lib/supabase-db");
 
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
@@ -14,6 +19,9 @@ module.exports = async function handler(req, res) {
   try {
     requireAuth(req);
     const body = await readJsonBody(req);
+    const productId = String(body.product_id || body.active_product_id || "").trim();
+    const history = await listPostPilotCopyHistory({ productId, limit: 300 });
+    const voiceProfile = await getPostPilotVoiceProfile(productId, "promote");
     const { preview } = await buildPersonalPostPreview({
       productName: body.product_name,
       affiliateLink: body.affiliate_link,
@@ -23,13 +31,30 @@ module.exports = async function handler(req, res) {
       customPost: body.custom_post,
       customComment: body.custom_comment,
       variation: body.variation,
+      history,
+      voiceProfile,
     });
+    for (const [channel, pattern, postText] of [
+      ["facebook", preview.pattern.facebook, preview.facebook_post_text],
+      ["threads", preview.pattern.threads, preview.threads_post_text],
+    ]) {
+      await recordPostPilotCopyHistory({
+        ...pattern,
+        channel,
+        productId,
+        postText,
+        intentKey: preview.post_mode,
+        metadata: { source: "preview" },
+      });
+    }
 
     res.statusCode = 200;
     res.end(JSON.stringify({
       ok: true,
       preview: {
         post_text: preview.post_text,
+        facebook_post_text: preview.facebook_post_text,
+        threads_post_text: preview.threads_post_text,
         comment_cta: preview.comment_cta,
         product_name: preview.product_name,
         affiliate_link: preview.affiliate_link,
@@ -44,6 +69,7 @@ module.exports = async function handler(req, res) {
         },
         variation: preview.variation,
         style: preview.style,
+        pattern: preview.pattern,
       },
     }));
   } catch (error) {

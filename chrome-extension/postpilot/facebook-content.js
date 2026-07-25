@@ -8,6 +8,10 @@ const STEP_RETRY_INTERVAL_MS = 5_000;
 
 let inPageRun = false;
 
+function facebookCaption(draft) {
+  return String(draft?.facebookPostText || draft?.facebook_post_text || draft?.postText || "").trim();
+}
+
 function sleep(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
@@ -441,7 +445,7 @@ function commentSubmitScope(commentBox) {
 
 async function getDraft() {
   const { currentDraft } = await chrome.storage.local.get("currentDraft");
-  if (!currentDraft?.postText) throw new Error("Tiada draft Post Pilot. Hantar draft dari webapp dahulu.");
+  if (!facebookCaption(currentDraft)) throw new Error("Tiada draft Post Pilot. Hantar draft dari webapp dahulu.");
   return currentDraft;
 }
 
@@ -776,11 +780,11 @@ async function waitForPostPublished(draft) {
   }).catch(() => {});
 
   return waitStep(() => {
-    const matchedPost = findNewestPostByCaption(draft.postText, { allowFallback: true });
+    const matchedPost = findNewestPostByCaption(facebookCaption(draft), { allowFallback: true });
     if (matchedPost) return matchedPost;
     if (activeDialog()) return null;
     window.scrollTo({ top: 0, behavior: "instant" });
-    return findNewestPostByCaption(draft.postText, { allowFallback: true });
+    return findNewestPostByCaption(facebookCaption(draft), { allowFallback: true });
   }, {
     timeout: STEP_RETRY_MS,
     interval: STEP_RETRY_INTERVAL_MS,
@@ -791,8 +795,8 @@ async function waitForPostPublished(draft) {
 
 async function openCommentBoxForPost(postNode, draft) {
   return waitStep(async (attempt) => {
-    const freshPost = draft?.postText
-      ? findNewestPostByCaption(draft.postText, { allowFallback: true }) || postNode
+    const freshPost = facebookCaption(draft)
+      ? findNewestPostByCaption(facebookCaption(draft), { allowFallback: true }) || postNode
       : postNode;
     if (!freshPost) return null;
     const existingBox = findTextboxIn(freshPost, "comment") || findTextboxIn(document, "comment");
@@ -842,7 +846,7 @@ async function runFullAutomation({ manual = false } = {}) {
     if (draft.remoteJobId) {
       window.scrollTo({ top: 0, behavior: "instant" });
       await sleep(500);
-      if (findNewestPostByCaption(draft.postText)) {
+      if (findNewestPostByCaption(facebookCaption(draft))) {
         steps.push("Caption ini sudah live di Facebook. Skip supaya tidak duplicate.");
         await chrome.storage.local.set({ [COMPLETED_AUTOMATION_KEY]: automationId, autoPublishedDraftId: draft.id || automationId });
         notifyFacebookDone(automationId);
@@ -866,7 +870,7 @@ async function runFullAutomation({ manual = false } = {}) {
 
     showPanel(progress(steps, "3/5 Isi personal post sekali sahaja..."), draft);
     await ensureComposerOpen(draft);
-    await fillOnceWithRetry(() => findTextboxIn(activeComposerScope(), "post"), draft.postText, "Personal post", "3/5 Isi personal post", draft);
+    await fillOnceWithRetry(() => findTextboxIn(activeComposerScope(), "post"), facebookCaption(draft), "Personal post", "3/5 Isi personal post", draft);
     await removeLinkPreviewIfPresent();
     steps.push("3/5 Personal post clean, tiada duplicate.");
 
@@ -904,7 +908,7 @@ async function fillPostOnly() {
     await clickPhotoVideo(draft);
     await attachHookImageFromDraft(draft);
     await ensureComposerOpen(draft);
-    await fillOnceWithRetry(() => findTextboxIn(activeComposerScope(), "post"), draft.postText, "Personal post", "3/5 Isi personal post", draft);
+    await fillOnceWithRetry(() => findTextboxIn(activeComposerScope(), "post"), facebookCaption(draft), "Personal post", "3/5 Isi personal post", draft);
     await removeLinkPreviewIfPresent();
     showPanel("Post personal sudah diisi sekali sahaja. Semak composer.", draft);
     return { ok: true };
@@ -917,7 +921,7 @@ async function fillCommentOnly() {
   const draft = await getDraft();
   await acquireRunLock("fill-comment", draft.automationId || draft.id || "", true);
   try {
-    const postNode = findNewestPostByCaption(draft.postText) || document;
+    const postNode = findNewestPostByCaption(facebookCaption(draft)) || document;
     const commentBox = await openCommentBoxForPost(postNode, draft);
     await fillCommentOnce(commentBox, draft.commentCta, draft);
     showPanel("CTA komen sudah diisi sekali sahaja. Semak sebelum post komen.", draft);

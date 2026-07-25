@@ -4415,6 +4415,37 @@ function pageHtml() {
                   <option value="objection">Objection</option>
                 </select>
               </div>
+              <details class="full advanced-panel">
+                <summary>Voice Lock</summary>
+                <p class="note">Kekalkan cara cakap yang sama untuk produk ini, walaupun pattern post berubah.</p>
+                <div class="client-grid">
+                  <div>
+                    <label for="postPilotVoiceSlang">Gaya bahasa</label>
+                    <select id="postPilotVoiceSlang">
+                      <option value="light">Santai ringan</option>
+                      <option value="moderate" selected>Malaysia natural</option>
+                      <option value="strong">Lebih slang</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="postPilotVoiceEnglish">Malay-English mix</label>
+                    <select id="postPilotVoiceEnglish">
+                      <option value="off">BM sahaja</option>
+                      <option value="light" selected>Light</option>
+                      <option value="moderate">Moderate</option>
+                    </select>
+                  </div>
+                  <div class="full">
+                    <label for="postPilotVoicePreferred">Ayat yang aku selalu guna</label>
+                    <input id="postPilotVoicePreferred" type="text" placeholder="Contoh, jujur aku rasa, senang cerita">
+                  </div>
+                  <div class="full">
+                    <label for="postPilotVoiceBanned">Ayat yang jangan guna</label>
+                    <input id="postPilotVoiceBanned" type="text" placeholder="Pisahkan dengan koma">
+                  </div>
+                </div>
+                <button id="savePostPilotVoiceButton" class="secondary" type="button">Save Voice Lock</button>
+              </details>
               <div>
                 <label for="threadsHookImage">Gambar hook</label>
                 <input id="threadsHookImage" name="hook_image" type="file" multiple accept="image/jpeg,image/png,image/webp">
@@ -4521,6 +4552,16 @@ function pageHtml() {
               <button id="clearSavedViralButton" class="secondary" type="button">Clear Saved Posts</button>
             </div>
             <div id="viralSavedOutput" class="viral-post-grid"></div>
+          </section>
+          <section class="saved-viral-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Post history</h2>
+                <p class="note">History server digunakan untuk elak pattern dan ayat berulang pada semua device.</p>
+              </div>
+              <button id="refreshViralHistoryButton" class="secondary" type="button">Refresh</button>
+            </div>
+            <div id="viralHistoryOutput" class="viral-post-grid"></div>
           </section>
         </div>
       </section>
@@ -5019,6 +5060,11 @@ Review retargeting when the warm audience is ready</textarea>
     const threadsHookImageStatus = document.getElementById("threadsHookImageStatus");
     const threadsHookGallery = document.getElementById("threadsHookGallery");
     const threadsBatchPostButton = document.getElementById("threadsBatchPostButton");
+    const postPilotVoiceSlang = document.getElementById("postPilotVoiceSlang");
+    const postPilotVoiceEnglish = document.getElementById("postPilotVoiceEnglish");
+    const postPilotVoicePreferred = document.getElementById("postPilotVoicePreferred");
+    const postPilotVoiceBanned = document.getElementById("postPilotVoiceBanned");
+    const savePostPilotVoiceButton = document.getElementById("savePostPilotVoiceButton");
     const threadsResult = document.getElementById("threadsResult");
     const remoteDeviceDot = document.getElementById("remoteDeviceDot");
     const remoteDeviceStatus = document.getElementById("remoteDeviceStatus");
@@ -5049,6 +5095,8 @@ Review retargeting when the warm audience is ready</textarea>
     const exportSavedViralButton = document.getElementById("exportSavedViralButton");
     const clearSavedViralButton = document.getElementById("clearSavedViralButton");
     const viralSavedOutput = document.getElementById("viralSavedOutput");
+    const viralHistoryOutput = document.getElementById("viralHistoryOutput");
+    const refreshViralHistoryButton = document.getElementById("refreshViralHistoryButton");
     const invoicePeriod = document.getElementById("invoicePeriod");
     const generateInvoicesButton = document.getElementById("generateInvoicesButton");
     const uploadInvoicesButton = document.getElementById("uploadInvoicesButton");
@@ -5263,6 +5311,10 @@ Review retargeting when the warm audience is ready</textarea>
 
     deleteProductButton.addEventListener("click", () => {
       deleteActivePostPilotProduct().catch(showThreadsError);
+    });
+
+    savePostPilotVoiceButton.addEventListener("click", () => {
+      savePostPilotVoiceProfile().catch(showThreadsError);
     });
 
     function showError(error) {
@@ -6424,6 +6476,39 @@ Review retargeting when the warm audience is ready</textarea>
       renderPostPilotProducts();
     }
 
+    async function loadPostPilotVoiceProfile() {
+      if (!activePostPilotProductId) return;
+      const response = await fetch(\`/api/postpilot-voice-profile?channel=promote&product_id=\${encodeURIComponent(activePostPilotProductId)}\`);
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load Voice Lock.");
+      const profile = json.profile || {};
+      postPilotVoiceSlang.value = profile.slang || "moderate";
+      postPilotVoiceEnglish.value = profile.englishMix || "light";
+      postPilotVoicePreferred.value = (profile.preferredPhrases || []).join(", ");
+      postPilotVoiceBanned.value = (profile.bannedPhrases || []).join(", ");
+    }
+
+    async function savePostPilotVoiceProfile() {
+      if (!activePostPilotProductId) throw new Error("Pilih produk dahulu.");
+      const response = await fetch(\`/api/postpilot-voice-profile?channel=promote&product_id=\${encodeURIComponent(activePostPilotProductId)}\`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          profile: {
+            pronouns: "aku_kau",
+            slang: postPilotVoiceSlang.value,
+            englishMix: postPilotVoiceEnglish.value,
+            emoji: false,
+            preferredPhrases: postPilotVoicePreferred.value.split(",").map((value) => value.trim()).filter(Boolean),
+            bannedPhrases: postPilotVoiceBanned.value.split(",").map((value) => value.trim()).filter(Boolean)
+          }
+        })
+      });
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal save Voice Lock.");
+      setMessage(threadsResult, "ok", "Voice Lock produk sudah disimpan.");
+    }
+
     async function activatePostPilotProduct(productId, { persist = true } = {}) {
       const product = postPilotProducts.find((item) => item.id === productId);
       if (!product) return;
@@ -6438,7 +6523,7 @@ Review retargeting when the warm audience is ready</textarea>
       threadsCommentPreview.value = "";
       renderPostPilotGallery();
       if (persist) await savePostPilotInputsToSupabase();
-      await loadPostPilotGallery();
+      await Promise.all([loadPostPilotGallery(), loadPostPilotVoiceProfile()]);
     }
 
     async function createPostPilotProductFromForm() {
@@ -6754,7 +6839,7 @@ Review retargeting when the warm audience is ready</textarea>
     function showThreadsPreview(json, { reveal = true, message = "" } = {}) {
       currentThreadsPreview = json.preview;
       seenThreadsVariations = [Number(currentThreadsPreview.variation || 0)];
-      threadsPostPreview.value = currentThreadsPreview.post_text || "";
+      threadsPostPreview.value = currentThreadsPreview.facebook_post_text || currentThreadsPreview.post_text || "";
       threadsCommentPreview.value = currentThreadsPreview.comment_cta || "";
       threadsPreviewMeta.textContent = [
         \`Produk: \${currentThreadsPreview.product_context?.product_name || currentThreadsPreview.product_name || "-"}\`,
@@ -6808,6 +6893,14 @@ Review retargeting when the warm audience is ready</textarea>
             threadsPostPreview.value,
             currentThreadsPreview.affiliate_link || document.getElementById("threadsAffiliateLink").value
           ),
+          facebookPostText: normalizePostPilotMainTextForSend(
+            threadsPostPreview.value,
+            currentThreadsPreview.affiliate_link || document.getElementById("threadsAffiliateLink").value
+          ),
+          threadsPostText: currentThreadsPreview.threads_post_text || normalizePostPilotMainTextForSend(
+            threadsPostPreview.value,
+            currentThreadsPreview.affiliate_link || document.getElementById("threadsAffiliateLink").value
+          ),
           commentCta: threadsCommentPreview.value.trim(),
           productName: currentThreadsPreview.product_name || currentThreadsPreview.product_context?.product_name || "",
           affiliateLink: currentThreadsPreview.affiliate_link || "",
@@ -6837,6 +6930,8 @@ Review retargeting when the warm audience is ready</textarea>
         posts: [{
           id: "postpilot-preview-" + Date.now(),
           postText,
+          facebookPostText: postText,
+          threadsPostText: currentThreadsPreview.threads_post_text || postText,
           commentCta: threadsCommentPreview.value.trim(),
           postMode: currentThreadsPreview.post_mode || "custom",
           style: currentThreadsPreview.style || "custom"
@@ -6892,7 +6987,7 @@ Review retargeting when the warm audience is ready</textarea>
         allOption.textContent = includeAllLabel;
         select.appendChild(allOption);
       }
-      values.forEach((value) => {
+      [...new Set(values)].forEach((value) => {
         const option = document.createElement("option");
         option.value = value;
         option.textContent = value;
@@ -7038,13 +7133,30 @@ Review retargeting when the warm audience is ready</textarea>
       };
     }
 
-    function generateViralPosts(count) {
-      const posts = [];
-      for (let index = 0; index < count; index += 1) {
-        posts.push(makeViralPost(posts));
-      }
-      viralGeneratedPosts = posts;
+    async function requestViralPosts(count, randomize = false) {
+      const response = await fetch("/api/threads-general", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          count,
+          randomize,
+          topic: viralTopic.value,
+          category: viralCategory.value,
+          tone: viralTone.value,
+          audience: viralAudience.value,
+          hashtags: viralHashtags.checked
+        })
+      });
+      const json = await readApiJson(response);
+      if (response.status === 401) return void (window.location.href = "/login");
+      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal jana Threads General.");
+      return json.posts || [];
+    }
+
+    async function generateViralPosts(count) {
+      viralGeneratedPosts = await requestViralPosts(count, false);
       renderViralPosts();
+      loadViralHistory().catch(() => {});
       setMessage(viralResult, "ok", count + " Threads viral post generated.");
     }
 
@@ -7071,31 +7183,17 @@ Review retargeting when the warm audience is ready</textarea>
       };
     }
 
-    function generateRandomViralPosts(count) {
-      const posts = [];
-      const audiences = shuffledViralValues(viralTemplates.audienceTypes, count);
-      const categories = shuffledViralValues(viralTemplates.categories, count);
-      const tones = shuffledViralValues(viralTemplates.toneOptions, count);
-      const topics = shuffledViralValues(viralTemplates.topicOptions || viralTemplates.categories, count);
-      for (let index = 0; index < count; index += 1) {
-        posts.push(makeViralPost(posts, {
-          audience: audiences[index],
-          category: categories[index],
-          tone: tones[index],
-          topic: topics[index],
-        }));
-      }
-      viralGeneratedPosts = posts;
+    async function generateRandomViralPosts(count) {
+      viralGeneratedPosts = await requestViralPosts(count, true);
       renderViralPosts();
+      loadViralHistory().catch(() => {});
       setMessage(viralResult, "ok", count + " random Threads viral post generated.");
     }
 
-    function ensureViralPostCount(count) {
-      const posts = [...viralGeneratedPosts];
-      while (posts.length < count) {
-        posts.push(makeViralPost(posts, randomViralOverride()));
+    async function ensureViralPostCount(count) {
+      if (viralGeneratedPosts.length < count) {
+        viralGeneratedPosts = await requestViralPosts(count, true);
       }
-      viralGeneratedPosts = posts;
       renderViralPosts();
       return viralGeneratedPosts.slice(0, count);
     }
@@ -7158,12 +7256,26 @@ Review retargeting when the warm audience is ready</textarea>
       renderSavedViralPosts();
     }
 
-    function regenerateViralPost(postId) {
+    async function regenerateViralPost(postId) {
       const index = viralGeneratedPosts.findIndex((post) => post.id === postId);
       if (index < 0) return;
-      const existing = viralGeneratedPosts.filter((post) => post.id !== postId);
-      viralGeneratedPosts[index] = makeViralPost(existing);
+      const [replacement] = await requestViralPosts(1, false);
+      if (replacement) viralGeneratedPosts[index] = replacement;
       renderViralPosts();
+    }
+
+    async function rateViralPost(post, rating) {
+      const response = await fetch("/api/postpilot-copy-history", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: post.id, rating })
+      });
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal simpan rating post.");
+      post.rating = rating;
+      renderViralPosts();
+      loadViralHistory().catch(() => {});
+      setMessage(viralResult, "ok", "Rating disimpan. Pattern engine akan belajar daripada pilihan ini.");
     }
 
     async function postViralToThreads(post) {
@@ -7180,7 +7292,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     async function postViralBatchToThreads(count) {
-      const posts = ensureViralPostCount(count);
+      const posts = await ensureViralPostCount(count);
       try {
         await createRemoteAutomationJob({
           type: "threads_text",
@@ -7230,7 +7342,7 @@ Review retargeting when the warm audience is ready</textarea>
         regenerateButton.className = "regenerate";
         regenerateButton.type = "button";
         regenerateButton.textContent = "Regenerate";
-        regenerateButton.addEventListener("click", () => regenerateViralPost(post.id));
+        regenerateButton.addEventListener("click", () => regenerateViralPost(post.id).catch(showThreadsError));
         actions.appendChild(regenerateButton);
       }
 
@@ -7240,6 +7352,17 @@ Review retargeting when the warm audience is ready</textarea>
       favoriteButton.textContent = isViralSaved(post) ? "Saved" : "Favorite";
       favoriteButton.addEventListener("click", () => toggleViralFavorite(post));
       actions.appendChild(favoriteButton);
+
+      if (!options.savedOnly) {
+        [["winner", "Winner"], ["average", "Average"], ["weak", "Weak"]].forEach(([rating, label]) => {
+          const ratingButton = document.createElement("button");
+          ratingButton.className = post.rating === rating ? "approve" : "secondary";
+          ratingButton.type = "button";
+          ratingButton.textContent = label;
+          ratingButton.addEventListener("click", () => rateViralPost(post, rating).catch(showThreadsError));
+          actions.appendChild(ratingButton);
+        });
+      }
 
       const postButton = document.createElement("button");
       postButton.className = "approve";
@@ -7289,6 +7412,40 @@ Review retargeting when the warm audience is ready</textarea>
       fillSelectOptions(viralSavedToneFilter, viralTemplates.toneOptions || [], "All tones");
       loadViralPosts();
       renderSavedViralPosts();
+      loadViralHistory().catch(() => {});
+    }
+
+    async function loadViralHistory() {
+      const response = await fetch("/api/postpilot-copy-history?channel=threads_general&limit=30");
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load post history.");
+      viralHistoryOutput.innerHTML = "";
+      (json.posts || []).forEach((post) => {
+        const card = document.createElement("article");
+        card.className = "viral-post-card";
+        const text = document.createElement("p");
+        text.className = "viral-post-text";
+        text.textContent = post.postText;
+        const meta = document.createElement("div");
+        meta.className = "viral-meta";
+        [post.patternFamily || "pattern", post.rating || "unrated", new Date(post.createdAt).toLocaleDateString("ms-MY")].forEach((value) => {
+          const span = document.createElement("span");
+          span.textContent = value;
+          meta.appendChild(span);
+        });
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        [["winner", "Winner"], ["average", "Average"], ["weak", "Weak"]].forEach(([rating, label]) => {
+          const button = document.createElement("button");
+          button.className = post.rating === rating ? "approve" : "secondary";
+          button.type = "button";
+          button.textContent = label;
+          button.addEventListener("click", () => rateViralPost(post, rating).catch(showThreadsError));
+          actions.appendChild(button);
+        });
+        card.append(text, meta, actions);
+        viralHistoryOutput.appendChild(card);
+      });
     }
 
     function showPreview(json) {
@@ -7512,6 +7669,7 @@ Review retargeting when the warm audience is ready</textarea>
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
+            product_id: activePostPilotProductId,
             product_name: currentThreadsPreview.product_name,
             affiliate_link: currentThreadsPreview.affiliate_link,
             post_mode: currentThreadsPreview.post_mode,
@@ -7530,13 +7688,15 @@ Review retargeting when the warm audience is ready</textarea>
         currentThreadsPreview = {
           ...currentThreadsPreview,
           post_text: json.preview.post_text,
+          facebook_post_text: json.preview.facebook_post_text || json.preview.post_text,
+          threads_post_text: json.preview.threads_post_text || json.preview.post_text,
           comment_cta: json.preview.comment_cta,
           product_context: json.preview.product_context,
           variation: json.preview.variation,
           style: json.preview.style
         };
         seenThreadsVariations.push(Number(currentThreadsPreview.variation || 0));
-        threadsPostPreview.value = currentThreadsPreview.post_text || "";
+        threadsPostPreview.value = currentThreadsPreview.facebook_post_text || currentThreadsPreview.post_text || "";
         threadsCommentPreview.value = currentThreadsPreview.comment_cta || "";
         threadsPreviewMeta.textContent = [
           \`Produk: \${currentThreadsPreview.product_context?.product_name || currentThreadsPreview.product_name || "-"}\`,
@@ -7563,9 +7723,9 @@ Review retargeting when the warm audience is ready</textarea>
       }
     });
 
-    generateViralOneButton.addEventListener("click", () => generateViralPosts(1));
-    generateViralTenButton.addEventListener("click", () => generateRandomViralPosts(10));
-    generateViralFiftyButton.addEventListener("click", () => generateRandomViralPosts(50));
+    generateViralOneButton.addEventListener("click", () => generateViralPosts(1).catch(showThreadsError));
+    generateViralTenButton.addEventListener("click", () => generateRandomViralPosts(10).catch(showThreadsError));
+    generateViralFiftyButton.addEventListener("click", () => generateRandomViralPosts(50).catch(showThreadsError));
     autoPostViralTenButton.addEventListener("click", () => postViralBatchToThreads(10));
     autoPostViralFiftyButton.addEventListener("click", () => postViralBatchToThreads(50));
     exportViralCsvButton.addEventListener("click", () => exportViralCsv(viralGeneratedPosts, "threads-viral-posts.csv"));
@@ -7579,6 +7739,7 @@ Review retargeting when the warm audience is ready</textarea>
     viralSavedSearch.addEventListener("input", renderSavedViralPosts);
     viralSavedCategoryFilter.addEventListener("change", renderSavedViralPosts);
     viralSavedToneFilter.addEventListener("change", renderSavedViralPosts);
+    refreshViralHistoryButton.addEventListener("click", () => loadViralHistory().catch(showThreadsError));
 
     sendThreadsExtensionButton.addEventListener("click", async () => {
       sendThreadsExtensionButton.disabled = true;
