@@ -118,6 +118,7 @@ test("Malaysia style layer keeps questions and acronyms clean", () => {
   posts.forEach((post) => {
     assert.doesNotMatch(post, /\?\./);
     assert.doesNotMatch(post, /\baI automation\b/);
+    assert.doesNotMatch(post, /\btikTok\b|\bfacebook Ads\b|\bwfh\b/);
     assert.doesNotMatch(post, /^(?:jujur aku rasa|aku baru perasan)\.$/m);
   });
 });
