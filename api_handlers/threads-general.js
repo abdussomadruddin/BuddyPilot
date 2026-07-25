@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
     const posts = [];
 
     for (let index = 0; index < count; index += 1) {
-      const category = randomize ? randomItem(templates.categories) : String(body.category || "Business");
+      const category = randomize ? randomItem(templates.categories) : String(body.category || "business").toLowerCase();
       const tone = randomize ? randomItem(templates.toneOptions) : String(body.tone || "Casual");
       const audience = randomize ? randomItem(templates.audienceTypes) : String(body.audience || "orang Malaysia");
       const topic = randomize

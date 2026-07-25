@@ -7051,7 +7051,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function viralContextFor(category) {
-      if (["Business", "Marketing", "Sales", "Side Income", "AI Automation", "TikTok Ads", "Facebook Ads", "Local Brand"].includes(category)) {
+      if (["business", "marketing", "sales", "side income", "ai automation", "tiktok ads", "facebook ads", "local brand", "content creation", "personal branding", "entrepreneurship", "startup", "freelancing", "finance", "investment", "ecommerce", "online business", "customer service", "leadership", "management", "technology"].includes(String(category || "").toLowerCase())) {
         return pickRandom(viralTemplates.businessContextPhrases);
       }
       return pickRandom(viralTemplates.malaysianContextPhrases);
@@ -7076,7 +7076,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function makeViralPost(existingPosts = [], override = {}) {
-      const category = override.category || viralCategory.value || "Business";
+      const category = String(override.category || viralCategory.value || "business").toLowerCase();
       const tone = override.tone || viralTone.value || "Casual";
       const audience = override.audience || viralAudience.value || pickRandom(viralTemplates.audienceTypes);
       const topic = (override.topic || viralTopic.value || category).trim();
