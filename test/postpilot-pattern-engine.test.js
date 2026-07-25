@@ -48,3 +48,27 @@ test("semantic similarity detects repeated wording beyond exact matches", () => 
   );
   assert.ok(score > 0.6);
 });
+
+test("Threads General turns audience labels into natural Malaysian context", () => {
+  const generated = generateAdaptivePost({
+    platform: "threads_general",
+    topic: "small business",
+    audience: "startup team",
+    forcedFamily: "recommendation",
+    seed: "natural-startup-audience",
+  });
+  assert.match(generated.postText, /kalau kau baru start/);
+  assert.doesNotMatch(generated.postText, /startup team/);
+});
+
+test("Threads General uses conversational insight wording", () => {
+  const outputs = Array.from({ length: 150 }, (_, index) => generateAdaptivePost({
+    platform: "threads_general",
+    topic: "content",
+    audience: "founder baru mula",
+    forcedFamily: index % 2 ? "insight" : "recommendation",
+    seed: `natural-wording-${index}`,
+  }).postText).join("\n");
+
+  assert.doesNotMatch(outputs, /lagi jelas satu perkara|basic yang konsisten memang jalan/);
+});
