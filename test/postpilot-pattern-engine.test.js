@@ -105,3 +105,36 @@ test("Threads General matches the short text-only feed rhythm", () => {
     assert.doesNotMatch(post, /small business owner|startup team/);
   });
 });
+
+test("Malaysia style layer keeps questions and acronyms clean", () => {
+  const posts = Array.from({ length: 120 }, (_, index) => generateAdaptivePost({
+    platform: "threads_general",
+    topic: "AI automation",
+    tone: index % 2 ? "Funny" : "Casual",
+    forcedFamily: index % 3 ? "question" : "story",
+    seed: `malaysia-style-clean-${index}`,
+  }).postText);
+
+  posts.forEach((post) => {
+    assert.doesNotMatch(post, /\?\./);
+    assert.doesNotMatch(post, /\baI automation\b/);
+    assert.doesNotMatch(post, /^(?:jujur aku rasa|aku baru perasan)\.$/m);
+  });
+});
+
+test("Malaysia style composer produces varied casing, rhythm, and shorthand", () => {
+  const families = threadsFamilyDeck(100, () => 0.61);
+  const posts = families.map((forcedFamily, index) => generateAdaptivePost({
+    platform: "threads_general",
+    topic: index % 2 ? "buat content" : "bisnes online",
+    tone: ["Casual", "Direct", "Funny", "Storytelling"][index % 4],
+    forcedFamily,
+    seed: `malaysia-style-variety-${index}`,
+  }).postText);
+
+  assert.ok(new Set(posts).size >= 90);
+  assert.ok(posts.some((post) => /\b(?:tak|nak|dah|ni|je|kat)\b/i.test(post)));
+  assert.ok(posts.some((post) => post.split("\n").length === 1));
+  assert.ok(posts.some((post) => post.split("\n").length >= 3));
+  assert.ok(posts.some((post) => /^[a-z]/.test(post)));
+});
