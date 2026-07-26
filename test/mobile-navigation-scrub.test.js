@@ -17,6 +17,8 @@ test("mobile navigation supports hold, finger-follow scrub, and release activati
   assert.match(appSource, /bp-glass-settle/);
   assert.match(appSource, /height: 78px/);
   assert.match(appSource, /scale\(1\.22,1\.08\)/);
+  assert.match(appSource, /opacity: 0; transform: translate3d/);
+  assert.match(appSource, /\.nav-scrubbing \.nav-liquid-indicator \{ opacity: 1;/);
 });
 
 test("content swipe and bottom navigation scrub use separate surfaces", () => {
