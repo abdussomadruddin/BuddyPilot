@@ -3950,23 +3950,23 @@ function pageHtml() {
 
       .topbar .topbar-tabs {
         --active-index: 0; inset: auto 10px calc(8px + env(safe-area-inset-bottom)); width: auto; height: 66px; padding: 5px;
-        overflow: hidden; border: 1px solid rgba(255,255,255,.76); border-radius: 27px; background: rgba(244,244,244,.66);
+        overflow: visible; border: 1px solid rgba(255,255,255,.76); border-radius: 27px; background: rgba(244,244,244,.66);
         box-shadow: 0 12px 34px rgba(15,15,15,.16), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(255,255,255,.38);
         -webkit-backdrop-filter: blur(28px) saturate(185%); backdrop-filter: blur(28px) saturate(185%);
       }
-      .nav-liquid-indicator { position: absolute; z-index: 0; top: 5px; left: 5px; display: block; width: calc((100% - 10px) / 5); height: 54px; overflow: hidden; border: 1px solid rgba(255,255,255,.92); border-radius: 22px; background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(255,255,255,.58)); box-shadow: 0 5px 18px rgba(0,0,0,.11), inset 0 1px 1px rgba(255,255,255,1), inset 0 -1px 1px rgba(120,120,120,.08); transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0); transition: transform 420ms cubic-bezier(.22,1.35,.36,1), width 180ms ease, border-radius 180ms ease, box-shadow 180ms ease; will-change: transform; -webkit-backdrop-filter: blur(18px) saturate(190%); backdrop-filter: blur(18px) saturate(190%); }
-      .nav-liquid-indicator::before { content: ""; position: absolute; inset: 1px 10% auto; height: 38%; border-radius: 999px; background: rgba(255,255,255,.58); filter: blur(5px); opacity: .86; pointer-events: none; }
+      .nav-liquid-indicator { position: absolute; z-index: 0; top: -8px; left: 5px; display: block; width: calc((100% - 10px) / 5); height: 78px; overflow: hidden; border: 1px solid rgba(255,255,255,.94); border-radius: 50%; background: radial-gradient(circle at 38% 24%, rgba(255,255,255,.98) 0, rgba(255,255,255,.72) 35%, rgba(225,235,245,.52) 72%, rgba(255,255,255,.66) 100%); box-shadow: 0 12px 28px rgba(0,0,0,.18), 0 0 0 1px rgba(180,205,225,.22), inset 0 2px 2px rgba(255,255,255,1), inset 0 -3px 6px rgba(95,125,150,.13); transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0) scale(1.08); transform-origin: center; transition: transform 440ms cubic-bezier(.22,1.4,.36,1), box-shadow 180ms ease; will-change: transform; -webkit-backdrop-filter: blur(24px) saturate(210%); backdrop-filter: blur(24px) saturate(210%); }
+      .nav-liquid-indicator::before { content: ""; position: absolute; inset: 3px 15% auto; height: 34%; border-radius: 50%; background: rgba(255,255,255,.7); filter: blur(5px); opacity: .94; pointer-events: none; }
       .nav-liquid-indicator::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: -55%; width: 38%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.9), transparent); opacity: 0; transform: skewX(-18deg); pointer-events: none; }
       .topbar .topbar-tabs .tab-button { position: relative; z-index: 1; min-height: 54px; border-radius: 22px; transition: color 150ms ease, opacity 150ms ease, transform 180ms cubic-bezier(.22,1.35,.36,1); }
-      .topbar .topbar-tabs .tab-button.active { color: #111; }
-      .topbar .topbar-tabs .tab-button.active .icon { color: var(--red); }
+      .topbar .topbar-tabs .tab-button.active { color: #111; transform: translateY(-3px) scale(1.04); }
+      .topbar .topbar-tabs .tab-button.active .icon { color: var(--red); transform: scale(1.14); }
       .topbar .topbar-tabs { touch-action: none; -webkit-user-select: none; user-select: none; }
       .topbar .topbar-tabs.nav-scrubbing { background: rgba(242,242,242,.58); box-shadow: 0 16px 42px rgba(15,15,15,.22), inset 0 1px 0 rgba(255,255,255,.96); }
-      .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator { transform: translate3d(var(--scrub-x, 0px),0,0) scale(1.06,.96); transition: none; border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,.15), inset 0 1px 1px #fff, inset 0 -1px 1px rgba(120,120,120,.06); }
+      .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator { transform: translate3d(var(--scrub-x, 0px),0,0) scale(1.22,1.08); transition: none; border-radius: 50%; box-shadow: 0 16px 34px rgba(0,0,0,.22), 0 0 0 1px rgba(190,220,245,.28), inset 0 2px 3px #fff, inset 0 -4px 8px rgba(80,115,145,.14); }
       .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator::after { opacity: .92; animation: bp-glass-glint 850ms ease-in-out infinite; }
       .topbar .topbar-tabs.nav-scrubbing .tab-button { opacity: .58; }
-      .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview { color: #111; opacity: 1; transform: translateY(-2px) scale(1.05); }
-      .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview .icon { color: var(--red); transform: scale(1.16); }
+      .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview { color: #111; opacity: 1; transform: translateY(-5px) scale(1.09); }
+      .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview .icon { color: var(--red); transform: scale(1.24); }
       .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview span { font-weight: 800; }
       .topbar .topbar-tabs.nav-settling .nav-liquid-indicator { animation: bp-glass-settle 440ms cubic-bezier(.22,1.35,.36,1); }
       .tab-panel.active { touch-action: pan-y; will-change: transform, opacity; }
