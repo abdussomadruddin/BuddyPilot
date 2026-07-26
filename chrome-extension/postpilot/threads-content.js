@@ -12,6 +12,56 @@ function threadsCaption(draft) {
   return String(draft?.threadsPostText || draft?.threads_post_text || draft?.postText || "").trim();
 }
 
+function splitThreadsChain(value, maxChars = 430) {
+  const paragraphs = String(value || "")
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const units = [];
+
+  for (const paragraph of paragraphs) {
+    if (paragraph.length <= maxChars) {
+      units.push(paragraph);
+      continue;
+    }
+    const sentences = paragraph.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [paragraph];
+    for (const sentence of sentences.map((part) => part.trim()).filter(Boolean)) {
+      if (sentence.length <= maxChars) {
+        units.push(sentence);
+        continue;
+      }
+      const words = sentence.split(/\s+/);
+      let line = "";
+      for (const word of words) {
+        const next = line ? `${line} ${word}` : word;
+        if (next.length > maxChars && line) {
+          units.push(line);
+          line = word;
+        } else {
+          line = next;
+        }
+      }
+      if (line) units.push(line);
+    }
+  }
+
+  const segments = [];
+  for (const unit of units) {
+    const next = segments.length ? `${segments[segments.length - 1]}\n\n${unit}` : unit;
+    if (segments.length && next.length <= maxChars) {
+      segments[segments.length - 1] = next;
+    } else {
+      segments.push(unit);
+    }
+  }
+  return segments.filter(Boolean);
+}
+
+function threadsDuplicateNeedle(draft) {
+  return splitThreadsChain(threadsCaption(draft))[0] || threadsCaption(draft);
+}
+
 function sleep(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
@@ -112,6 +162,18 @@ function findPostButton(scope = activeComposerScope()) {
   ]) || (scope !== document ? findClickableIn(document, ["^post$", "^publish$", "^share$"]) : null);
 }
 
+function findAddToThreadButton(scope = activeComposerScope()) {
+  return findClickableIn(scope, [
+    "^add to thread$",
+    "add to thread",
+    "add another thread",
+    "tambah pada thread",
+    "tambah ke thread",
+  ]) || (scope !== document
+    ? findClickableIn(document, ["^add to thread$", "add to thread", "add another thread"])
+    : null);
+}
+
 function findFileInput(scope = activeComposerScope()) {
   return [...scope.querySelectorAll("input[type='file']"), ...document.querySelectorAll("input[type='file']")]
     .find((node) => !node.disabled && (!node.accept || /image|\*/i.test(node.accept)));
@@ -139,7 +201,7 @@ function findUploadButton(scope = activeComposerScope()) {
   return iconButtons[0] || null;
 }
 
-function findTextboxIn(scope = activeComposerScope()) {
+function findThreadTextboxes(scope = activeComposerScope()) {
   const root = scope || document;
   const candidates = [
     ...root.querySelectorAll('[contenteditable="true"][role="textbox"]'),
@@ -147,15 +209,19 @@ function findTextboxIn(scope = activeComposerScope()) {
     ...root.querySelectorAll("textarea"),
   ].filter((node) => visible(node) && !node.closest(`#${PANEL_ID}`));
 
-  return candidates.find((node) => {
+  return [...new Set(candidates)].filter((node) => {
     const label = `${attrOf(node, "aria-label")} ${attrOf(node, "aria-placeholder")} ${attrOf(node, "placeholder")}`.toLowerCase();
     if (label.includes("search")) return false;
     if (label.includes("reply") || label.includes("comment")) return false;
     return label.includes("thread")
       || label.includes("what")
       || label.includes("new")
-      || textOf(node).length < 120;
-  }) || candidates[0] || null;
+      || node.closest('[role="dialog"], [aria-modal="true"]');
+  });
+}
+
+function findTextboxIn(scope = activeComposerScope()) {
+  return findThreadTextboxes(scope)[0] || null;
 }
 
 function findExistingThread(postText) {
@@ -462,6 +528,40 @@ async function fillCaptionOnce(draft) {
   });
 }
 
+async function fillCaptionChainOnce(draft) {
+  const segments = splitThreadsChain(threadsCaption(draft));
+  if (!segments.length) throw new Error("Caption Threads kosong.");
+  if (segments.length === 1) {
+    await fillCaptionOnce(draft);
+    return segments;
+  }
+
+  const firstTextbox = await waitStep(() => findThreadTextboxes(activeComposerScope())[0] || findThreadTextboxes(document)[0], {
+    label: `Threads 3/6 Composer 1/${segments.length}`,
+    draft,
+  });
+  await fillOnce(firstTextbox, segments[0], `Threads caption 1/${segments.length}`);
+
+  for (let index = 1; index < segments.length; index += 1) {
+    const before = findThreadTextboxes(activeComposerScope());
+    const addButton = await waitStep(() => findAddToThreadButton(activeComposerScope()) || findAddToThreadButton(document), {
+      label: `Threads 3/6 Add to thread ${index + 1}/${segments.length}`,
+      draft,
+    });
+    addButton.scrollIntoView({ block: "center", inline: "nearest" });
+    addButton.click();
+    const textbox = await waitStep(() => {
+      const after = findThreadTextboxes(activeComposerScope());
+      return after.find((node) => !before.includes(node)) || (after.length > before.length ? after[after.length - 1] : null);
+    }, {
+      label: `Threads 3/6 Composer ${index + 1}/${segments.length}`,
+      draft,
+    });
+    await fillOnce(textbox, segments[index], `Threads caption ${index + 1}/${segments.length}`);
+  }
+  return segments;
+}
+
 async function clickThreadsPost(draft) {
   const postButton = await waitStep(() => findPostButton(activeComposerScope()) || findPostButton(document), {
     label: "Threads 4/6 Button Post",
@@ -537,7 +637,7 @@ async function runThreadsAutomation({ manual = false } = {}) {
     if (draft.remoteJobId) {
       window.scrollTo({ top: 0, behavior: "instant" });
       await sleep(500);
-      if (findExistingThread(threadsCaption(draft))) {
+      if (findExistingThread(threadsDuplicateNeedle(draft))) {
         steps.push("Caption ini sudah live di Threads. Skip supaya tidak duplicate.");
         await chrome.storage.local.set({ [COMPLETED_AUTOMATION_KEY]: automationId });
         notifyThreadsDone(automationId, false);
@@ -557,9 +657,10 @@ async function runThreadsAutomation({ manual = false } = {}) {
     await attachHookImage(draft);
     steps.push("Threads 2/6 Gambar hook siap.");
 
-    showPanel(progress(steps, "Threads 3/6 Isi caption sekali sahaja..."), draft);
-    await fillCaptionOnce(draft);
-    steps.push("Threads 3/6 Caption clean, tiada duplicate.");
+    const chainSize = splitThreadsChain(threadsCaption(draft)).length;
+    showPanel(progress(steps, `Threads 3/6 Isi ${chainSize} post berangkai...`), draft);
+    await fillCaptionChainOnce(draft);
+    steps.push(`Threads 3/6 ${chainSize} post berangkai siap, tiada duplicate.`);
 
     showPanel(progress(steps, "Threads 4/6 Tekan Post..."), draft);
     await clickThreadsPost(draft);

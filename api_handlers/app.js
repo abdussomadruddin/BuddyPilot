@@ -4493,13 +4493,9 @@ function pageHtml() {
             <label for="threadsPostPreview">Post utama</label>
             <textarea id="threadsPostPreview"></textarea>
 
-            <label for="threadsCommentPreview">Komen CTA</label>
-            <textarea id="threadsCommentPreview"></textarea>
-
             <div class="actions">
               <button class="approve" id="sendThreadsExtensionButton" type="button">POST NOW</button>
               <button class="regenerate" id="regenerateThreadsButton" type="button">Jana Semula Post</button>
-              <button class="secondary" id="copyThreadsCtaButton" type="button">Copy CTA</button>
             </div>
           </section>
 
@@ -5075,10 +5071,8 @@ Review retargeting when the warm audience is ready</textarea>
     const threadsPreviewPanel = document.getElementById("threadsPreviewPanel");
     const threadsPreviewMeta = document.getElementById("threadsPreviewMeta");
     const threadsPostPreview = document.getElementById("threadsPostPreview");
-    const threadsCommentPreview = document.getElementById("threadsCommentPreview");
     const sendThreadsExtensionButton = document.getElementById("sendThreadsExtensionButton");
     const regenerateThreadsButton = document.getElementById("regenerateThreadsButton");
-    const copyThreadsCtaButton = document.getElementById("copyThreadsCtaButton");
     const threadsHookImage = document.getElementById("threadsHookImage");
     const threadsHookImagePreview = document.getElementById("threadsHookImagePreview");
     const threadsHookImageStatus = document.getElementById("threadsHookImageStatus");
@@ -6651,7 +6645,6 @@ Review retargeting when the warm audience is ready</textarea>
       savedThreadsImage = null;
       threadsPreviewPanel.hidden = true;
       threadsPostPreview.value = "";
-      threadsCommentPreview.value = "";
       renderPostPilotGallery();
       if (persist) await savePostPilotInputsToSupabase();
       await Promise.all([loadPostPilotGallery(), loadPostPilotVoiceProfile()]);
@@ -6727,19 +6720,19 @@ Review retargeting when the warm audience is ready</textarea>
       const safeLink = String(link || "https://swiy.co/kmethod").trim() || "https://swiy.co/kmethod";
       const lines = String(value || "")
         .replace(/https?:\\/\\/\\S+/gi, "")
-        .split(/\\r?\\n/)
+        .split(/\\n{2,}|\\r?\\n/)
         .map((line) => line.trim())
         .filter(Boolean)
-        .filter((line) => !/^klik\\s+sini\\s*:/i.test(line));
+        .filter((line) => !/^klik\\s+sini\\b/i.test(line));
       const selected = [];
       let total = 0;
       for (const line of lines) {
         const nextTotal = total + line.length + (selected.length ? 2 : 0);
-        if (selected.length >= 3 || nextTotal > 430) break;
+        if (nextTotal > 1700) break;
         selected.push(line);
         total = nextTotal;
       }
-      return [...selected, \`klik sini: \${safeLink}\`].join("\\n\\n").trim();
+      return [...selected, \`klik sini, \${safeLink}\`].join("\\n\\n").trim();
     }
 
     async function compressImageForPostPilotStorage(file) {
@@ -6971,7 +6964,6 @@ Review retargeting when the warm audience is ready</textarea>
       currentThreadsPreview = json.preview;
       seenThreadsVariations = [Number(currentThreadsPreview.variation || 0)];
       threadsPostPreview.value = currentThreadsPreview.facebook_post_text || currentThreadsPreview.post_text || "";
-      threadsCommentPreview.value = currentThreadsPreview.comment_cta || "";
       threadsPreviewMeta.textContent = [
         \`Produk: \${currentThreadsPreview.product_context?.product_name || currentThreadsPreview.product_name || "-"}\`,
         \`Concept: \${Number(currentThreadsPreview.variation || 0) + 1}/120\`,
@@ -6983,7 +6975,7 @@ Review retargeting when the warm audience is ready</textarea>
       if (message || reveal) {
         threadsResult.className = "result ok";
         threadsResult.textContent = [
-          message || "Preview Post Pilot siap. Post utama dan CTA komen sudah disediakan.",
+          message || "Preview Post Pilot siap. Caption panjang akan dipecahkan menjadi post berangkai di Threads jika perlu.",
           savedThreadsImage && !threadsHookImage.files[0] ? "Gambar hook last key in tersedia untuk extension." : "",
           preparedThreadsImageNotice || ""
         ].filter(Boolean).join("\\n\\n");
@@ -7032,7 +7024,6 @@ Review retargeting when the warm audience is ready</textarea>
             threadsPostPreview.value,
             currentThreadsPreview.affiliate_link || document.getElementById("threadsAffiliateLink").value
           ),
-          commentCta: threadsCommentPreview.value.trim(),
           productName: currentThreadsPreview.product_name || currentThreadsPreview.product_context?.product_name || "",
           affiliateLink: currentThreadsPreview.affiliate_link || "",
           postMode: currentThreadsPreview.post_mode || "soft",
@@ -7063,7 +7054,6 @@ Review retargeting when the warm audience is ready</textarea>
           postText,
           facebookPostText: postText,
           threadsPostText: currentThreadsPreview.threads_post_text || postText,
-          commentCta: threadsCommentPreview.value.trim(),
           postMode: currentThreadsPreview.post_mode || "custom",
           style: currentThreadsPreview.style || "custom"
         }]
@@ -7880,14 +7870,12 @@ Review retargeting when the warm audience is ready</textarea>
           post_text: json.preview.post_text,
           facebook_post_text: json.preview.facebook_post_text || json.preview.post_text,
           threads_post_text: json.preview.threads_post_text || json.preview.post_text,
-          comment_cta: json.preview.comment_cta,
           product_context: json.preview.product_context,
           variation: json.preview.variation,
           style: json.preview.style
         };
         seenThreadsVariations.push(Number(currentThreadsPreview.variation || 0));
         threadsPostPreview.value = currentThreadsPreview.facebook_post_text || currentThreadsPreview.post_text || "";
-        threadsCommentPreview.value = currentThreadsPreview.comment_cta || "";
         threadsPreviewMeta.textContent = [
           \`Produk: \${currentThreadsPreview.product_context?.product_name || currentThreadsPreview.product_name || "-"}\`,
           \`Concept: \${Number(currentThreadsPreview.variation || 0) + 1}/120\`,
@@ -7900,16 +7888,6 @@ Review retargeting when the warm audience is ready</textarea>
       } finally {
         regenerateThreadsButton.disabled = false;
         regenerateThreadsButton.textContent = "Jana Semula Post";
-      }
-    });
-
-    copyThreadsCtaButton.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(threadsCommentPreview.value || "");
-        threadsResult.className = "result ok";
-        threadsResult.textContent = "CTA komen sudah dicopy.";
-      } catch (error) {
-        showThreadsError(error);
       }
     });
 

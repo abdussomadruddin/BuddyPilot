@@ -1,13 +1,10 @@
 const meta = document.getElementById("meta");
 const postText = document.getElementById("postText");
-const commentCta = document.getElementById("commentCta");
 const statusBox = document.getElementById("status");
 const openFacebookButton = document.getElementById("openFacebookButton");
 const fillPostButton = document.getElementById("fillPostButton");
 const autoPostButton = document.getElementById("autoPostButton");
 const retryBatchButton = document.getElementById("retryBatchButton");
-const copyCtaButton = document.getElementById("copyCtaButton");
-const fillCommentButton = document.getElementById("fillCommentButton");
 const extensionVersion = document.getElementById("extensionVersion");
 const remoteMeta = document.getElementById("remoteMeta");
 const pairCode = document.getElementById("pairCode");
@@ -53,7 +50,6 @@ async function loadDraft() {
     if (!currentDraft) {
       meta.textContent = "Belum ada draft. Hantar dari tab Post Pilot di webapp.";
       postText.value = "";
-      commentCta.value = "";
       return;
     }
     meta.textContent = [
@@ -62,7 +58,6 @@ async function loadDraft() {
       currentDraft.image ? "gambar hook ready" : "tiada gambar"
     ].filter(Boolean).join(" | ");
     postText.value = currentDraft.postText || "";
-    commentCta.value = currentDraft.commentCta || "";
   } catch (error) {
     setStatus(error.message || String(error), true);
   }
@@ -161,24 +156,6 @@ retryBatchButton.addEventListener("click", async () => {
   try {
     await sendMessage({ type: "RESUME_POSTPILOT_BATCH" });
     setStatus("Retry batch item semasa dimulakan.");
-  } catch (error) {
-    setStatus(error.message || String(error), true);
-  }
-});
-
-copyCtaButton.addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(currentDraft?.commentCta || commentCta.value || "");
-    setStatus("CTA komen sudah dicopy.");
-  } catch (error) {
-    setStatus(error.message || String(error), true);
-  }
-});
-
-fillCommentButton.addEventListener("click", async () => {
-  try {
-    await sendMessage({ type: "FILL_ACTIVE_COMMENT" });
-    setStatus("CTA komen cuba diisi sekali sahaja. Semak sebelum post komen.");
   } catch (error) {
     setStatus(error.message || String(error), true);
   }

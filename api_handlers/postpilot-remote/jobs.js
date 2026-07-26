@@ -43,7 +43,6 @@ module.exports = async function handler(req, res) {
             postText: String(post.facebookPostText || post.postText || "").trim(),
             facebookPostText: String(post.facebookPostText || post.postText || "").trim(),
             threadsPostText: String(post.threadsPostText || post.postText || "").trim(),
-            commentCta: String(post.commentCta || "").trim(),
             postMode: String(post.postMode || "custom"),
             style: String(post.style || "custom"),
             image: { id: images[index].id, name: images[index].name, type: images[index].type || "image/jpeg", url: images[index].url },

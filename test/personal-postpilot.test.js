@@ -9,7 +9,7 @@ const {
 const MODES = ["soft", "hard", "proof", "engagement", "objection"];
 const LINK = "https://swiy.co/kmethod";
 
-test("promote copy sounds personal with an optional question and one final link", async () => {
+test("promote copy is long, personal, and keeps one final link without comment CTA", async () => {
   const outputs = [];
   const questions = [];
 
@@ -26,7 +26,8 @@ test("promote copy sounds personal with an optional question and one final link"
     const lines = text.split(/\n{2,}/);
     const questionLines = lines.filter((line) => line.endsWith("?"));
 
-    assert.ok(text.length <= 500);
+    assert.ok(text.length > 600);
+    assert.ok(text.length <= 1800);
     assert.equal((text.match(/K-Method/g) || []).length, 1);
     assert.equal((text.match(new RegExp(LINK.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length, 1);
     assert.ok(questionLines.length <= 1);
@@ -34,6 +35,7 @@ test("promote copy sounds personal with an optional question and one final link"
     assert.doesNotMatch(text.replace(LINK, ""), /\*\*|:/);
     assert.doesNotMatch(text.toLowerCase(), /yang menarik bukan sekadar produk dia|sangat berpotensi|kesimpulannya|dalam era digital/);
     assert.match(text, /\baku\b/i);
+    assert.equal(result.preview.comment_cta, "");
 
     outputs.push(text);
     if (questionLines[0]) questions.push(questionLines[0]);
