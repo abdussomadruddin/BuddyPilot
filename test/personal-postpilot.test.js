@@ -5,9 +5,19 @@ const {
   buildPersonalPostPreview,
   generatePersonalPostCopy,
 } = require("../lib/personal-postpilot");
+const { OPERATOR_PROMOTE_OPENINGS } = require("../lib/postpilot-pattern-engine");
 
 const MODES = ["soft", "hard", "proof", "engagement", "objection"];
 const LINK = "https://swiy.co/kmethod";
+
+test("promote copy has 500 unique casual opening variations", () => {
+  assert.equal(OPERATOR_PROMOTE_OPENINGS.length, 500);
+  assert.equal(new Set(OPERATOR_PROMOTE_OPENINGS).size, 500);
+  OPERATOR_PROMOTE_OPENINGS.forEach((opening) => {
+    assert.match(opening, /\b(aku|jujur|mula-mula|tadi|semalam|sekejap|pagi|malam)\b/i);
+    assert.doesNotMatch(opening, /\*\*|:/);
+  });
+});
 
 test("promote copy is long, personal, and keeps one final link without comment CTA", async () => {
   const outputs = [];
