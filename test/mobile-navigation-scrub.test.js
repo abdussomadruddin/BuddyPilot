@@ -7,7 +7,7 @@ const appSource = fs.readFileSync(path.join(__dirname, "..", "api_handlers", "ap
 
 test("mobile navigation supports hold, finger-follow scrub, and release activation", () => {
   assert.match(appSource, /function setupMainTabScrub\(\)/);
-  assert.match(appSource, /window\.setTimeout\(beginScrub, 150\)/);
+  assert.match(appSource, /window\.requestAnimationFrame\(beginScrub\)/);
   assert.match(appSource, /--scrub-x/);
   assert.match(appSource, /touchmove/);
   assert.match(appSource, /resetScrub\(true\)/);
@@ -19,6 +19,8 @@ test("mobile navigation supports hold, finger-follow scrub, and release activati
   assert.match(appSource, /scale\(1\.22,1\.08\)/);
   assert.match(appSource, /opacity: 0; transform: translate3d/);
   assert.match(appSource, /\.nav-scrubbing \.nav-liquid-indicator \{ opacity: 1;/);
+  assert.match(appSource, /nav-lens-entering/);
+  assert.match(appSource, /bp-lens-emerge/);
 });
 
 test("content swipe and bottom navigation scrub use separate surfaces", () => {

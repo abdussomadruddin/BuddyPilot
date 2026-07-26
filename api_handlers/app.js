@@ -3963,6 +3963,7 @@ function pageHtml() {
       .topbar .topbar-tabs { touch-action: none; -webkit-user-select: none; user-select: none; }
       .topbar .topbar-tabs.nav-scrubbing { background: rgba(242,242,242,.58); box-shadow: 0 16px 42px rgba(15,15,15,.22), inset 0 1px 0 rgba(255,255,255,.96); }
       .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator { opacity: 1; transform: translate3d(var(--scrub-x, 0px),0,0) scale(1.22,1.08); transition: none; border-radius: 50%; box-shadow: 0 16px 34px rgba(0,0,0,.22), 0 0 0 1px rgba(190,220,245,.28), inset 0 2px 3px #fff, inset 0 -4px 8px rgba(80,115,145,.14); }
+      .topbar .topbar-tabs.nav-scrubbing.nav-lens-entering .nav-liquid-indicator { animation: bp-lens-emerge 320ms cubic-bezier(.16,1.28,.3,1) both; }
       .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator::after { opacity: .92; animation: bp-glass-glint 850ms ease-in-out infinite; }
       .topbar .topbar-tabs.nav-scrubbing .tab-button { opacity: .58; }
       .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview { color: #111; opacity: 1; transform: translateY(-5px) scale(1.09); }
@@ -4033,6 +4034,12 @@ function pageHtml() {
     @keyframes bp-slide-back { from { opacity: 0; transform: translate3d(-38px,0,0); } to { opacity: 1; transform: translate3d(0,0,0); } }
     @keyframes bp-drawer-in { from { opacity: 0; transform: translate3d(100%,0,0); } to { opacity: 1; transform: translate3d(0,0,0); } }
     @keyframes bp-glass-glint { 0% { left: -55%; } 55%, 100% { left: 118%; } }
+    @keyframes bp-lens-emerge {
+      0% { opacity: 0; clip-path: circle(8% at 50% 64%); filter: blur(7px) brightness(1.18); }
+      58% { opacity: 1; clip-path: circle(62% at 50% 50%); filter: blur(0) brightness(1.08); }
+      78% { clip-path: circle(47% at 50% 50%); }
+      100% { opacity: 1; clip-path: circle(72% at 50% 50%); filter: blur(0) brightness(1); }
+    }
     @keyframes bp-glass-settle {
       0% { filter: brightness(1.08); }
       42% { filter: brightness(1.02); }
@@ -5965,7 +5972,7 @@ Review retargeting when the warm audience is ready</textarea>
 
       function clearHoldTimer() {
         if (!scrub?.holdTimer) return;
-        window.clearTimeout(scrub.holdTimer);
+        window.cancelAnimationFrame(scrub.holdTimer);
         scrub.holdTimer = null;
       }
 
@@ -5989,8 +5996,12 @@ Review retargeting when the warm audience is ready</textarea>
       function beginScrub() {
         if (!scrub || scrub.dragging || !mobileQuery.matches) return;
         scrub.dragging = true;
-        mobileNavigation.classList.add("nav-scrubbing");
+        mobileNavigation.classList.add("nav-scrubbing", "nav-lens-entering");
         previewAt(scrub.lastX);
+        scrub.enterTimer = window.setTimeout(() => {
+          mobileNavigation.classList.remove("nav-lens-entering");
+          if (scrub) scrub.enterTimer = null;
+        }, 340);
       }
 
       function resetScrub(activate = false) {
@@ -5998,6 +6009,7 @@ Review retargeting when the warm audience is ready</textarea>
         clearHoldTimer();
         const completed = scrub;
         scrub = null;
+        if (completed.enterTimer) window.clearTimeout(completed.enterTimer);
         if (!completed.dragging) return;
         suppressTabClickUntil = Date.now() + 500;
         const target = buttons[completed.targetIndex]?.dataset.tabTarget;
@@ -6008,7 +6020,7 @@ Review retargeting when the warm audience is ready</textarea>
         }
         buttons.forEach((button) => button.classList.remove("scrub-preview"));
         window.requestAnimationFrame(() => {
-          mobileNavigation.classList.remove("nav-scrubbing");
+          mobileNavigation.classList.remove("nav-scrubbing", "nav-lens-entering");
           mobileNavigation.style.removeProperty("--scrub-x");
           mobileNavigation.classList.remove("nav-settling");
           void mobileNavigation.offsetWidth;
@@ -6027,7 +6039,8 @@ Review retargeting when the warm audience is ready</textarea>
           lastX: touch.clientX,
           targetIndex: NAV_ITEMS.indexOf(document.querySelector(".tab-button.active")?.dataset.tabTarget),
           dragging: false,
-          holdTimer: window.setTimeout(beginScrub, 150),
+          holdTimer: window.requestAnimationFrame(beginScrub),
+          enterTimer: null,
         };
       }, { passive: true });
 
