@@ -6728,11 +6728,15 @@ Review retargeting when the warm audience is ready</textarea>
       let total = 0;
       for (const line of lines) {
         const nextTotal = total + line.length + (selected.length ? 2 : 0);
-        if (nextTotal > 1700) break;
+        if (nextTotal > 3700) break;
         selected.push(line);
         total = nextTotal;
       }
-      return [...selected, \`klik sini, \${safeLink}\`].join("\\n\\n").trim();
+      return [
+        ...selected,
+        \`baca salespage penuh dekat sini,\\n\${safeLink}\`,
+        "kalau rasa posting ni bermanfaat,\\nshare posting ni."
+      ].join("\\n\\n").trim();
     }
 
     async function compressImageForPostPilotStorage(file) {

@@ -26,12 +26,14 @@ test("promote copy is long, personal, and keeps one final link without comment C
     const lines = text.split(/\n{2,}/);
     const questionLines = lines.filter((line) => line.endsWith("?"));
 
-    assert.ok(text.length > 600);
-    assert.ok(text.length <= 1800);
-    assert.equal((text.match(/K-Method/g) || []).length, 1);
+    assert.ok(text.length > 1800);
+    assert.ok(text.length <= 3800);
+    assert.ok((text.match(/K-Method/g) || []).length >= 2);
     assert.equal((text.match(new RegExp(LINK.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length, 1);
-    assert.ok(questionLines.length <= 1);
-    assert.equal(lines.at(-1), `klik sini, ${LINK}`);
+    assert.ok(questionLines.length <= 3);
+    assert.ok(!lines.at(-1).endsWith("?"));
+    assert.equal(lines.at(-2), `baca salespage penuh dekat sini,\n${LINK}`);
+    assert.equal(lines.at(-1), "kalau rasa posting ni bermanfaat,\nshare posting ni.");
     assert.doesNotMatch(text.replace(LINK, ""), /\*\*|:/);
     assert.doesNotMatch(text.toLowerCase(), /yang menarik bukan sekadar produk dia|sangat berpotensi|kesimpulannya|dalam era digital/);
     assert.match(text, /\baku\b/i);
@@ -56,7 +58,8 @@ test("promote generator preserves hyphenated product names naturally", () => {
 
   assert.match(text, /K-Method/);
   assert.doesNotMatch(text, /\bK\b(?!-Method)/);
-  assert.ok((text.match(/\?/g) || []).length <= 1);
+  assert.ok((text.match(/\?/g) || []).length <= 3);
+  assert.ok(!text.trim().endsWith("?"));
 });
 
 test("custom promote copy removes extra links and forbidden punctuation", async () => {
@@ -70,6 +73,7 @@ test("custom promote copy removes extra links and forbidden punctuation", async 
   const text = result.preview.post_text;
 
   assert.equal((text.match(/https?:\/\//g) || []).length, 1);
-  assert.equal(text.split(/\n{2,}/).at(-1), `klik sini, ${LINK}`);
+  assert.match(text, new RegExp(`baca salespage penuh dekat sini,\\n${LINK.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}`));
+  assert.equal(text.split(/\n{2,}/).at(-1), "kalau rasa posting ni bermanfaat,\nshare posting ni.");
   assert.doesNotMatch(text.replace(LINK, ""), /\*\*|:/);
 });
