@@ -12,6 +12,9 @@ test("mobile navigation supports hold, finger-follow scrub, and release activati
   assert.match(appSource, /touchmove/);
   assert.match(appSource, /resetScrub\(true\)/);
   assert.match(appSource, /setupMainTabScrub\(\);/);
+  assert.match(appSource, /nav-settling/);
+  assert.match(appSource, /bp-glass-glint/);
+  assert.match(appSource, /bp-glass-settle/);
 });
 
 test("content swipe and bottom navigation scrub use separate surfaces", () => {
