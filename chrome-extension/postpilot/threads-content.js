@@ -5,6 +5,8 @@ const COMPLETED_AUTOMATION_KEY = "postpilotThreadsCompletedAutomationId";
 const LOCK_TTL_MS = 7 * 60_000;
 const STEP_RETRY_MS = 5 * 60_000;
 const STEP_RETRY_INTERVAL_MS = 5_000;
+const THREADS_CHAIN_VERSION = 2;
+const THREADS_SEGMENT_MAX_CHARS = 430;
 
 let inPageRun = false;
 
@@ -12,7 +14,7 @@ function threadsCaption(draft) {
   return String(draft?.threadsPostText || draft?.threads_post_text || draft?.postText || "").trim();
 }
 
-function splitThreadsChain(value, maxChars = 430) {
+function splitThreadsChain(value, maxChars = THREADS_SEGMENT_MAX_CHARS) {
   const paragraphs = String(value || "")
     .replace(/\r\n/g, "\n")
     .split(/\n{2,}/)
@@ -517,10 +519,14 @@ async function attachHookImage(draft) {
 }
 
 async function fillCaptionOnce(draft) {
+  const caption = threadsCaption(draft);
+  if (!draft?.threadsTextOnly && !draft?.threadsTextBatch && caption.length > THREADS_SEGMENT_MAX_CHARS) {
+    throw new Error("Caption promote terlalu panjang untuk satu post. Gunakan flow post berangkai.");
+  }
   await waitStep(async () => {
     const textbox = findTextboxIn(activeComposerScope()) || findTextboxIn(document);
     if (!textbox) return null;
-    await fillOnce(textbox, threadsCaption(draft), "Threads caption");
+    await fillOnce(textbox, caption, "Threads caption");
     return textbox;
   }, {
     label: "Threads 3/6 Isi caption sekali sahaja",
@@ -541,6 +547,9 @@ async function fillCaptionChainOnce(draft) {
     draft,
   });
   await fillOnce(firstTextbox, segments[0], `Threads caption 1/${segments.length}`);
+  if (textOf(firstTextbox).trim().length > THREADS_SEGMENT_MAX_CHARS) {
+    throw new Error("Composer pertama melebihi 430 aksara. Auto-post dihentikan.");
+  }
 
   for (let index = 1; index < segments.length; index += 1) {
     const before = findThreadTextboxes(activeComposerScope());
@@ -558,6 +567,14 @@ async function fillCaptionChainOnce(draft) {
       draft,
     });
     await fillOnce(textbox, segments[index], `Threads caption ${index + 1}/${segments.length}`);
+    if (textOf(textbox).trim().length > THREADS_SEGMENT_MAX_CHARS) {
+      throw new Error(`Composer ${index + 1} melebihi 430 aksara. Auto-post dihentikan.`);
+    }
+  }
+  const filled = findThreadTextboxes(activeComposerScope())
+    .filter((textbox) => normalized(textOf(textbox)).length > 0);
+  if (filled.length < segments.length) {
+    throw new Error(`Threads hanya menyediakan ${filled.length}/${segments.length} composer. Auto-post dihentikan.`);
   }
   return segments;
 }
@@ -567,6 +584,7 @@ async function clickThreadsPost(draft) {
     label: "Threads 4/6 Button Post",
     draft,
   });
+  if (disabled(postButton)) throw new Error("Button Post masih disabled. Caption berangkai belum lengkap.");
   postButton.scrollIntoView({ block: "center", inline: "nearest" });
   await sleep(250);
   postButton.click();
@@ -576,7 +594,7 @@ async function waitThreadsPosted(draft) {
   await waitStep(() => !activeDialog(), {
     label: "Threads 5/6 Composer tutup selepas Post",
     draft,
-  }).catch(() => {});
+  });
 }
 
 function notifyThreadsDone(automationId, threadsTextOnly = false, threadsTextBatch = false) {
@@ -819,6 +837,10 @@ async function runThreadsTextBatchAutomation({ manual = false } = {}) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
+    if (message?.type === "POSTPILOT_THREADS_CHAIN_CAPABILITY") {
+      sendResponse({ ok: true, chainVersion: THREADS_CHAIN_VERSION });
+      return;
+    }
     if (message?.type === "POSTPILOT_THREADS_AUTO_POST") {
       const draft = await getDraft().catch(() => null);
       const autoBlocked = draft?.autoPublish && !(await shouldAutoStartDraft(draft));
@@ -829,7 +851,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       runThreadsAutomation({ manual: true }).catch((error) => {
         showPanel(error?.message || String(error), null);
       });
-      sendResponse({ ok: true, message: "Threads auto flow started." });
+      sendResponse({ ok: true, message: "Threads auto flow started.", chainVersion: THREADS_CHAIN_VERSION });
       return;
     }
     if (message?.type === "POSTPILOT_THREADS_TEXT_ONLY_POST") {

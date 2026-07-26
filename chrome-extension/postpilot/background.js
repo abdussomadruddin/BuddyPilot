@@ -543,6 +543,17 @@ async function sendToFacebookTabWithRetry(tabId, type) {
 }
 
 async function sendToThreadsTabWithRetry(tabId, type) {
+  if (type === "POSTPILOT_THREADS_AUTO_POST") {
+    let capability = null;
+    try {
+      capability = await chrome.tabs.sendMessage(tabId, { type: "POSTPILOT_THREADS_CHAIN_CAPABILITY" });
+    } catch {
+      capability = null;
+    }
+    if (Number(capability?.chainVersion || 0) < 2) {
+      throw new Error("Threads chain engine lama masih aktif. Reload Post Pilot Assist dan refresh tab Threads.");
+    }
+  }
   return sendToTabWithRetry(tabId, type, "Threads");
 }
 

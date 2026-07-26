@@ -20,8 +20,11 @@ test("Post Pilot promote UI no longer exposes comment CTA", () => {
 
 test("Threads promote automation builds a native chained thread", () => {
   assert.match(extensionSource, /function splitThreadsChain\(/);
-  assert.match(extensionSource, /maxChars = 430/);
+  assert.match(extensionSource, /THREADS_SEGMENT_MAX_CHARS = 430/);
   assert.match(extensionSource, /function findAddToThreadButton\(/);
   assert.match(extensionSource, /function fillCaptionChainOnce\(/);
   assert.match(extensionSource, /await fillCaptionChainOnce\(draft\)/);
+  assert.match(extensionSource, /THREADS_CHAIN_VERSION = 2/);
+  assert.match(extensionSource, /Composer pertama melebihi 430 aksara/);
+  assert.match(extensionSource, /Button Post masih disabled/);
 });
