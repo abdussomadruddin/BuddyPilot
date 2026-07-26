@@ -1,0 +1,21 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+
+const appSource = fs.readFileSync(path.join(__dirname, "..", "api_handlers", "app.js"), "utf8");
+
+test("mobile navigation supports hold, finger-follow scrub, and release activation", () => {
+  assert.match(appSource, /function setupMainTabScrub\(\)/);
+  assert.match(appSource, /window\.setTimeout\(beginScrub, 150\)/);
+  assert.match(appSource, /--scrub-x/);
+  assert.match(appSource, /touchmove/);
+  assert.match(appSource, /resetScrub\(true\)/);
+  assert.match(appSource, /setupMainTabScrub\(\);/);
+});
+
+test("content swipe and bottom navigation scrub use separate surfaces", () => {
+  assert.match(appSource, /const surfaces = \[mainSurface\]\.filter\(Boolean\)/);
+  assert.match(appSource, /\.nav-scrubbing \.nav-liquid-indicator/);
+  assert.match(appSource, /\.tab-button\.scrub-preview/);
+});

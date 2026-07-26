@@ -3954,11 +3954,16 @@ function pageHtml() {
         box-shadow: 0 12px 34px rgba(15,15,15,.18), inset 0 1px 0 rgba(255,255,255,.8);
         -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
       }
-      .nav-liquid-indicator { position: absolute; z-index: 0; top: 5px; left: 5px; display: block; width: calc((100% - 10px) / 5); height: 54px; border: 1px solid rgba(255,255,255,.9); border-radius: 22px; background: rgba(255,255,255,.82); box-shadow: 0 4px 16px rgba(0,0,0,.10), inset 0 1px 0 #fff; transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0); transition: transform 420ms cubic-bezier(.22,1.35,.36,1); }
-      .topbar .topbar-tabs .tab-button { position: relative; z-index: 1; min-height: 54px; border-radius: 22px; }
+      .nav-liquid-indicator { position: absolute; z-index: 0; top: 5px; left: 5px; display: block; width: calc((100% - 10px) / 5); height: 54px; border: 1px solid rgba(255,255,255,.9); border-radius: 22px; background: rgba(255,255,255,.82); box-shadow: 0 4px 16px rgba(0,0,0,.10), inset 0 1px 0 #fff; transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0); transition: transform 420ms cubic-bezier(.22,1.35,.36,1), width 180ms ease; will-change: transform; }
+      .topbar .topbar-tabs .tab-button { position: relative; z-index: 1; min-height: 54px; border-radius: 22px; transition: color 150ms ease, opacity 150ms ease, transform 180ms cubic-bezier(.22,1.35,.36,1); }
       .topbar .topbar-tabs .tab-button.active { color: #111; }
       .topbar .topbar-tabs .tab-button.active .icon { color: var(--red); }
-      .topbar .topbar-tabs { touch-action: pan-x; }
+      .topbar .topbar-tabs { touch-action: none; -webkit-user-select: none; user-select: none; }
+      .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator { transform: translate3d(var(--scrub-x, 0px),0,0); transition: none; }
+      .topbar .topbar-tabs.nav-scrubbing .tab-button { opacity: .58; }
+      .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview { color: #111; opacity: 1; transform: translateY(-2px) scale(1.05); }
+      .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview .icon { color: var(--red); transform: scale(1.16); }
+      .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview span { font-weight: 800; }
       .tab-panel.active { touch-action: pan-y; will-change: transform, opacity; }
       .tab-panel.active.tab-swipe-dragging { animation: none; transform: translate3d(var(--tab-swipe-x, 0px), 0, 0); opacity: var(--tab-swipe-opacity, 1); transition: none; }
       .tab-panel.active.tab-swipe-returning { animation: none; transform: translate3d(0, 0, 0); opacity: 1; transition: transform 220ms cubic-bezier(.22,1,.36,1), opacity 180ms ease; }
@@ -5834,7 +5839,7 @@ Review retargeting when the warm audience is ready</textarea>
     function setupMainTabSwipe() {
       const mobileQuery = window.matchMedia("(max-width: 700px)");
       const mainSurface = document.querySelector("main");
-      const surfaces = [mainSurface, mobileNavigation].filter(Boolean);
+      const surfaces = [mainSurface].filter(Boolean);
       let gesture = null;
 
       function activeTabName() {
@@ -5937,6 +5942,103 @@ Review retargeting when the warm audience is ready</textarea>
         surface.addEventListener("touchmove", moveSwipe, { passive: false });
         surface.addEventListener("touchend", finishSwipe, { passive: true });
         surface.addEventListener("touchcancel", finishSwipe, { passive: true });
+      });
+    }
+
+    function setupMainTabScrub() {
+      if (!mobileNavigation) return;
+      const mobileQuery = window.matchMedia("(max-width: 600px)");
+      const buttons = [...mobileNavigation.querySelectorAll(".tab-button[data-tab-target]")];
+      let scrub = null;
+
+      function clearHoldTimer() {
+        if (!scrub?.holdTimer) return;
+        window.clearTimeout(scrub.holdTimer);
+        scrub.holdTimer = null;
+      }
+
+      function previewAt(clientX) {
+        if (!scrub) return;
+        const rect = mobileNavigation.getBoundingClientRect();
+        const trackLeft = rect.left + 5;
+        const trackWidth = Math.max(1, rect.width - 10);
+        const slotWidth = trackWidth / buttons.length;
+        const boundedX = Math.max(trackLeft + slotWidth / 2, Math.min(rect.right - 5 - slotWidth / 2, clientX));
+        const targetIndex = Math.max(0, Math.min(buttons.length - 1, Math.floor((boundedX - trackLeft) / slotWidth)));
+        const indicatorX = boundedX - trackLeft - slotWidth / 2;
+        mobileNavigation.style.setProperty("--scrub-x", indicatorX.toFixed(2) + "px");
+        buttons.forEach((button, index) => button.classList.toggle("scrub-preview", index === targetIndex));
+        if (targetIndex !== scrub.targetIndex) {
+          scrub.targetIndex = targetIndex;
+          if (navigator.vibrate) navigator.vibrate(8);
+        }
+      }
+
+      function beginScrub() {
+        if (!scrub || scrub.dragging || !mobileQuery.matches) return;
+        scrub.dragging = true;
+        mobileNavigation.classList.add("nav-scrubbing");
+        previewAt(scrub.lastX);
+      }
+
+      function resetScrub(activate = false) {
+        if (!scrub) return;
+        clearHoldTimer();
+        const completed = scrub;
+        scrub = null;
+        if (!completed.dragging) return;
+        suppressTabClickUntil = Date.now() + 500;
+        const target = buttons[completed.targetIndex]?.dataset.tabTarget;
+        if (activate && target) {
+          activateTab(target);
+          saveLastWork(target, activeSubtabFor(target));
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        buttons.forEach((button) => button.classList.remove("scrub-preview"));
+        window.requestAnimationFrame(() => {
+          mobileNavigation.classList.remove("nav-scrubbing");
+          mobileNavigation.style.removeProperty("--scrub-x");
+        });
+      }
+
+      mobileNavigation.addEventListener("touchstart", (event) => {
+        if (!mobileQuery.matches || event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        scrub = {
+          identifier: touch.identifier,
+          startX: touch.clientX,
+          startY: touch.clientY,
+          lastX: touch.clientX,
+          targetIndex: NAV_ITEMS.indexOf(document.querySelector(".tab-button.active")?.dataset.tabTarget),
+          dragging: false,
+          holdTimer: window.setTimeout(beginScrub, 150),
+        };
+      }, { passive: true });
+
+      mobileNavigation.addEventListener("touchmove", (event) => {
+        if (!scrub) return;
+        const touch = [...event.touches].find((item) => item.identifier === scrub.identifier);
+        if (!touch) return;
+        scrub.lastX = touch.clientX;
+        const deltaX = touch.clientX - scrub.startX;
+        const deltaY = touch.clientY - scrub.startY;
+        if (!scrub.dragging && Math.abs(deltaY) > 12 && Math.abs(deltaY) > Math.abs(deltaX)) {
+          resetScrub(false);
+          return;
+        }
+        if (!scrub.dragging) return;
+        event.preventDefault();
+        previewAt(touch.clientX);
+      }, { passive: false });
+
+      mobileNavigation.addEventListener("touchend", (event) => {
+        if (!scrub) return;
+        if (scrub.dragging) event.preventDefault();
+        resetScrub(true);
+      }, { passive: false });
+      mobileNavigation.addEventListener("touchcancel", () => resetScrub(false), { passive: true });
+      mobileNavigation.addEventListener("contextmenu", (event) => {
+        if (scrub?.dragging) event.preventDefault();
       });
     }
 
@@ -9887,6 +9989,7 @@ Review retargeting when the warm audience is ready</textarea>
     reportEndDate.value = reportWeek.end;
     setupTabs();
     setupMainTabSwipe();
+    setupMainTabScrub();
     setupPanels();
     topbarMenu.addEventListener("toggle", () => {
       const drawerMode = window.matchMedia("(max-width: 600px)").matches;
