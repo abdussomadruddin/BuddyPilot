@@ -16,14 +16,16 @@ test("mobile navigation supports hold, finger-follow scrub, and release activati
   assert.match(appSource, /bp-glass-glint/);
   assert.match(appSource, /bp-liquid-release/);
   assert.match(appSource, /height: 78px/);
-  assert.match(appSource, /scale\(1\.22,1\.08\)/);
+  assert.match(appSource, /scale\(1\.2,1\.06\)/);
   assert.match(appSource, /opacity: 0; transform: translate3d/);
   assert.match(appSource, /\.nav-scrubbing \.nav-liquid-indicator \{ opacity: 1;/);
   assert.match(appSource, /nav-lens-entering/);
   assert.match(appSource, /bp-lens-emerge/);
   assert.match(appSource, /bp-lens-emerge 1000ms/);
   assert.match(appSource, /bp-liquid-release 1000ms/);
-  assert.match(appSource, /transition: transform 90ms/);
+  assert.match(appSource, /function schedulePreview\(clientX\)/);
+  assert.match(appSource, /scrub\.previewFrame = window\.requestAnimationFrame/);
+  assert.match(appSource, /\.nav-scrubbing \.nav-liquid-indicator \{ opacity: 1;[^}]*transition: none;/);
   assert.match(appSource, /setTimeout\(\(\) => mobileNavigation\.classList\.remove\("nav-settling"\), 1050\)/);
 });
 
