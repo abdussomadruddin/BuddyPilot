@@ -3124,7 +3124,7 @@ function pageHtml() {
         inset: auto 0 0;
         z-index: 80;
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0;
         width: 100%;
         min-width: 0;
@@ -3954,7 +3954,7 @@ function pageHtml() {
         box-shadow: 0 12px 34px rgba(15,15,15,.16), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(255,255,255,.38);
         -webkit-backdrop-filter: blur(28px) saturate(185%); backdrop-filter: blur(28px) saturate(185%);
       }
-      .nav-liquid-indicator { position: absolute; z-index: 0; top: -8px; left: 5px; display: block; width: calc((100% - 10px) / 5); height: 78px; overflow: hidden; border: 1px solid rgba(255,255,255,.94); border-radius: 50%; background: radial-gradient(circle at 38% 24%, rgba(255,255,255,.98) 0, rgba(255,255,255,.72) 35%, rgba(225,235,245,.52) 72%, rgba(255,255,255,.66) 100%); box-shadow: none; opacity: 0; transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0) scale(.72); transform-origin: center; transition: opacity 180ms ease; will-change: transform, opacity; -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%); }
+      .nav-liquid-indicator { position: absolute; z-index: 0; top: -8px; left: 5px; display: block; width: calc((100% - 10px) / 3); height: 78px; overflow: hidden; border: 1px solid rgba(255,255,255,.94); border-radius: 50%; background: radial-gradient(circle at 38% 24%, rgba(255,255,255,.98) 0, rgba(255,255,255,.72) 35%, rgba(225,235,245,.52) 72%, rgba(255,255,255,.66) 100%); box-shadow: none; opacity: 0; transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0) scale(.72); transform-origin: center; transition: opacity 180ms ease; will-change: transform, opacity; -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%); }
       .nav-liquid-indicator::before { content: ""; position: absolute; inset: 3px 15% auto; height: 34%; border-radius: 50%; background: rgba(255,255,255,.7); filter: blur(5px); opacity: .94; pointer-events: none; }
       .nav-liquid-indicator::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: -55%; width: 38%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.9), transparent); opacity: 0; transform: skewX(-18deg); pointer-events: none; }
       .topbar .topbar-tabs .tab-button { position: relative; z-index: 1; min-height: 54px; border-radius: 22px; transition: color 150ms ease, opacity 150ms ease, transform 180ms cubic-bezier(.22,1.35,.36,1); }
@@ -4201,8 +4201,6 @@ function pageHtml() {
         <button class="tab-button active" type="button" data-tab-target="dashboard"><svg class="icon" aria-hidden="true"><use href="/icons.svg#layout-dashboard"></use></svg><span>Dashboard</span></button>
         <button class="tab-button" type="button" data-tab-target="personalpostpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#send"></use></svg><span>Post Pilot</span></button>
         <button class="tab-button" type="button" data-tab-target="clientpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Client Pilot</span></button>
-        <button class="tab-button" type="button" data-tab-target="reportpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart"></use></svg><span>Report Pilot</span></button>
-        <button class="tab-button" type="button" data-tab-target="invoicepilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#receipt"></use></svg><span>Invoice Pilot</span></button>
       </nav>
       <details class="topbar-menu">
         <summary><svg class="icon" aria-hidden="true"><use href="/icons.svg#menu"></use></svg><span>Menu</span></summary>
@@ -4286,17 +4284,17 @@ function pageHtml() {
                 <span class="quick-card-copy"><strong>Buat Post Threads</strong><small>Threads General</small></span>
                 <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
               </button>
-              <button class="quick-card" type="button" data-action-key="weekly-report" data-go-tab="reportpilot">
+              <button class="quick-card" type="button" data-action-key="weekly-report" data-go-tab="clientpilot" data-go-subtab="client-report-panel">
                 <span class="quick-card-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart"></use></svg></span>
                 <span class="quick-card-copy"><strong>Buat Weekly Report</strong><small>Report Pilot</small></span>
                 <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
               </button>
-              <button class="quick-card" type="button" data-action-key="invoice" data-go-tab="invoicepilot" data-go-subtab="invoice-panel">
+              <button class="quick-card" type="button" data-action-key="invoice" data-go-tab="clientpilot" data-go-subtab="client-invoice-panel" data-go-inner-subtab="invoice-panel">
                 <span class="quick-card-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#file-text"></use></svg></span>
                 <span class="quick-card-copy"><strong>Buat Invois</strong><small>Invoice Pilot</small></span>
                 <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
               </button>
-              <button class="quick-card" type="button" data-action-key="receipt" data-go-tab="invoicepilot" data-go-subtab="receipt-panel">
+              <button class="quick-card" type="button" data-action-key="receipt" data-go-tab="clientpilot" data-go-subtab="client-invoice-panel" data-go-inner-subtab="receipt-panel">
                 <span class="quick-card-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#receipt"></use></svg></span>
                 <span class="quick-card-copy"><strong>Buat Resit</strong><small>Payment receipt</small></span>
                 <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
@@ -5225,8 +5223,8 @@ Review retargeting when the warm audience is ready</textarea>
     const LAST_REPORT_CLIENT_KEY = "buddypilot-last-report-client-v1";
     const TODAY_CACHE_KEY = "buddypilot-operations-cache-v1";
     const OPERATIONS_CACHE_MS = 5 * 60 * 1000;
-    const NAV_ITEMS = ["dashboard", "personalpostpilot", "clientpilot", "reportpilot", "invoicepilot"];
-    const NAV_TITLES = { dashboard: "Hari Ini", personalpostpilot: "Post Pilot", clientpilot: "Client Pilot", reportpilot: "Report Pilot", invoicepilot: "Invoice Pilot" };
+    const NAV_ITEMS = ["dashboard", "personalpostpilot", "clientpilot"];
+    const NAV_TITLES = { dashboard: "Hari Ini", personalpostpilot: "Post Pilot", clientpilot: "Client Pilot" };
     let currentPreview = null;
     let seenVariations = [];
     let preparedCreativeFile = null;
@@ -5581,7 +5579,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function activeSubtabFor(tabName) {
-      const group = tabName === "personalpostpilot" ? "post-pilot" : tabName === "clientpilot" ? "client" : tabName === "invoicepilot" ? "invoice-pilot" : "";
+      const group = tabName === "personalpostpilot" ? "post-pilot" : tabName === "clientpilot" ? "client-modules" : "";
       return group ? document.querySelector(\`.subtab-panel.active[data-subtab-panel="\${group}"]\`)?.id || "" : "";
     }
 
@@ -5593,18 +5591,31 @@ Review retargeting when the warm audience is ready</textarea>
     function readLastWork() {
       try {
         const value = JSON.parse(localStorage.getItem(LAST_WORK_STORAGE_KEY) || "null");
+        if (value?.tab === "reportpilot" || value?.tab === "invoicepilot") {
+          value.subtab = value.tab === "reportpilot" ? "client-report-panel" : "client-invoice-panel";
+          value.tab = "clientpilot";
+        }
         return value && NAV_ITEMS.includes(value.tab) && Date.now() - Number(value.updatedAt || 0) < 14 * 86400000 ? value : null;
       } catch { return null; }
     }
 
     function navigateToWork(target = {}, { remember = true } = {}) {
       if (!target.tab) return;
-      activateTab(target.tab);
-      if (target.subtab) {
-        const group = target.tab === "personalpostpilot" ? "post-pilot" : target.tab === "clientpilot" ? "client" : "invoice-pilot";
-        activateSubtab(group, target.subtab);
+      const legacyModule = target.tab === "reportpilot" ? "client-report-panel" : target.tab === "invoicepilot" ? "client-invoice-panel" : "";
+      const mainTab = legacyModule ? "clientpilot" : target.tab;
+      const subtab = legacyModule || target.subtab;
+      activateTab(mainTab);
+      if (mainTab === "clientpilot") {
+        const isClientInnerPanel = subtab === "client-list-panel" || subtab === "client-add-panel";
+        activateSubtab("client-modules", isClientInnerPanel ? "client-overview-panel" : subtab || "client-overview-panel");
+        if (isClientInnerPanel) activateSubtab("client", subtab);
+      } else if (subtab) {
+        activateSubtab("post-pilot", subtab);
       }
-      if (remember) saveLastWork(target.tab, target.subtab || "");
+      if (target.innerSubtab) {
+        activateSubtab(subtab === "client-invoice-panel" ? "invoice-pilot" : "client", target.innerSubtab);
+      }
+      if (remember) saveLastWork(mainTab, activeSubtabFor(mainTab));
       if (target.panel) window.setTimeout(() => document.getElementById(target.panel)?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
       else window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -6087,11 +6098,48 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function openInvoicePilotPanel(targetId) {
-      activateTab("invoicepilot");
+      activateTab("clientpilot");
+      activateSubtab("client-modules", "client-invoice-panel");
       activateSubtab("invoice-pilot", targetId);
     }
 
+    function configureClientPilotModules() {
+      const clientPanel = document.getElementById("tab-clientpilot");
+      const clientCard = clientPanel?.querySelector(":scope > .card");
+      const reportPanel = document.getElementById("tab-reportpilot");
+      const invoicePanel = document.getElementById("tab-invoicepilot");
+      if (!clientPanel || !clientCard || !reportPanel || !invoicePanel || document.getElementById("client-module-tabs")) return;
+
+      const moduleTabs = document.createElement("div");
+      moduleTabs.id = "client-module-tabs";
+      moduleTabs.className = "subtabs client-module-tabs";
+      moduleTabs.setAttribute("aria-label", "Client Pilot modules");
+      moduleTabs.innerHTML = \`
+        <button class="subtab-button active" type="button" data-subtab-group="client-modules" data-subtab-target="client-overview-panel">Client Pilot</button>
+        <button class="subtab-button" type="button" data-subtab-group="client-modules" data-subtab-target="client-report-panel">Report Pilot</button>
+        <button class="subtab-button" type="button" data-subtab-group="client-modules" data-subtab-target="client-invoice-panel">Invoice Pilot</button>
+      \`;
+      clientPanel.insertBefore(moduleTabs, clientCard);
+
+      clientCard.id = "client-overview-panel";
+      clientCard.classList.add("subtab-panel", "active");
+      clientCard.dataset.subtabPanel = "client-modules";
+
+      [
+        [reportPanel, "client-report-panel"],
+        [invoicePanel, "client-invoice-panel"],
+      ].forEach(([panel, id]) => {
+        panel.classList.remove("tab-panel");
+        panel.classList.add("subtab-panel");
+        panel.removeAttribute("data-tab-panel");
+        panel.dataset.subtabPanel = "client-modules";
+        panel.id = id;
+        clientPanel.appendChild(panel);
+      });
+    }
+
     function setupTabs() {
+      configureClientPilotModules();
       const requestedParams = new URLSearchParams(window.location.search);
       const requestedTab = requestedParams.get("tab");
       const requestedPanel = requestedParams.get("panel");
@@ -6100,6 +6148,11 @@ Review retargeting when the warm audience is ready</textarea>
         savedMainTab = "personalpostpilot";
         localStorage.setItem("active-main-tab", savedMainTab);
         localStorage.setItem("active-subtab-post-pilot", "pagepilot-panel");
+      }
+      if (savedMainTab === "reportpilot" || savedMainTab === "invoicepilot") {
+        localStorage.setItem("active-subtab-client-modules", savedMainTab === "reportpilot" ? "client-report-panel" : "client-invoice-panel");
+        savedMainTab = "clientpilot";
+        localStorage.setItem("active-main-tab", savedMainTab);
       }
       const mainTab = document.querySelector(\`.tab-button[data-tab-target="\${savedMainTab}"]\`) ? savedMainTab : "dashboard";
       activateTab(mainTab);
@@ -6115,11 +6168,12 @@ Review retargeting when the warm audience is ready</textarea>
       });
 
       const subtabDefaults = {
+        "client-modules": "client-overview-panel",
         "invoice-pilot": "invoice-panel",
         client: "client-list-panel",
         "post-pilot": "postpilot-auto-panel"
       };
-      ["invoice-pilot", "client", "post-pilot"].forEach((group) => {
+      ["client-modules", "invoice-pilot", "client", "post-pilot"].forEach((group) => {
         const fallback = subtabDefaults[group] || document.querySelector(\`.subtab-button[data-subtab-group="\${group}"]\`)?.dataset.subtabTarget;
         const saved = group === "invoice-pilot" && requestedPanel ? requestedPanel : localStorage.getItem(\`active-subtab-\${group}\`);
         const savedPanel = saved ? document.getElementById(saved) : null;
@@ -10030,7 +10084,11 @@ Review retargeting when the warm audience is ready</textarea>
       button.addEventListener("click", () => {
         recordQuickAction(button.dataset.actionKey);
         if (button.dataset.actionKey === "onboard-client") resetClientFormMode();
-        navigateToWork({ tab: button.dataset.goTab, subtab: button.dataset.goSubtab || "" });
+        navigateToWork({
+          tab: button.dataset.goTab,
+          subtab: button.dataset.goSubtab || "",
+          innerSubtab: button.dataset.goInnerSubtab || ""
+        });
       });
     });
     refreshTodayButton.addEventListener("click", () => loadTodayDashboard({ force: true }));
