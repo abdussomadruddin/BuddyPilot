@@ -10,7 +10,9 @@ test("Report Pilot and Invoice Pilot are Client Pilot modules", () => {
   assert.match(source, /data-subtab-target="client-invoice-panel">Invoice Pilot/);
   assert.doesNotMatch(source, /data-tab-target="reportpilot"/);
   assert.doesNotMatch(source, /data-tab-target="invoicepilot"/);
-  assert.match(source, /const NAV_ITEMS = \["dashboard", "personalpostpilot", "copypilot", "clientpilot"\]/);
+  assert.match(source, /const NAV_ITEMS = \["dashboard", "personalpostpilot", "clientpilot"\]/);
+  assert.doesNotMatch(source, /data-tab-target="copypilot"/);
+  assert.match(source, /savedMainTab === "copypilot"[\s\S]*savedMainTab = "dashboard"/);
 });
 
 test("legacy report and invoice routes migrate to Client Pilot", () => {
