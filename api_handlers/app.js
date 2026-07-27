@@ -3954,7 +3954,7 @@ function pageHtml() {
         box-shadow: 0 12px 34px rgba(15,15,15,.16), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(255,255,255,.38);
         -webkit-backdrop-filter: blur(28px) saturate(185%); backdrop-filter: blur(28px) saturate(185%);
       }
-      .nav-liquid-indicator { position: absolute; z-index: 0; top: -8px; left: 5px; display: block; width: calc((100% - 10px) / 5); height: 78px; overflow: hidden; border: 1px solid rgba(255,255,255,.94); border-radius: 50%; background: radial-gradient(circle at 38% 24%, rgba(255,255,255,.98) 0, rgba(255,255,255,.72) 35%, rgba(225,235,245,.52) 72%, rgba(255,255,255,.66) 100%); box-shadow: none; opacity: 0; transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0) scale(.72); transform-origin: center; transition: transform 360ms cubic-bezier(.22,1.25,.36,1), opacity 220ms ease, box-shadow 180ms ease; will-change: transform, opacity; -webkit-backdrop-filter: blur(24px) saturate(210%); backdrop-filter: blur(24px) saturate(210%); }
+      .nav-liquid-indicator { position: absolute; z-index: 0; top: -8px; left: 5px; display: block; width: calc((100% - 10px) / 5); height: 78px; overflow: hidden; border: 1px solid rgba(255,255,255,.94); border-radius: 50%; background: radial-gradient(circle at 38% 24%, rgba(255,255,255,.98) 0, rgba(255,255,255,.72) 35%, rgba(225,235,245,.52) 72%, rgba(255,255,255,.66) 100%); box-shadow: none; opacity: 0; transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0) scale(.72); transform-origin: center; transition: transform 1000ms cubic-bezier(.16,1,.3,1), opacity 1000ms ease, box-shadow 1000ms ease; will-change: transform, opacity, filter, clip-path; -webkit-backdrop-filter: blur(24px) saturate(210%); backdrop-filter: blur(24px) saturate(210%); }
       .nav-liquid-indicator::before { content: ""; position: absolute; inset: 3px 15% auto; height: 34%; border-radius: 50%; background: rgba(255,255,255,.7); filter: blur(5px); opacity: .94; pointer-events: none; }
       .nav-liquid-indicator::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: -55%; width: 38%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.9), transparent); opacity: 0; transform: skewX(-18deg); pointer-events: none; }
       .topbar .topbar-tabs .tab-button { position: relative; z-index: 1; min-height: 54px; border-radius: 22px; transition: color 150ms ease, opacity 150ms ease, transform 180ms cubic-bezier(.22,1.35,.36,1); }
@@ -3962,14 +3962,14 @@ function pageHtml() {
       .topbar .topbar-tabs .tab-button.active .icon { color: var(--red); }
       .topbar .topbar-tabs { touch-action: none; -webkit-user-select: none; user-select: none; }
       .topbar .topbar-tabs.nav-scrubbing { background: rgba(242,242,242,.58); box-shadow: 0 16px 42px rgba(15,15,15,.22), inset 0 1px 0 rgba(255,255,255,.96); }
-      .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator { opacity: 1; transform: translate3d(var(--scrub-x, 0px),0,0) scale(1.22,1.08); transition: none; border-radius: 50%; box-shadow: 0 16px 34px rgba(0,0,0,.22), 0 0 0 1px rgba(190,220,245,.28), inset 0 2px 3px #fff, inset 0 -4px 8px rgba(80,115,145,.14); }
-      .topbar .topbar-tabs.nav-scrubbing.nav-lens-entering .nav-liquid-indicator { animation: bp-lens-emerge 320ms cubic-bezier(.16,1.28,.3,1) both; }
+      .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator { opacity: 1; transform: translate3d(var(--scrub-x, 0px),0,0) scale(1.22,1.08); transition: transform 90ms cubic-bezier(.2,.7,.2,1), opacity 180ms ease; border-radius: 50%; box-shadow: 0 16px 34px rgba(0,0,0,.22), 0 0 0 1px rgba(190,220,245,.28), inset 0 2px 3px #fff, inset 0 -4px 8px rgba(80,115,145,.14); }
+      .topbar .topbar-tabs.nav-scrubbing.nav-lens-entering .nav-liquid-indicator { animation: bp-lens-emerge 1000ms cubic-bezier(.16,1,.3,1) both; }
       .topbar .topbar-tabs.nav-scrubbing .nav-liquid-indicator::after { opacity: .92; animation: bp-glass-glint 850ms ease-in-out infinite; }
       .topbar .topbar-tabs.nav-scrubbing .tab-button { opacity: .58; }
       .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview { color: #111; opacity: 1; transform: translateY(-5px) scale(1.09); }
       .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview .icon { color: var(--red); transform: scale(1.24); }
       .topbar .topbar-tabs.nav-scrubbing .tab-button.scrub-preview span { font-weight: 800; }
-      .topbar .topbar-tabs.nav-settling .nav-liquid-indicator { animation: bp-glass-settle 440ms cubic-bezier(.22,1.35,.36,1); }
+      .topbar .topbar-tabs.nav-settling .nav-liquid-indicator { animation: bp-liquid-release 1000ms cubic-bezier(.16,1,.3,1) both; }
       .tab-panel.active { touch-action: pan-y; will-change: transform, opacity; }
       .tab-panel.active.tab-swipe-dragging { animation: none; transform: translate3d(var(--tab-swipe-x, 0px), 0, 0); opacity: var(--tab-swipe-opacity, 1); transition: none; }
       .tab-panel.active.tab-swipe-returning { animation: none; transform: translate3d(0, 0, 0); opacity: 1; transition: transform 220ms cubic-bezier(.22,1,.36,1), opacity 180ms ease; }
@@ -4035,16 +4035,18 @@ function pageHtml() {
     @keyframes bp-drawer-in { from { opacity: 0; transform: translate3d(100%,0,0); } to { opacity: 1; transform: translate3d(0,0,0); } }
     @keyframes bp-glass-glint { 0% { left: -55%; } 55%, 100% { left: 118%; } }
     @keyframes bp-lens-emerge {
-      0% { opacity: 0; clip-path: circle(8% at 50% 64%); filter: blur(7px) brightness(1.18); }
-      58% { opacity: 1; clip-path: circle(62% at 50% 50%); filter: blur(0) brightness(1.08); }
-      78% { clip-path: circle(47% at 50% 50%); }
-      100% { opacity: 1; clip-path: circle(72% at 50% 50%); filter: blur(0) brightness(1); }
+      0% { opacity: 0; clip-path: circle(5% at 50% 68%); filter: blur(10px) brightness(1.24); transform: translate3d(var(--scrub-x, 0px),6px,0) scale(.5,.38); }
+      34% { opacity: .92; clip-path: circle(78% at 50% 50%); filter: blur(1px) brightness(1.12); transform: translate3d(var(--scrub-x, 0px),-3px,0) scale(1.3,.98); }
+      58% { opacity: 1; clip-path: circle(58% at 50% 50%); transform: translate3d(var(--scrub-x, 0px),1px,0) scale(1.13,1.16); }
+      78% { clip-path: circle(74% at 50% 50%); transform: translate3d(var(--scrub-x, 0px),0,0) scale(1.25,1.04); }
+      100% { opacity: 1; clip-path: circle(72% at 50% 50%); filter: blur(0) brightness(1); transform: translate3d(var(--scrub-x, 0px),0,0) scale(1.22,1.08); }
     }
-    @keyframes bp-glass-settle {
-      0% { filter: brightness(1.08); }
-      42% { filter: brightness(1.02); }
-      72% { filter: brightness(1.06); }
-      100% { filter: brightness(1); }
+    @keyframes bp-liquid-release {
+      0% { opacity: 1; clip-path: circle(72% at 50% 50%); filter: blur(0) brightness(1.08); transform: translate3d(calc(var(--active-index) * 100%),0,0) scale(1.22,1.08); }
+      28% { opacity: .95; clip-path: circle(78% at 50% 50%); transform: translate3d(calc(var(--active-index) * 100%),2px,0) scale(1.08,1.2); }
+      56% { opacity: .72; clip-path: circle(48% at 50% 58%); filter: blur(2px) brightness(1.14); transform: translate3d(calc(var(--active-index) * 100%),5px,0) scale(.9,.72); }
+      82% { opacity: .24; clip-path: circle(18% at 50% 68%); filter: blur(7px) brightness(1.2); transform: translate3d(calc(var(--active-index) * 100%),9px,0) scale(.58,.34); }
+      100% { opacity: 0; clip-path: circle(3% at 50% 72%); filter: blur(10px) brightness(1.24); transform: translate3d(calc(var(--active-index) * 100%),12px,0) scale(.35,.16); }
     }
 
     .menu-backdrop,
@@ -5990,12 +5992,13 @@ Review retargeting when the warm audience is ready</textarea>
       function beginScrub() {
         if (!scrub || scrub.dragging || !mobileQuery.matches) return;
         scrub.dragging = true;
+        mobileNavigation.classList.remove("nav-settling");
         mobileNavigation.classList.add("nav-scrubbing", "nav-lens-entering");
         previewAt(scrub.lastX);
         scrub.enterTimer = window.setTimeout(() => {
           mobileNavigation.classList.remove("nav-lens-entering");
           if (scrub) scrub.enterTimer = null;
-        }, 340);
+        }, 1000);
       }
 
       function resetScrub(activate = false) {
@@ -6019,7 +6022,7 @@ Review retargeting when the warm audience is ready</textarea>
           mobileNavigation.classList.remove("nav-settling");
           void mobileNavigation.offsetWidth;
           mobileNavigation.classList.add("nav-settling");
-          window.setTimeout(() => mobileNavigation.classList.remove("nav-settling"), 460);
+          window.setTimeout(() => mobileNavigation.classList.remove("nav-settling"), 1050);
         });
       }
 
