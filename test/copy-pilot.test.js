@@ -1,6 +1,24 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { generateCopyPilot } = require("../lib/copy-pilot");
+const { generateCopyPilot, providerResponse } = require("../lib/copy-pilot");
+
+test("Copy Pilot sends DeepSeek requests using the current V4 chat contract", async () => {
+  const previousFetch = global.fetch;
+  global.fetch = async (url, options) => {
+    assert.equal(url, "https://api.deepseek.com/chat/completions");
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, "deepseek-v4-flash");
+    assert.deepEqual(body.thinking, { type: "disabled" });
+    assert.deepEqual(body.messages.map((item) => item.role), ["system", "user"]);
+    return { ok: true, json: async () => ({ choices: [{ message: { content: "siap" } }] }) };
+  };
+  try {
+    const result = await providerResponse("Arahan", "Input", { provider: "deepseek", apiKey: "test-deepseek-key" });
+    assert.equal(result, "siap");
+  } finally {
+    global.fetch = previousFetch;
+  }
+});
 
 test("Copy Pilot preserves the analyzed intent and repairs failed copy", async () => {
   const previousFetch = global.fetch;

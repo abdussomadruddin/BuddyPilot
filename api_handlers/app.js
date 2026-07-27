@@ -4211,11 +4211,13 @@ function pageHtml() {
           <button type="button" data-menu-subtab="bank-panel"><svg class="icon" aria-hidden="true"><use href="/icons.svg#landmark"></use></svg><span>Akaun Bank</span></button>
           <button type="button" data-menu-section="menuTikTokSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#link"></use></svg><span>TikTok Ads</span></button>
           <div id="menuTikTokSettings" class="menu-settings-panel" hidden></div>
-          <button type="button" data-menu-section="menuOpenAISettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#sparkles"></use></svg><span>OPENAI KEY</span></button>
+          <button type="button" data-menu-section="menuOpenAISettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#sparkles"></use></svg><span>AI API KEY</span></button>
           <div id="menuOpenAISettings" class="menu-settings-panel menu-tiktok-card" hidden>
-            <strong>OPENAI KEY</strong>
+            <strong>AI API KEY</strong>
             <span id="openaiKeyStatus">Semak status key...</span>
             <form id="openaiKeyForm">
+              <label for="aiProviderSelect">AI provider</label>
+              <select id="aiProviderSelect"><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option></select>
               <label for="openaiKeyInput">API key baru</label>
               <input id="openaiKeyInput" type="password" autocomplete="off" placeholder="sk-..." required>
               <button type="submit">Save Key</button>
@@ -6257,7 +6259,11 @@ Review retargeting when the warm audience is ready</textarea>
             try {
               const response = await fetch("/api/copy-pilot/settings");
               const json = await readApiJson(response);
-              document.getElementById("openaiKeyStatus").textContent = json.configured ? "Key aktif, " + json.hint : "Belum ada OpenAI key.";
+              const provider = json.provider === "deepseek" ? "DeepSeek" : "OpenAI";
+              document.getElementById("aiProviderSelect").value = json.provider || "openai";
+              document.getElementById("openaiKeyStatus").textContent = json.configured
+                ? provider + " aktif, OpenAI " + (json.openaiHint || "belum diset") + ", DeepSeek " + (json.deepseekHint || "belum diset")
+                : "Belum ada AI API key.";
             } catch (error) {
               document.getElementById("openaiKeyStatus").textContent = error.message;
             }
@@ -6271,14 +6277,17 @@ Review retargeting when the warm audience is ready</textarea>
           const response = await fetch("/api/copy-pilot/settings", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ apiKey: document.getElementById("openaiKeyInput").value }),
+            body: JSON.stringify({
+              apiKey: document.getElementById("openaiKeyInput").value,
+              provider: document.getElementById("aiProviderSelect").value,
+            }),
           });
           const json = await readApiJson(response);
           if (!response.ok || !json.ok) throw new Error(json.error || "Key gagal disimpan.");
           document.getElementById("openaiKeyInput").value = "";
-          document.getElementById("openaiKeyStatus").textContent = "Key aktif, " + json.hint;
+          document.getElementById("openaiKeyStatus").textContent = (json.provider === "deepseek" ? "DeepSeek" : "OpenAI") + " aktif, " + json.hint;
           result.className = "result ok";
-          result.textContent = "OpenAI key disimpan secara encrypted.";
+          result.textContent = (json.provider === "deepseek" ? "DeepSeek" : "OpenAI") + " key disimpan secara encrypted.";
         } catch (error) {
           result.className = "result err";
           result.textContent = error.message;

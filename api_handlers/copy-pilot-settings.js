@@ -1,6 +1,6 @@
 const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/postpilot");
-const { openaiKeyStatus, saveOpenaiKey } = require("../lib/copy-pilot");
+const { openaiKeyStatus, saveProviderKey } = require("../lib/copy-pilot");
 
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
@@ -12,7 +12,8 @@ module.exports = async function handler(req, res) {
     }
     if (req.method === "POST") {
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, ...(await saveOpenaiKey((await readJsonBody(req)).apiKey)) }));
+      const body = await readJsonBody(req);
+      return res.end(JSON.stringify({ ok: true, ...(await saveProviderKey(body.apiKey, body.provider)) }));
     }
     res.statusCode = 405;
     res.end(JSON.stringify({ ok: false, error: "Method not allowed." }));
