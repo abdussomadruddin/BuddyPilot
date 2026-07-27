@@ -1321,7 +1321,7 @@ function pageHtml() {
       }
 
       .dashboard-workspace .quick-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
     }
 
@@ -3954,7 +3954,7 @@ function pageHtml() {
         box-shadow: 0 12px 34px rgba(15,15,15,.16), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(255,255,255,.38);
         -webkit-backdrop-filter: blur(28px) saturate(185%); backdrop-filter: blur(28px) saturate(185%);
       }
-      .nav-liquid-indicator { position: absolute; z-index: 0; top: -8px; left: 5px; display: block; width: calc((100% - 10px) / 3); height: 78px; overflow: hidden; border: 1px solid rgba(255,255,255,.94); border-radius: 50%; background: radial-gradient(circle at 38% 24%, rgba(255,255,255,.98) 0, rgba(255,255,255,.72) 35%, rgba(225,235,245,.52) 72%, rgba(255,255,255,.66) 100%); box-shadow: none; opacity: 0; transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0) scale(.72); transform-origin: center; transition: opacity 180ms ease; will-change: transform, opacity; -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%); }
+      .nav-liquid-indicator { position: absolute; z-index: 0; top: -8px; left: 5px; display: block; width: calc((100% - 10px) / 4); height: 78px; overflow: hidden; border: 1px solid rgba(255,255,255,.94); border-radius: 50%; background: radial-gradient(circle at 38% 24%, rgba(255,255,255,.98) 0, rgba(255,255,255,.72) 35%, rgba(225,235,245,.52) 72%, rgba(255,255,255,.66) 100%); box-shadow: none; opacity: 0; transform: translate3d(calc((var(--active-index) * 100%) + var(--swipe-offset, 0px)),0,0) scale(.72); transform-origin: center; transition: opacity 180ms ease; will-change: transform, opacity; -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%); }
       .nav-liquid-indicator::before { content: ""; position: absolute; inset: 3px 15% auto; height: 34%; border-radius: 50%; background: rgba(255,255,255,.7); filter: blur(5px); opacity: .94; pointer-events: none; }
       .nav-liquid-indicator::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: -55%; width: 38%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.9), transparent); opacity: 0; transform: skewX(-18deg); pointer-events: none; }
       .topbar .topbar-tabs .tab-button { position: relative; z-index: 1; min-height: 54px; border-radius: 22px; transition: color 150ms ease, opacity 150ms ease, transform 180ms cubic-bezier(.22,1.35,.36,1); }
@@ -4200,6 +4200,7 @@ function pageHtml() {
         <span class="nav-liquid-indicator" aria-hidden="true"></span>
         <button class="tab-button active" type="button" data-tab-target="dashboard"><svg class="icon" aria-hidden="true"><use href="/icons.svg#layout-dashboard"></use></svg><span>Dashboard</span></button>
         <button class="tab-button" type="button" data-tab-target="personalpostpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#send"></use></svg><span>Post Pilot</span></button>
+        <button class="tab-button" type="button" data-tab-target="copypilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#file-text"></use></svg><span>Copy Pilot</span></button>
         <button class="tab-button" type="button" data-tab-target="clientpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Client Pilot</span></button>
       </nav>
       <details class="topbar-menu">
@@ -4576,6 +4577,59 @@ function pageHtml() {
               <button id="refreshViralHistoryButton" class="secondary" type="button">Refresh</button>
             </div>
             <div id="viralHistoryOutput" class="viral-post-grid"></div>
+          </section>
+        </div>
+      </section>
+    </section>
+
+    <section id="tab-copypilot" class="tab-panel" data-tab-panel="copypilot">
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <h1>Copy Pilot</h1>
+            <p class="note">Editor peribadi untuk susun tulisan kasar menjadi Facebook post tanpa mengubah cara anda berfikir.</p>
+          </div>
+        </div>
+        <div class="workspace-grid">
+          <form id="copyPilotForm" class="client-form">
+            <div class="client-grid">
+              <div><label for="copyPilotTitle">Tajuk atau topik</label><input id="copyPilotTitle" name="title" type="text" placeholder="Apa yang posting ini nak sampaikan"></div>
+              <div><label for="copyPilotAudience">Target audience</label><input id="copyPilotAudience" name="audience" type="text" placeholder="Contoh, marketer dan business owner"></div>
+              <div class="full"><label for="copyPilotRaw">Tulisan kasar</label><textarea id="copyPilotRaw" name="raw" class="report-tall-textarea" required placeholder="Paste point, transcription atau tulisan kasar di sini"></textarea></div>
+              <div><label for="copyPilotLength">Panjang</label><select id="copyPilotLength" name="length"><option value="1500">Pendek, sekitar 1,500 karakter</option><option value="3000" selected>Sederhana, sekitar 3,000 karakter</option><option value="5000">Panjang, sekitar 5,000 karakter</option><option value="10000">Long form, sekitar 10,000 karakter</option><option value="28000">Maximum Facebook</option></select></div>
+              <div><label for="copyPilotCta">CTA</label><input id="copyPilotCta" name="cta" type="text" value="kalau posting ni bermanfaat, share posting ni"></div>
+              <div><label for="copyPilotProduct">Produk atau brand</label><input id="copyPilotProduct" name="product" type="text"></div>
+              <div><label for="copyPilotLink">Link</label><input id="copyPilotLink" name="link" type="url" placeholder="https://"></div>
+              <div class="full"><label>Tone</label><div class="client-filter-chips" id="copyPilotTones"><button class="active" type="button" data-copy-tone="Personal">Personal</button><button type="button" data-copy-tone="Educational">Educational</button><button type="button" data-copy-tone="Storytelling">Storytelling</button><button type="button" data-copy-tone="Controversial">Controversial</button><button type="button" data-copy-tone="Emotional">Emotional</button><button type="button" data-copy-tone="Soft Selling">Soft Selling</button></div></div>
+              <div class="full"><label for="copyPilotDna">Writing DNA</label><textarea id="copyPilotDna" name="dna">Guna Bahasa Melayu Malaysia dan English secara natural.
+Guna aku untuk cerita personal dan korang untuk audience ramai.
+Ayat santai, direct, jujur dan conversational.
+Jangan guna emoji, dash, bahasa Indonesia atau motivational cliché.
+Jangan cipta pengalaman, result, data, testimoni atau fakta.
+Technical marketing terms kekal dalam English.
+Gunakan perenggan pendek dan banyak whitespace.</textarea></div>
+            </div>
+            <div class="client-form-actions">
+              <button id="generateCopyPilotButton" type="submit">Generate Posting</button>
+              <button id="saveCopyPilotDraftButton" class="secondary" type="button">Save Draft</button>
+              <button id="clearCopyPilotButton" class="secondary" type="button">Clear</button>
+            </div>
+          </form>
+          <section>
+            <div id="copyPilotQuality" class="result"></div>
+            <label for="copyPilotOutput">Facebook Post Preview</label>
+            <textarea id="copyPilotOutput" class="report-tall-textarea" placeholder="Posting yang sudah disusun akan keluar di sini"></textarea>
+            <div class="client-form-actions">
+              <button id="copyCopyPilotButton" type="button">Copy Posting</button>
+              <button id="downloadCopyPilotButton" class="secondary" type="button">Download TXT</button>
+            </div>
+            <div id="copyPilotFeedback" class="client-filter-chips" aria-label="Writing feedback">
+              <button type="button" data-copy-feedback="feels_like_me">Feels like me</button>
+              <button type="button" data-copy-feedback="too_ai">Too AI</button>
+              <button type="button" data-copy-feedback="too_formal">Too formal</button>
+              <button type="button" data-copy-feedback="weak_hook">Weak hook</button>
+              <button type="button" data-copy-feedback="lost_meaning">Lost my meaning</button>
+            </div>
           </section>
         </div>
       </section>
@@ -5223,8 +5277,8 @@ Review retargeting when the warm audience is ready</textarea>
     const LAST_REPORT_CLIENT_KEY = "buddypilot-last-report-client-v1";
     const TODAY_CACHE_KEY = "buddypilot-operations-cache-v1";
     const OPERATIONS_CACHE_MS = 5 * 60 * 1000;
-    const NAV_ITEMS = ["dashboard", "personalpostpilot", "clientpilot"];
-    const NAV_TITLES = { dashboard: "Hari Ini", personalpostpilot: "Post Pilot", clientpilot: "Client Pilot" };
+    const NAV_ITEMS = ["dashboard", "personalpostpilot", "copypilot", "clientpilot"];
+    const NAV_TITLES = { dashboard: "Hari Ini", personalpostpilot: "Post Pilot", copypilot: "Copy Pilot", clientpilot: "Client Pilot" };
     let currentPreview = null;
     let seenVariations = [];
     let preparedCreativeFile = null;
@@ -6101,6 +6155,78 @@ Review retargeting when the warm audience is ready</textarea>
       activateTab("clientpilot");
       activateSubtab("client-modules", "client-invoice-panel");
       activateSubtab("invoice-pilot", targetId);
+    }
+
+    function setupCopyPilot() {
+      const form = document.getElementById("copyPilotForm");
+      if (!form) return;
+      const output = document.getElementById("copyPilotOutput");
+      const quality = document.getElementById("copyPilotQuality");
+      const generateButton = document.getElementById("generateCopyPilotButton");
+      const storageKey = "buddypilot-copy-pilot-v1";
+      const feedbackKey = "buddypilot-copy-pilot-feedback-v1";
+      const selectedTones = () => [...document.querySelectorAll("[data-copy-tone].active")].map((button) => button.dataset.copyTone);
+      const snapshot = () => Object.fromEntries([...new FormData(form).entries()].concat([["output", output.value], ["tones", selectedTones()]]));
+      const save = () => localStorage.setItem(storageKey, JSON.stringify(snapshot()));
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+        if (saved) {
+          Object.entries(saved).forEach(([key, value]) => {
+            if (key === "output") output.value = String(value || "");
+            else if (key !== "tones" && form.elements[key]) form.elements[key].value = String(value || "");
+          });
+          if (Array.isArray(saved.tones)) document.querySelectorAll("[data-copy-tone]").forEach((button) => button.classList.toggle("active", saved.tones.includes(button.dataset.copyTone)));
+        }
+      } catch {}
+      form.addEventListener("input", save);
+      document.getElementById("copyPilotTones").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-copy-tone]");
+        if (!button) return;
+        button.classList.toggle("active");
+        if (!selectedTones().length) button.classList.add("active");
+        save();
+      });
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        generateButton.disabled = true;
+        generateButton.textContent = "Menyusun tulisan...";
+        quality.className = "result";
+        quality.textContent = "Intent Analyzer sedang memahami tulisan asal.";
+        try {
+          const payload = snapshot();
+          const response = await fetch("/api/copy-pilot/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+          const json = await readApiJson(response);
+          if (!response.ok || !json.ok) throw new Error(json.error || "Copy Pilot gagal generate.");
+          output.value = json.post;
+          quality.className = "result ok";
+          quality.textContent = [json.intent?.coreMessage ? "Core message, " + json.intent.coreMessage : "", ...(json.warnings || [])].filter(Boolean).join("\\n") || "Semakan lulus, intent asal dikekalkan.";
+          save();
+        } catch (error) {
+          quality.className = "result err";
+          quality.textContent = error.message;
+        } finally {
+          generateButton.disabled = false;
+          generateButton.textContent = "Generate Posting";
+        }
+      });
+      document.getElementById("saveCopyPilotDraftButton").addEventListener("click", () => { save(); showToast("Draft Copy Pilot disimpan."); });
+      document.getElementById("clearCopyPilotButton").addEventListener("click", () => { form.reset(); output.value = ""; localStorage.removeItem(storageKey); });
+      document.getElementById("copyCopyPilotButton").addEventListener("click", async () => { await navigator.clipboard.writeText(output.value); showToast("Posting sudah dicopy."); });
+      document.getElementById("downloadCopyPilotButton").addEventListener("click", () => {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([output.value], { type: "text/plain;charset=utf-8" }));
+        link.download = "copy-pilot-post.txt";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+      document.getElementById("copyPilotFeedback").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-copy-feedback]");
+        if (!button || !output.value) return;
+        const entries = JSON.parse(localStorage.getItem(feedbackKey) || "[]");
+        entries.unshift({ feedback: button.dataset.copyFeedback, post: output.value, createdAt: new Date().toISOString() });
+        localStorage.setItem(feedbackKey, JSON.stringify(entries.slice(0, 100)));
+        showToast("Feedback disimpan dalam Writing Brain.");
+      });
     }
 
     function configureClientPilotModules() {
@@ -10064,6 +10190,7 @@ Review retargeting when the warm audience is ready</textarea>
     reportStartDate.value = reportWeek.start;
     reportEndDate.value = reportWeek.end;
     setupTabs();
+    setupCopyPilot();
     setupMainTabSwipe();
     setupMainTabScrub();
     setupPanels();
