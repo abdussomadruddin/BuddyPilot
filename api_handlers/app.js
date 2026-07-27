@@ -1321,7 +1321,7 @@ function pageHtml() {
       }
 
       .dashboard-workspace .quick-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
 
@@ -3124,7 +3124,7 @@ function pageHtml() {
         inset: auto 0 0;
         z-index: 80;
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0;
         width: 100%;
         min-width: 0;
