@@ -4209,6 +4209,19 @@ function pageHtml() {
           <button type="button" data-menu-refresh><svg class="icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg><span>Refresh</span></button>
           <button type="button" data-menu-subtab="settings-panel"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Tetapan</span></button>
           <button type="button" data-menu-subtab="bank-panel"><svg class="icon" aria-hidden="true"><use href="/icons.svg#landmark"></use></svg><span>Akaun Bank</span></button>
+          <button type="button" data-menu-section="menuTikTokSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#link"></use></svg><span>TikTok Ads</span></button>
+          <div id="menuTikTokSettings" class="menu-settings-panel" hidden></div>
+          <button type="button" data-menu-section="menuOpenAISettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#sparkles"></use></svg><span>OPENAI KEY</span></button>
+          <div id="menuOpenAISettings" class="menu-settings-panel menu-tiktok-card" hidden>
+            <strong>OPENAI KEY</strong>
+            <span id="openaiKeyStatus">Semak status key...</span>
+            <form id="openaiKeyForm">
+              <label for="openaiKeyInput">API key baru</label>
+              <input id="openaiKeyInput" type="password" autocomplete="off" placeholder="sk-..." required>
+              <button type="submit">Save Key</button>
+            </form>
+            <div id="openaiKeyResult" class="result"></div>
+          </div>
           <form method="post" action="/api/logout">
             <button class="logout-option" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#log-out"></use></svg><span>Logout</span></button>
           </form>
@@ -6227,6 +6240,55 @@ Review retargeting when the warm audience is ready</textarea>
         localStorage.setItem(feedbackKey, JSON.stringify(entries.slice(0, 100)));
         showToast("Feedback disimpan dalam Writing Brain.");
       });
+    }
+
+    function setupMenuIntegrations() {
+      const tiktokCard = document.getElementById("tiktokAdsSettings");
+      const tiktokPanel = document.getElementById("menuTikTokSettings");
+      if (tiktokCard && tiktokPanel) tiktokPanel.appendChild(tiktokCard);
+      const panels = [...document.querySelectorAll(".menu-settings-panel")];
+      document.querySelectorAll("[data-menu-section]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const panel = document.getElementById(button.dataset.menuSection);
+          const willOpen = panel.hidden;
+          panels.forEach((item) => { item.hidden = true; });
+          panel.hidden = !willOpen;
+          if (willOpen && panel.id === "menuOpenAISettings") {
+            try {
+              const response = await fetch("/api/copy-pilot/settings");
+              const json = await readApiJson(response);
+              document.getElementById("openaiKeyStatus").textContent = json.configured ? "Key aktif, " + json.hint : "Belum ada OpenAI key.";
+            } catch (error) {
+              document.getElementById("openaiKeyStatus").textContent = error.message;
+            }
+          }
+        });
+      });
+      document.getElementById("openaiKeyForm")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const result = document.getElementById("openaiKeyResult");
+        try {
+          const response = await fetch("/api/copy-pilot/settings", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ apiKey: document.getElementById("openaiKeyInput").value }),
+          });
+          const json = await readApiJson(response);
+          if (!response.ok || !json.ok) throw new Error(json.error || "Key gagal disimpan.");
+          document.getElementById("openaiKeyInput").value = "";
+          document.getElementById("openaiKeyStatus").textContent = "Key aktif, " + json.hint;
+          result.className = "result ok";
+          result.textContent = "OpenAI key disimpan secara encrypted.";
+        } catch (error) {
+          result.className = "result err";
+          result.textContent = error.message;
+        }
+      });
+      const requested = new URLSearchParams(window.location.search);
+      if (requested.get("tiktok") || window.location.hash === "#tiktokAdsSettings") {
+        topbarMenu.open = true;
+        panels.forEach((item) => { item.hidden = item !== tiktokPanel; });
+      }
     }
 
     function configureClientPilotModules() {
@@ -10191,6 +10253,7 @@ Review retargeting when the warm audience is ready</textarea>
     reportEndDate.value = reportWeek.end;
     setupTabs();
     setupCopyPilot();
+    setupMenuIntegrations();
     setupMainTabSwipe();
     setupMainTabScrub();
     setupPanels();

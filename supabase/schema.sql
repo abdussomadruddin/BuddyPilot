@@ -13,6 +13,7 @@ create table if not exists public.tiktok_mcp_connections (
   constraint tiktok_mcp_connections_status check (status in ('disconnected', 'authorizing', 'connected', 'expired', 'error'))
 );
 
+
 create table if not exists public.push_subscriptions (
   id uuid primary key default gen_random_uuid(),
   endpoint text not null unique,
