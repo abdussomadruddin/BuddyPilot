@@ -67,13 +67,33 @@ test("TikTok TOP is prospecting while MID and BOT are retargeting", () => {
   assert.equal(analytics.categories.retargeting.results, 8);
   assert.equal(analytics.categories.other.spend, 0);
   const draft = buildReportDraft(analytics, tiktokConfig);
-  assert.equal(draft.adSpend, 150);
+  assert.equal(draft.adSpend, 300);
   assert.equal(draft.leadsGenerated, 4);
   assert.equal(draft.costPerLead, 37.5);
   assert.match(draft.whatWeProved, /TOP - Prospecting Lead Gen/);
   assert.match(draft.whatWeProved, /MID\/BOT - Retargeting Traffic WhatsApp/);
   assert.match(draft.retargetingBestPerformance, /100 clicks.*RM\s?0\.40 CPC/);
   assert.doesNotMatch(draft.retargetingBestPerformance, /lead|CPL/i);
+});
+
+test("TikTok weekly PDF falls back to overall clicks and CPC when TOP has no leads", () => {
+  const tiktokConfig = { ...config, platform: "tiktok", resultMetric: "leads" };
+  const analytics = aggregateAdflowData({
+    insights: { currency: "MYR", spend: 120, clicks: 60, leads: 0 },
+    campaigns: [
+      { id: "top", name: "TOP - Lead Gen", spend: 50, clicks: 20, leads: 0 },
+      { id: "mid", name: "MID - Traffic Whatsapp", spend: 40, clicks: 24, leads: 0 },
+      { id: "bot", name: "BOT - Traffic Whatsapp", spend: 30, clicks: 16, leads: 0 },
+    ],
+  }, tiktokConfig);
+  const draft = buildReportDraft(analytics, tiktokConfig);
+  assert.equal(draft.adSpend, 120);
+  assert.equal(draft.resultLabel, "Clicks");
+  assert.equal(draft.leadsGenerated, 60);
+  assert.equal(draft.costPerLead, 2);
+  assert.match(draft.whatWeProved, /TOP - Prospecting Lead Gen:.*20 clicks.*CPC/);
+  assert.match(draft.recommendation, /Overall delivery: 60 clicks.*CPC/);
+  assert.doesNotMatch(`${draft.whatWeProved}\n${draft.recommendation}`, /\b0 leads\b|CPL/);
 });
 
 test("messaging conversations use campaign and ad conversation fields", () => {
