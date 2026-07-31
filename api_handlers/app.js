@@ -4190,6 +4190,7 @@ function pageHtml() {
       .onboarding-template-action button { width: 100%; }
     }
   </style>
+  <link rel="stylesheet" href="/buddypilot-redesign.css?v=1">
 </head>
 <body>
   <main>
