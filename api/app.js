@@ -4,6 +4,7 @@ const routes = {
   "bank-accounts": require("../api_handlers/bank-accounts"),
   "bank-accounts/qr": require("../api_handlers/bank-accounts/qr"),
   clients: require("../api_handlers/clients"),
+  "clients/agency-operations": require("../api_handlers/clients/agency-operations"),
   "clients/onboarding": require("../api_handlers/clients/onboarding"),
   "dashboard/today": require("../api_handlers/dashboard/today"),
   "operations/overview": require("../api_handlers/operations/overview"),

@@ -901,6 +901,187 @@ textarea:focus {
   margin: 0 0 6px;
 }
 
+.agency-overview {
+  display: grid;
+  gap: 18px;
+}
+
+.agency-overview-toolbar,
+.agency-workspace-toolbar,
+.agency-panel-heading,
+.agency-attention-heading,
+.agency-operation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.agency-overview-toolbar h2,
+.agency-panel-heading h3 {
+  margin: 0 0 4px;
+}
+
+.agency-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.agency-metrics article {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.agency-metrics span,
+.agency-operation-item span,
+.agency-attention-item span {
+  display: block;
+  color: var(--bp-muted);
+  font-size: 12px;
+}
+
+.agency-metrics strong {
+  display: block;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+  font-size: clamp(21px, 2vw, 30px);
+}
+
+.agency-workspace-toolbar {
+  justify-content: flex-start;
+  padding: 14px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-soft);
+}
+
+.agency-workspace-toolbar label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.agency-workspace-toolbar select {
+  width: min(420px, 100%);
+}
+
+.agency-attention-list {
+  display: grid;
+  gap: 8px;
+}
+
+.agency-attention-heading span {
+  min-width: 26px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--bp-soft);
+  text-align: center;
+  font-weight: 700;
+}
+
+.agency-attention-item,
+.agency-clear-state {
+  padding: 13px 15px;
+  border: 1px solid var(--bp-line);
+  border-left: 4px solid #d79b2d;
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.agency-attention-item[data-tone="danger"] {
+  border-left-color: #c83b3b;
+}
+
+.agency-clear-state {
+  border-left-color: #2c8b69;
+}
+
+.agency-clear-state span {
+  display: block;
+  margin-top: 3px;
+  color: var(--bp-muted);
+  font-size: 13px;
+}
+
+.agency-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.agency-workspace-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.agency-inline-form {
+  display: grid;
+  gap: 11px;
+  margin: 14px 0 18px;
+  padding: 14px;
+  border-radius: var(--bp-radius);
+  background: var(--bp-soft);
+}
+
+.agency-inline-form label {
+  margin: 0;
+}
+
+.agency-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.agency-operation-list {
+  display: grid;
+  gap: 9px;
+}
+
+.agency-operation-item {
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.agency-operation-item > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.agency-operation-item strong {
+  overflow-wrap: anywhere;
+}
+
+.agency-operation-item span {
+  margin-top: 4px;
+}
+
+.agency-operation-meta {
+  min-width: 110px;
+}
+
+.agency-operation-item[data-priority="urgent"] {
+  border-left: 4px solid #c83b3b;
+}
+
+.agency-operation-item[data-priority="high"] {
+  border-left: 4px solid #d79b2d;
+}
+
+.empty-state.compact {
+  min-height: 100px;
+  padding: 15px;
+}
+
 @media (max-width: 600px) {
   .agency-client-detail {
     padding: 16px;
@@ -922,5 +1103,32 @@ textarea:focus {
 
   .agency-detail-grid > div:nth-child(odd) {
     border-right: 0;
+  }
+
+  .agency-overview-toolbar,
+  .agency-workspace-toolbar,
+  .agency-operation-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .agency-overview-toolbar button,
+  .agency-workspace-toolbar select,
+  .agency-operation-item button {
+    width: 100%;
+  }
+
+  .agency-metrics,
+  .agency-workspace-grid,
+  .agency-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .agency-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .agency-operation-meta {
+    min-width: 0;
   }
 }

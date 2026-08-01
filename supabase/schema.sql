@@ -81,6 +81,35 @@ alter table public.invoice_clients add column if not exists agency_status text;
 alter table public.invoice_clients add column if not exists notes text not null default '';
 alter table public.invoice_clients add column if not exists archived_at timestamptz;
 
+create table if not exists public.agency_services (
+  id uuid primary key default gen_random_uuid(),
+  client_code text not null references public.invoice_clients(code) on update cascade on delete cascade,
+  name text not null,
+  monthly_fee numeric(12, 2) not null default 0 check (monthly_fee >= 0),
+  status text not null default 'active' check (status in ('active', 'paused', 'completed')),
+  start_date date,
+  renewal_date date,
+  owner text not null default '',
+  notes text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.agency_tasks (
+  id uuid primary key default gen_random_uuid(),
+  client_code text not null references public.invoice_clients(code) on update cascade on delete cascade,
+  service_id uuid references public.agency_services(id) on delete set null,
+  title text not null,
+  due_date date,
+  priority text not null default 'normal' check (priority in ('low', 'normal', 'high', 'urgent')),
+  status text not null default 'todo' check (status in ('todo', 'in_progress', 'done', 'cancelled')),
+  owner text not null default '',
+  notes text not null default '',
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 update public.invoice_clients
 set agency_status = case
   when deleted_at is not null then 'archived'
@@ -450,6 +479,11 @@ create table if not exists public.operations_incidents (
 
 create index if not exists invoice_clients_brand_client_idx on public.invoice_clients (brand_client);
 create index if not exists invoice_clients_onboarding_status_idx on public.invoice_clients (onboarding_status);
+create index if not exists agency_services_client_status_idx on public.agency_services (client_code, status);
+create index if not exists agency_services_renewal_idx on public.agency_services (renewal_date) where status = 'active';
+create index if not exists agency_tasks_client_status_idx on public.agency_tasks (client_code, status);
+create index if not exists agency_tasks_service_id_idx on public.agency_tasks (service_id) where service_id is not null;
+create index if not exists agency_tasks_due_idx on public.agency_tasks (due_date) where status in ('todo', 'in_progress');
 create index if not exists invoice_uploads_period_idx on public.invoice_uploads (period);
 create index if not exists invoice_uploads_client_code_idx on public.invoice_uploads (client_code);
 create unique index if not exists bank_accounts_one_default_idx on public.bank_accounts (is_default) where is_default = true and is_active = true and deleted_at is null;
@@ -474,6 +508,16 @@ $$;
 drop trigger if exists invoice_clients_touch_updated_at on public.invoice_clients;
 create trigger invoice_clients_touch_updated_at
 before update on public.invoice_clients
+for each row execute function public.touch_updated_at();
+
+drop trigger if exists agency_services_touch_updated_at on public.agency_services;
+create trigger agency_services_touch_updated_at
+before update on public.agency_services
+for each row execute function public.touch_updated_at();
+
+drop trigger if exists agency_tasks_touch_updated_at on public.agency_tasks;
+create trigger agency_tasks_touch_updated_at
+before update on public.agency_tasks
 for each row execute function public.touch_updated_at();
 
 drop trigger if exists business_settings_touch_updated_at on public.business_settings;
@@ -532,6 +576,8 @@ before update on public.operations_incidents
 for each row execute function public.touch_updated_at();
 
 alter table public.invoice_clients enable row level security;
+alter table public.agency_services enable row level security;
+alter table public.agency_tasks enable row level security;
 alter table public.tiktok_mcp_connections enable row level security;
 alter table public.push_subscriptions enable row level security;
 alter table public.business_settings enable row level security;
@@ -553,6 +599,10 @@ alter table public.operations_incidents enable row level security;
 grant select, insert, update, delete on public.postpilot_hook_images to service_role;
 grant select, insert, update, delete on public.invoice_clients to service_role;
 revoke all on public.invoice_clients from anon, authenticated;
+grant select, insert, update, delete on public.agency_services to service_role;
+grant select, insert, update, delete on public.agency_tasks to service_role;
+revoke all on public.agency_services from anon, authenticated;
+revoke all on public.agency_tasks from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_products to service_role;
 revoke all on public.postpilot_products from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_voice_profiles to service_role;
