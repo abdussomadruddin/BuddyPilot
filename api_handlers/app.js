@@ -4216,8 +4216,21 @@ function pageHtml() {
     .ads-cmo-scorecard th, .ads-cmo-scorecard td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; }
     .ads-cmo-scorecard th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
     .ads-cmo-status { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 999px; background: var(--blue-soft); font-size: 12px; font-weight: 800; }
-    .ads-cmo-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .ads-cmo-product-rule { display: grid; grid-template-columns: 1fr 1.4fr .9fr repeat(3, .7fr) auto; gap: 8px; align-items: end; margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+    .ads-cmo-settings-panel { margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+    .ads-cmo-settings-panel > summary { padding: 16px 18px; background: #f7f7f5; font-size: 16px; font-weight: 800; }
+    .ads-cmo-settings-content { padding: 18px; border-top: 1px solid var(--line); }
+    .ads-cmo-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 14px; border-radius: 12px; background: #f7f7f5; }
+    .ads-cmo-settings-grid .check-row { grid-column: 1 / -1; min-height: 48px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+    .ads-cmo-settings-grid > div, .ads-cmo-product-rule > div { min-width: 0; }
+    .ads-cmo-settings-grid label:not(.check-row), .ads-cmo-product-rule label { margin: 0 0 7px; color: #4d5158; font-size: 12px; font-weight: 800; }
+    .ads-cmo-rules-heading { align-items: flex-end; margin: 24px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .ads-cmo-rules-heading h3 { margin: 0 0 4px; }
+    .ads-cmo-rules-heading .note { margin: 0; }
+    .ads-cmo-rules-heading button { flex: 0 0 auto; }
+    #adsCmoProductRules { display: grid; gap: 12px; }
+    .ads-cmo-product-rule { display: grid; grid-template-columns: 1fr 1.4fr .9fr repeat(3, .7fr) auto; gap: 10px; align-items: end; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: 0 4px 14px rgba(20, 20, 20, .035); }
+    .ads-cmo-product-rule .danger { min-width: 88px; }
+    .ads-cmo-settings-actions { justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
     .ads-cmo-empty { padding: 28px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); text-align: center; }
     .ads-cmo-live { margin-top: 18px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
     .ads-cmo-live-badge { align-self: flex-start; padding: 6px 9px; border-radius: 999px; background: #e8f6ef; color: #24705a; font-size: 11px; font-weight: 800; }
@@ -4256,12 +4269,23 @@ function pageHtml() {
     .ads-cmo-campaign-detail small { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
     .ads-cmo-campaign-detail strong { margin-top: 3px; overflow-wrap: anywhere; font-size: 14px; }
     .ads-cmo-live-warnings { margin: 12px 0 0; padding: 12px 12px 12px 30px; border-radius: 8px; background: #fff4e5; color: #7b4c12; }
+    @media (max-width: 1180px) {
+      .ads-cmo-product-rule { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .ads-cmo-product-rule > div:nth-child(2) { grid-column: span 2; }
+      .ads-cmo-product-rule .danger { grid-column: 3; }
+    }
     @media (max-width: 820px) {
       .ads-cmo-toolbar, .ads-cmo-settings-grid, .ads-cmo-two-column { grid-template-columns: 1fr; }
+      .ads-cmo-settings-content { padding: 12px; }
+      .ads-cmo-settings-grid { padding: 10px; }
+      .ads-cmo-settings-grid .check-row { grid-column: auto; }
+      .ads-cmo-rules-heading { align-items: stretch; }
+      .ads-cmo-rules-heading button { width: 100%; }
       .ads-cmo-toolbar-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       #adsCmoRetryButton { grid-column: 1 / -1; }
       .ads-cmo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .ads-cmo-product-rule { grid-template-columns: 1fr 1fr; }
+      .ads-cmo-product-rule > div:nth-child(2) { grid-column: auto; }
       .ads-cmo-product-rule .danger { grid-column: 1 / -1; }
       .ads-cmo-live { padding: 12px; }
       .ads-cmo-live-spend { align-items: flex-start; flex-direction: column; }
@@ -4276,6 +4300,11 @@ function pageHtml() {
       .ads-cmo-product-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .ads-cmo-live-campaigns .ads-cmo-table-scroll { display: none; }
       .ads-cmo-campaign-cards { display: block; }
+    }
+    @media (max-width: 520px) {
+      .ads-cmo-product-rule { grid-template-columns: 1fr; }
+      .ads-cmo-product-rule .danger { grid-column: auto; width: 100%; }
+      .ads-cmo-settings-actions button { width: 100%; }
     }
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
@@ -4449,16 +4478,18 @@ function pageHtml() {
           <ul id="adsCmoLiveWarnings" class="ads-cmo-live-warnings"></ul>
         </section>
 
-        <details id="adsCmoSettings" class="advanced-panel" style="margin-top:16px">
+        <details id="adsCmoSettings" class="advanced-panel ads-cmo-settings-panel">
           <summary>Account & Profit Settings</summary>
-          <div class="ads-cmo-settings-grid" style="margin-top:14px">
-            <label class="check-row"><input id="adsCmoAutoEnabled" type="checkbox"> Auto report setiap pagi</label>
-            <div><label for="adsCmoProspectingKeywords">Prospecting keywords</label><input id="adsCmoProspectingKeywords" type="text"></div>
-            <div><label for="adsCmoRetargetingKeywords">Retargeting keywords</label><input id="adsCmoRetargetingKeywords" type="text"></div>
+          <div class="ads-cmo-settings-content">
+            <div class="ads-cmo-settings-grid">
+              <label class="check-row"><input id="adsCmoAutoEnabled" type="checkbox"> Auto report setiap pagi</label>
+              <div><label for="adsCmoProspectingKeywords">Prospecting keywords</label><input id="adsCmoProspectingKeywords" type="text"></div>
+              <div><label for="adsCmoRetargetingKeywords">Retargeting keywords</label><input id="adsCmoRetargetingKeywords" type="text"></div>
+            </div>
+            <div class="section-heading ads-cmo-rules-heading"><div><h3>Product Rules</h3><p class="note">Padankan campaign dengan harga, margin atau allowable CPA.</p></div><button id="adsCmoAddProductButton" class="secondary" type="button">Add Product</button></div>
+            <div id="adsCmoProductRules"></div>
+            <div class="actions ads-cmo-settings-actions"><button id="adsCmoSaveSettingsButton" type="button">Save Settings</button></div>
           </div>
-          <div class="section-heading" style="margin-top:18px"><div><h3>Product Rules</h3><p class="note">Padankan campaign dengan harga, margin atau allowable CPA.</p></div><button id="adsCmoAddProductButton" class="secondary" type="button">Add Product</button></div>
-          <div id="adsCmoProductRules"></div>
-          <div class="actions"><button id="adsCmoSaveSettingsButton" type="button">Save Settings</button></div>
         </details>
 
         <section class="ads-cmo-section" style="margin-top:16px">
