@@ -4782,6 +4782,13 @@ Review retargeting when the warm audience is ready</textarea>
               <select id="agencyWorkspaceClient"><option value="">Semua agency clients</option></select>
             </div>
             <div id="agencyAttentionList" class="agency-attention-list"></div>
+            <section class="agency-delivery-calendar">
+              <div class="agency-panel-heading">
+                <div><h3>Delivery Calendar</h3><p class="note">Task due dalam 14 hari akan muncul di sini.</p></div>
+                <button id="generateAgencyRecurringButton" class="secondary" type="button">Sync Recurring Tasks</button>
+              </div>
+              <div id="agencyDeliveryCalendar" class="agency-calendar-list"></div>
+            </section>
             <div class="agency-workspace-grid">
               <section class="agency-workspace-panel">
                 <div class="agency-panel-heading"><div><h3>Services</h3><p class="note">Track fee, owner dan renewal.</p></div></div>
@@ -4813,11 +4820,38 @@ Review retargeting when the warm audience is ready</textarea>
                     <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
                     <label>Status<select name="status"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></label>
                   </div>
+                  <label>Work type<select name="workType"><option value="general">General</option><option value="report">Weekly report</option><option value="invoice">Invoice</option><option value="creative">Creative</option><option value="campaign_review">Campaign review</option></select></label>
                   <div class="inline-actions"><button type="submit">Save Task</button><button id="cancelAgencyTaskEdit" class="secondary" type="button" hidden>Cancel</button></div>
                 </form>
                 <div id="agencyTaskList" class="agency-operation-list"></div>
               </section>
             </div>
+            <section class="agency-workspace-panel agency-recurring-panel">
+              <div class="agency-panel-heading"><div><h3>Recurring Deliveries</h3><p class="note">Jadualkan report, invoice, creative atau campaign review secara mingguan dan bulanan.</p></div></div>
+              <form id="agencyTemplateForm" class="agency-inline-form agency-template-form">
+                <input name="id" type="hidden">
+                <label>Delivery name<input name="title" type="text" placeholder="Contoh: Hantar weekly report" required></label>
+                <div class="agency-form-row">
+                  <label>Work type<select name="workType"><option value="report">Weekly report</option><option value="invoice">Invoice</option><option value="creative">Creative</option><option value="campaign_review">Campaign review</option><option value="general">General</option></select></label>
+                  <label>Service<select name="serviceId"><option value="">No linked service</option></select></label>
+                </div>
+                <div class="agency-form-row">
+                  <label>Cadence<select name="cadence"><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
+                  <label>Next due date<input name="nextDueDate" type="date" required></label>
+                </div>
+                <div class="agency-form-row">
+                  <label>Weekly day<select name="weekday"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select></label>
+                  <label>Monthly day<input name="monthDay" type="number" min="1" max="28" value="1" required></label>
+                </div>
+                <div class="agency-form-row">
+                  <label>Priority<select name="priority"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option><option value="low">Low</option></select></label>
+                  <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
+                </div>
+                <label class="agency-checkbox"><input name="isActive" type="checkbox" checked> Active schedule</label>
+                <div class="inline-actions"><button type="submit">Save Recurring Delivery</button><button id="cancelAgencyTemplateEdit" class="secondary" type="button" hidden>Cancel</button></div>
+              </form>
+              <div id="agencyTemplateList" class="agency-operation-list"></div>
+            </section>
             <div id="agencyOperationsResult" class="result"></div>
           </section>
         </div>
@@ -5272,13 +5306,18 @@ Review retargeting when the warm audience is ready</textarea>
     const agencyManagedBudget = document.getElementById("agencyManagedBudget");
     const agencyOpenTasks = document.getElementById("agencyOpenTasks");
     const agencyAttentionList = document.getElementById("agencyAttentionList");
+    const agencyDeliveryCalendar = document.getElementById("agencyDeliveryCalendar");
+    const generateAgencyRecurringButton = document.getElementById("generateAgencyRecurringButton");
     const agencyServiceForm = document.getElementById("agencyServiceForm");
     const agencyTaskForm = document.getElementById("agencyTaskForm");
+    const agencyTemplateForm = document.getElementById("agencyTemplateForm");
     const agencyServiceList = document.getElementById("agencyServiceList");
     const agencyTaskList = document.getElementById("agencyTaskList");
+    const agencyTemplateList = document.getElementById("agencyTemplateList");
     const agencyOperationsResult = document.getElementById("agencyOperationsResult");
     const cancelAgencyServiceEdit = document.getElementById("cancelAgencyServiceEdit");
     const cancelAgencyTaskEdit = document.getElementById("cancelAgencyTaskEdit");
+    const cancelAgencyTemplateEdit = document.getElementById("cancelAgencyTemplateEdit");
     const dashboardClientCount = document.getElementById("dashboardClientCount");
     const dashboardInvoiceCount = document.getElementById("dashboardInvoiceCount");
     const dashboardRegistryStatus = document.getElementById("dashboardRegistryStatus");
@@ -5407,6 +5446,7 @@ Review retargeting when the warm audience is ready</textarea>
     let currentClients = [];
     let currentAgencyServices = [];
     let currentAgencyTasks = [];
+    let currentAgencyTemplates = [];
     let currentAgencyClientCode = "";
     let currentClientOnboarding = null;
     let currentClientOnboardingStep = "details";
@@ -8736,6 +8776,10 @@ Review retargeting when the warm audience is ready</textarea>
       return ({ active: "Active", paused: "Paused", completed: "Completed", todo: "To do", in_progress: "In progress", done: "Done", cancelled: "Cancelled" })[status] || status;
     }
 
+    function agencyWorkTypeLabel(type) {
+      return ({ general: "General", report: "Weekly report", invoice: "Invoice", creative: "Creative", campaign_review: "Campaign review" })[type] || "General";
+    }
+
     function populateAgencyWorkspaceClients() {
       const selected = agencyWorkspaceClient.value;
       const clients = currentClients.filter((client) => !["archived", "completed"].includes(agencyClientStatus(client)));
@@ -8750,7 +8794,37 @@ Review retargeting when the warm audience is ready</textarea>
       form.elements.id.value = "";
       cancelButton.hidden = true;
       const submit = form.querySelector('button[type="submit"]');
-      submit.textContent = form === agencyServiceForm ? "Save Service" : "Save Task";
+      submit.textContent = form === agencyServiceForm ? "Save Service" : form === agencyTemplateForm ? "Save Recurring Delivery" : "Save Task";
+    }
+
+    function populateAgencyServiceOptions(selectedCode) {
+      const select = agencyTemplateForm.elements.serviceId;
+      const selected = select.value;
+      const services = currentAgencyServices.filter((service) => !selectedCode || service.clientCode === selectedCode);
+      select.innerHTML = '<option value="">No linked service</option>' + services.map((service) => '<option value="' + escapeHtml(service.id) + '">' + escapeHtml(service.name) + '</option>').join("");
+      select.value = services.some((service) => service.id === selected) ? selected : "";
+    }
+
+    function agencyModuleAction(task) {
+      if (!task || !["report", "invoice"].includes(task.workType)) return "";
+      const label = task.workType === "report" ? "Open Report" : "Open Invoice";
+      return '<button class="secondary open-agency-module" type="button" data-work-type="' + task.workType + '" data-client-code="' + escapeHtml(task.clientCode) + '">' + label + '</button>';
+    }
+
+    function renderAgencyDeliveryCalendar(tasks, today) {
+      const limit = new Date(today + "T12:00:00");
+      limit.setDate(limit.getDate() + 13);
+      const endDate = localIsoDate(limit);
+      const upcoming = tasks.filter((task) => task.dueDate && task.dueDate >= today && task.dueDate <= endDate && ["todo", "in_progress"].includes(task.status));
+      const groups = upcoming.reduce((map, task) => {
+        if (!map.has(task.dueDate)) map.set(task.dueDate, []);
+        map.get(task.dueDate).push(task);
+        return map;
+      }, new Map());
+      agencyDeliveryCalendar.innerHTML = groups.size ? [...groups.entries()].map(([dueDate, items]) => {
+        const label = new Date(dueDate + "T12:00:00").toLocaleDateString("en-MY", { weekday: "short", day: "numeric", month: "short" });
+        return '<section class="agency-calendar-day"><div class="agency-calendar-date"><strong>' + escapeHtml(label) + '</strong><span>' + items.length + ' task</span></div><div class="agency-calendar-tasks">' + items.map((task) => '<article><div><strong>' + escapeHtml(task.title) + '</strong><span>' + escapeHtml(agencyClientLabel(task.clientCode)) + ' · ' + escapeHtml(agencyWorkTypeLabel(task.workType)) + '</span></div>' + agencyModuleAction(task) + '</article>').join("") + '</div></section>';
+      }).join("") : '<div class="empty-state compact"><strong>Tiada delivery dalam 14 hari.</strong><span>Tambah recurring delivery atau task dengan due date.</span></div>';
     }
 
     function renderAgencyOperations() {
@@ -8759,7 +8833,9 @@ Review retargeting when the warm audience is ready</textarea>
       const selectedCode = agencyWorkspaceClient.value;
       const services = currentAgencyServices.filter((item) => !selectedCode || item.clientCode === selectedCode);
       const tasks = currentAgencyTasks.filter((item) => !selectedCode || item.clientCode === selectedCode);
+      const templates = currentAgencyTemplates.filter((item) => !selectedCode || item.clientCode === selectedCode);
       const openTasks = currentAgencyTasks.filter((item) => ["todo", "in_progress"].includes(item.status));
+      populateAgencyServiceOptions(selectedCode);
       agencyActiveClients.textContent = String(activeClients.length);
       agencyMonthlyRevenue.textContent = formatMoneyValue(activeClients.reduce((total, client) => total + Number(client.monthlyRetainer || 0), 0));
       agencyManagedBudget.textContent = formatMoneyValue(activeClients.reduce((total, client) => total + Number(client.monthlyAdBudget || 0), 0));
@@ -8778,6 +8854,7 @@ Review retargeting when the warm audience is ready</textarea>
       agencyAttentionList.innerHTML = attention.length
         ? '<div class="agency-attention-heading"><strong>Needs attention</strong><span>' + attention.length + '</span></div>' + attention.map((item) => '<div class="agency-attention-item" data-tone="' + item.tone + '"><strong>' + escapeHtml(item.title) + '</strong><span>' + escapeHtml(item.detail) + '</span></div>').join("")
         : '<div class="agency-clear-state"><strong>Everything on track</strong><span>Tiada task overdue atau renewal dalam 30 hari.</span></div>';
+      renderAgencyDeliveryCalendar(tasks, today);
 
       agencyServiceList.innerHTML = services.length ? services.map((service) => \`
         <article class="agency-operation-item">
@@ -8789,11 +8866,19 @@ Review retargeting when the warm audience is ready</textarea>
 
       agencyTaskList.innerHTML = tasks.length ? tasks.map((task) => \`
         <article class="agency-operation-item" data-priority="\${escapeHtml(task.priority)}">
-          <div><strong>\${escapeHtml(task.title)}</strong><span>\${escapeHtml(agencyClientLabel(task.clientCode))} · \${escapeHtml(task.owner || "No owner")}</span></div>
+          <div><strong>\${escapeHtml(task.title)}</strong><span>\${escapeHtml(agencyClientLabel(task.clientCode))} · \${escapeHtml(agencyWorkTypeLabel(task.workType))} · \${escapeHtml(task.owner || "No owner")}</span></div>
           <div class="agency-operation-meta"><span class="agency-status-pill" data-status="\${escapeHtml(task.status)}">\${escapeHtml(agencyOperationStatusLabel(task.status))}</span><span>\${escapeHtml(task.dueDate || "No due date")}</span></div>
-          <div class="inline-actions"><button class="secondary toggle-agency-task" type="button" data-task-id="\${escapeHtml(task.id)}" data-next-status="\${task.status === "done" ? "todo" : "done"}">\${task.status === "done" ? "Reopen" : "Done"}</button><button class="secondary edit-agency-task" type="button" data-task-id="\${escapeHtml(task.id)}">Edit</button></div>
+          <div class="inline-actions">\${agencyModuleAction(task)}<button class="secondary toggle-agency-task" type="button" data-task-id="\${escapeHtml(task.id)}" data-next-status="\${task.status === "done" ? "todo" : "done"}">\${task.status === "done" ? "Reopen" : "Done"}</button><button class="secondary edit-agency-task" type="button" data-task-id="\${escapeHtml(task.id)}">Edit</button></div>
         </article>
       \`).join("") : '<div class="empty-state compact"><strong>Belum ada task.</strong><span>Pilih client dan tambah task pertama.</span></div>';
+
+      agencyTemplateList.innerHTML = templates.length ? templates.map((template) => \`
+        <article class="agency-operation-item" data-priority="\${escapeHtml(template.priority)}">
+          <div><strong>\${escapeHtml(template.title)}</strong><span>\${escapeHtml(agencyClientLabel(template.clientCode))} · \${escapeHtml(agencyWorkTypeLabel(template.workType))}</span></div>
+          <div class="agency-operation-meta"><span class="agency-status-pill" data-status="\${template.isActive ? "active" : "paused"}">\${template.isActive ? "Active" : "Paused"}</span><span>\${template.cadence === "weekly" ? "Weekly" : "Monthly"} · Next \${escapeHtml(template.nextDueDate)}</span></div>
+          <div class="inline-actions"><button class="secondary toggle-agency-template" type="button" data-template-id="\${escapeHtml(template.id)}" data-next-active="\${template.isActive ? "false" : "true"}">\${template.isActive ? "Pause" : "Resume"}</button><button class="secondary edit-agency-template" type="button" data-template-id="\${escapeHtml(template.id)}">Edit</button></div>
+        </article>
+      \`).join("") : '<div class="empty-state compact"><strong>Belum ada recurring delivery.</strong><span>Pilih client dan jadualkan kerja berulang pertama.</span></div>';
     }
 
     async function loadAgencyOperations(options = {}) {
@@ -8808,8 +8893,10 @@ Review retargeting when the warm audience is ready</textarea>
         if (!response.ok || !json.ok) throw new Error(json.error || "Agency operations gagal dimuatkan.");
         currentAgencyServices = json.services || [];
         currentAgencyTasks = json.tasks || [];
+        currentAgencyTemplates = json.templates || [];
         renderAgencyOperations();
         setMessage(agencyOperationsResult, "", "");
+        if (json.generated) showToast(json.generated + " recurring task dijana.", "ok");
       } catch (error) {
         setMessage(agencyOperationsResult, "err", error.message || String(error));
       } finally {
@@ -8822,6 +8909,7 @@ Review retargeting when the warm audience is ready</textarea>
       const clientCode = agencyWorkspaceClient.value;
       if (!clientCode) return setMessage(agencyOperationsResult, "err", "Pilih Working on client dahulu.");
       const values = Object.fromEntries(new FormData(form).entries());
+      if (resource === "template") values.isActive = form.elements.isActive.checked;
       const id = values.id || "";
       const submit = form.querySelector('button[type="submit"]');
       const finishButton = setButtonBusy(submit, "Saving...");
@@ -8834,10 +8922,10 @@ Review retargeting when the warm audience is ready</textarea>
         const json = await readApiJson(response);
         if (response.status === 401) return void (window.location.href = "/login");
         if (!response.ok || !json.ok) throw new Error(json.error || "Agency operation gagal disimpan.");
-        resetAgencyOperationForm(form, resource === "service" ? cancelAgencyServiceEdit : cancelAgencyTaskEdit);
+        resetAgencyOperationForm(form, resource === "service" ? cancelAgencyServiceEdit : resource === "template" ? cancelAgencyTemplateEdit : cancelAgencyTaskEdit);
         await loadAgencyOperations({ silent: true });
         finishButton("Saved");
-        showToast(resource === "service" ? "Service disimpan." : "Task disimpan.", "ok");
+        showToast(resource === "service" ? "Service disimpan." : resource === "template" ? "Recurring delivery disimpan." : "Task disimpan.", "ok");
       } catch (error) {
         finishButton();
         setMessage(agencyOperationsResult, "err", error.message || String(error));
@@ -8859,6 +8947,64 @@ Review retargeting when the warm audience is ready</textarea>
       } catch (error) {
         finishButton();
         setMessage(agencyOperationsResult, "err", error.message || String(error));
+      }
+    }
+
+    async function updateAgencyTemplateActive(templateId, isActive, button) {
+      const finishButton = setButtonBusy(button, "Saving...");
+      try {
+        const response = await fetch("/api/clients/agency-operations", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ resource: "template", id: templateId, isActive }),
+        });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Recurring delivery gagal dikemaskini.");
+        await loadAgencyOperations({ silent: true });
+        finishButton(isActive ? "Resumed" : "Paused");
+      } catch (error) {
+        finishButton();
+        setMessage(agencyOperationsResult, "err", error.message || String(error));
+      }
+    }
+
+    async function syncAgencyRecurringTasks() {
+      const finishButton = setButtonBusy(generateAgencyRecurringButton, "Syncing...");
+      try {
+        const response = await fetch("/api/clients/agency-operations", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "generate_recurring", clientCode: agencyWorkspaceClient.value || "" }),
+        });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Recurring task gagal dijana.");
+        currentAgencyServices = json.services || [];
+        currentAgencyTasks = json.tasks || [];
+        currentAgencyTemplates = json.templates || [];
+        renderAgencyOperations();
+        finishButton("Synced");
+        showToast(json.generated ? json.generated + " recurring task dijana." : "Semua recurring task sudah terkini.", "ok");
+      } catch (error) {
+        finishButton();
+        setMessage(agencyOperationsResult, "err", error.message || String(error));
+      }
+    }
+
+    function openAgencyWorkModule(workType, clientCode) {
+      if (workType === "invoice") {
+        openInvoicePilotPanel("invoice-panel");
+        return;
+      }
+      if (workType === "report") {
+        activateTab("clientpilot");
+        activateSubtab("client-modules", "client-report-panel");
+        window.setTimeout(() => {
+          if ([...reportClient.options].some((option) => option.value === clientCode)) {
+            reportClient.value = clientCode;
+            reportClient.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+          reportClient.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 160);
       }
     }
 
@@ -10541,9 +10687,11 @@ Review retargeting when the warm audience is ready</textarea>
     });
     clientForm.addEventListener("submit", saveClient);
     refreshAgencyOperationsButton.addEventListener("click", () => loadAgencyOperations());
+    generateAgencyRecurringButton.addEventListener("click", syncAgencyRecurringTasks);
     agencyWorkspaceClient.addEventListener("change", () => {
       resetAgencyOperationForm(agencyServiceForm, cancelAgencyServiceEdit);
       resetAgencyOperationForm(agencyTaskForm, cancelAgencyTaskEdit);
+      resetAgencyOperationForm(agencyTemplateForm, cancelAgencyTemplateEdit);
       renderAgencyOperations();
     });
     agencyServiceForm.addEventListener("submit", (event) => {
@@ -10554,8 +10702,13 @@ Review retargeting when the warm audience is ready</textarea>
       event.preventDefault();
       saveAgencyOperation("task", agencyTaskForm);
     });
+    agencyTemplateForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveAgencyOperation("template", agencyTemplateForm);
+    });
     cancelAgencyServiceEdit.addEventListener("click", () => resetAgencyOperationForm(agencyServiceForm, cancelAgencyServiceEdit));
     cancelAgencyTaskEdit.addEventListener("click", () => resetAgencyOperationForm(agencyTaskForm, cancelAgencyTaskEdit));
+    cancelAgencyTemplateEdit.addEventListener("click", () => resetAgencyOperationForm(agencyTemplateForm, cancelAgencyTemplateEdit));
     agencyServiceList.addEventListener("click", (event) => {
       const button = event.target.closest(".edit-agency-service");
       if (!button) return;
@@ -10571,6 +10724,11 @@ Review retargeting when the warm audience is ready</textarea>
       agencyServiceForm.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     agencyTaskList.addEventListener("click", (event) => {
+      const moduleButton = event.target.closest(".open-agency-module");
+      if (moduleButton) {
+        openAgencyWorkModule(moduleButton.dataset.workType, moduleButton.dataset.clientCode);
+        return;
+      }
       const toggleButton = event.target.closest(".toggle-agency-task");
       if (toggleButton) {
         updateAgencyTaskStatus(toggleButton.dataset.taskId, toggleButton.dataset.nextStatus, toggleButton);
@@ -10582,12 +10740,36 @@ Review retargeting when the warm audience is ready</textarea>
       if (!task) return;
       agencyWorkspaceClient.value = task.clientCode;
       renderAgencyOperations();
-      for (const name of ["id", "title", "dueDate", "priority", "owner", "status"]) {
+      for (const name of ["id", "title", "dueDate", "priority", "owner", "status", "workType"]) {
         if (agencyTaskForm.elements[name]) agencyTaskForm.elements[name].value = task[name] || "";
       }
       agencyTaskForm.querySelector('button[type="submit"]').textContent = "Update Task";
       cancelAgencyTaskEdit.hidden = false;
       agencyTaskForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    agencyTemplateList.addEventListener("click", (event) => {
+      const toggleButton = event.target.closest(".toggle-agency-template");
+      if (toggleButton) {
+        updateAgencyTemplateActive(toggleButton.dataset.templateId, toggleButton.dataset.nextActive === "true", toggleButton);
+        return;
+      }
+      const button = event.target.closest(".edit-agency-template");
+      if (!button) return;
+      const template = currentAgencyTemplates.find((item) => item.id === button.dataset.templateId);
+      if (!template) return;
+      agencyWorkspaceClient.value = template.clientCode;
+      renderAgencyOperations();
+      for (const name of ["id", "title", "workType", "serviceId", "cadence", "nextDueDate", "weekday", "monthDay", "priority", "owner"]) {
+        if (agencyTemplateForm.elements[name]) agencyTemplateForm.elements[name].value = template[name] ?? "";
+      }
+      agencyTemplateForm.elements.isActive.checked = template.isActive;
+      agencyTemplateForm.querySelector('button[type="submit"]').textContent = "Update Recurring Delivery";
+      cancelAgencyTemplateEdit.hidden = false;
+      agencyTemplateForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    agencyDeliveryCalendar.addEventListener("click", (event) => {
+      const button = event.target.closest(".open-agency-module");
+      if (button) openAgencyWorkModule(button.dataset.workType, button.dataset.clientCode);
     });
     copyClientOnboardingTemplateButton.addEventListener("click", copyClientOnboardingTemplate);
     clientOnboardingBackButton.addEventListener("click", () => {

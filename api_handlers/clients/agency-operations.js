@@ -4,9 +4,12 @@ const { recordActivity } = require("../../lib/supabase-db");
 const {
   createAgencyService,
   createAgencyTask,
+  createAgencyTemplate,
+  generateDueAgencyTasks,
   listAgencyOperations,
   updateAgencyService,
   updateAgencyTask,
+  updateAgencyTemplate,
 } = require("../../lib/agency-operations");
 
 module.exports = async function handler(req, res) {
@@ -23,15 +26,23 @@ module.exports = async function handler(req, res) {
 
     if (req.method === "POST" || req.method === "PATCH") {
       const body = await readJsonBody(req);
+      if (req.method === "POST" && body.action === "generate_recurring") {
+        const generated = await generateDueAgencyTasks(body.clientCode || "");
+        const data = await listAgencyOperations(body.clientCode || "", { generate: false });
+        res.statusCode = 200;
+        res.end(JSON.stringify({ ok: true, generated, ...data }));
+        return;
+      }
       const resource = String(body.resource || "").trim().toLowerCase();
       let saved;
       if (resource === "service") saved = req.method === "POST" ? await createAgencyService(body) : await updateAgencyService(body);
       else if (resource === "task") saved = req.method === "POST" ? await createAgencyTask(body) : await updateAgencyTask(body);
+      else if (resource === "template") saved = req.method === "POST" ? await createAgencyTemplate(body) : await updateAgencyTemplate(body);
       else throw new Error("Jenis agency operation tidak sah.");
 
       await recordActivity({
         type: `${resource}_${req.method === "POST" ? "created" : "updated"}`,
-        title: `${resource === "service" ? "Service" : "Task"} agency ${req.method === "POST" ? "ditambah" : "dikemaskini"}`,
+        title: `${resource === "service" ? "Service" : resource === "template" ? "Recurring delivery" : "Task"} agency ${req.method === "POST" ? "ditambah" : "dikemaskini"}`,
         description: saved.name || saved.title || "",
         entityType: resource,
         entityId: saved.id,

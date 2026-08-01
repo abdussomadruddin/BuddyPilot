@@ -1020,6 +1020,99 @@ textarea:focus {
   background: var(--bp-panel);
 }
 
+.agency-delivery-calendar,
+.agency-recurring-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.agency-calendar-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.agency-calendar-day {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-soft);
+}
+
+.agency-calendar-date span,
+.agency-calendar-tasks span {
+  display: block;
+  margin-top: 3px;
+  color: var(--bp-muted);
+  font-size: 12px;
+}
+
+.agency-calendar-tasks {
+  display: grid;
+  gap: 8px;
+}
+
+.agency-calendar-tasks article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.agency-calendar-tasks article > div {
+  min-width: 0;
+}
+
+.agency-calendar-tasks strong {
+  overflow-wrap: anywhere;
+}
+
+.agency-calendar-tasks button {
+  flex: 0 0 auto;
+}
+
+.agency-recurring-panel {
+  display: grid;
+  gap: 2px;
+}
+
+.agency-template-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.agency-template-form > label:first-of-type,
+.agency-template-form > .inline-actions,
+.agency-template-form > .agency-checkbox {
+  grid-column: 1 / -1;
+}
+
+.agency-template-form .agency-form-row {
+  align-content: start;
+}
+
+.agency-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agency-checkbox input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
 .agency-inline-form {
   display: grid;
   gap: 11px;
@@ -1120,7 +1213,9 @@ textarea:focus {
 
   .agency-metrics,
   .agency-workspace-grid,
-  .agency-form-row {
+  .agency-form-row,
+  .agency-template-form,
+  .agency-calendar-day {
     grid-template-columns: 1fr;
   }
 
@@ -1130,5 +1225,20 @@ textarea:focus {
 
   .agency-operation-meta {
     min-width: 0;
+  }
+
+  .agency-panel-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .agency-panel-heading button,
+  .agency-calendar-tasks button {
+    width: 100%;
+  }
+
+  .agency-calendar-tasks article {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

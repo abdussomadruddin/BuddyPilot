@@ -95,10 +95,31 @@ create table if not exists public.agency_services (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.agency_task_templates (
+  id uuid primary key default gen_random_uuid(),
+  client_code text not null references public.invoice_clients(code) on update cascade on delete cascade,
+  service_id uuid references public.agency_services(id) on delete set null,
+  title text not null,
+  work_type text not null default 'general' check (work_type in ('general', 'report', 'invoice', 'creative', 'campaign_review')),
+  cadence text not null default 'weekly' check (cadence in ('weekly', 'monthly')),
+  weekday smallint not null default 1 check (weekday between 0 and 6),
+  month_day smallint not null default 1 check (month_day between 1 and 28),
+  priority text not null default 'normal' check (priority in ('low', 'normal', 'high', 'urgent')),
+  owner text not null default '',
+  notes text not null default '',
+  is_active boolean not null default true,
+  next_due_date date not null default current_date,
+  last_generated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.agency_tasks (
   id uuid primary key default gen_random_uuid(),
   client_code text not null references public.invoice_clients(code) on update cascade on delete cascade,
   service_id uuid references public.agency_services(id) on delete set null,
+  template_id uuid references public.agency_task_templates(id) on delete set null,
+  work_type text not null default 'general' check (work_type in ('general', 'report', 'invoice', 'creative', 'campaign_review')),
   title text not null,
   due_date date,
   priority text not null default 'normal' check (priority in ('low', 'normal', 'high', 'urgent')),
@@ -109,6 +130,19 @@ create table if not exists public.agency_tasks (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.agency_tasks add column if not exists template_id uuid references public.agency_task_templates(id) on delete set null;
+alter table public.agency_tasks add column if not exists work_type text not null default 'general';
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conrelid = 'public.agency_tasks'::regclass and conname = 'agency_tasks_work_type_check') then
+    alter table public.agency_tasks
+      add constraint agency_tasks_work_type_check
+      check (work_type in ('general', 'report', 'invoice', 'creative', 'campaign_review'));
+  end if;
+end
+$$;
 
 update public.invoice_clients
 set agency_status = case
@@ -481,8 +515,13 @@ create index if not exists invoice_clients_brand_client_idx on public.invoice_cl
 create index if not exists invoice_clients_onboarding_status_idx on public.invoice_clients (onboarding_status);
 create index if not exists agency_services_client_status_idx on public.agency_services (client_code, status);
 create index if not exists agency_services_renewal_idx on public.agency_services (renewal_date) where status = 'active';
+create index if not exists agency_task_templates_client_idx on public.agency_task_templates (client_code, is_active);
+create index if not exists agency_task_templates_service_idx on public.agency_task_templates (service_id) where service_id is not null;
+create index if not exists agency_task_templates_due_idx on public.agency_task_templates (next_due_date) where is_active = true;
 create index if not exists agency_tasks_client_status_idx on public.agency_tasks (client_code, status);
 create index if not exists agency_tasks_service_id_idx on public.agency_tasks (service_id) where service_id is not null;
+create index if not exists agency_tasks_template_id_idx on public.agency_tasks (template_id) where template_id is not null;
+create unique index if not exists agency_tasks_template_due_uidx on public.agency_tasks (template_id, due_date);
 create index if not exists agency_tasks_due_idx on public.agency_tasks (due_date) where status in ('todo', 'in_progress');
 create index if not exists invoice_uploads_period_idx on public.invoice_uploads (period);
 create index if not exists invoice_uploads_client_code_idx on public.invoice_uploads (client_code);
@@ -518,6 +557,11 @@ for each row execute function public.touch_updated_at();
 drop trigger if exists agency_tasks_touch_updated_at on public.agency_tasks;
 create trigger agency_tasks_touch_updated_at
 before update on public.agency_tasks
+for each row execute function public.touch_updated_at();
+
+drop trigger if exists agency_task_templates_touch_updated_at on public.agency_task_templates;
+create trigger agency_task_templates_touch_updated_at
+before update on public.agency_task_templates
 for each row execute function public.touch_updated_at();
 
 drop trigger if exists business_settings_touch_updated_at on public.business_settings;
@@ -578,6 +622,7 @@ for each row execute function public.touch_updated_at();
 alter table public.invoice_clients enable row level security;
 alter table public.agency_services enable row level security;
 alter table public.agency_tasks enable row level security;
+alter table public.agency_task_templates enable row level security;
 alter table public.tiktok_mcp_connections enable row level security;
 alter table public.push_subscriptions enable row level security;
 alter table public.business_settings enable row level security;
@@ -601,8 +646,10 @@ grant select, insert, update, delete on public.invoice_clients to service_role;
 revoke all on public.invoice_clients from anon, authenticated;
 grant select, insert, update, delete on public.agency_services to service_role;
 grant select, insert, update, delete on public.agency_tasks to service_role;
+grant select, insert, update, delete on public.agency_task_templates to service_role;
 revoke all on public.agency_services from anon, authenticated;
 revoke all on public.agency_tasks from anon, authenticated;
+revoke all on public.agency_task_templates from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_products to service_role;
 revoke all on public.postpilot_products from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_voice_profiles to service_role;
