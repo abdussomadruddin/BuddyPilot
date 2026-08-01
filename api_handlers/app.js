@@ -3949,13 +3949,13 @@ function pageHtml() {
       .mobile-context-title { display: block; font-size: 16px; font-weight: 800; }
 
       .topbar .topbar-tabs {
-        --active-index: 0; inset: auto auto calc(8px + env(safe-area-inset-bottom)) 50%; width: min(318px, calc(100% - 36px)); height: 66px; padding: 5px;
-        grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; border: 1px solid rgba(255,255,255,.76); border-radius: 27px; background: rgba(244,244,244,.66);
+        --active-index: 0; inset: auto auto calc(8px + env(safe-area-inset-bottom)) 50%; width: min(366px, calc(100% - 24px)); height: 66px; padding: 5px;
+        grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; border: 1px solid rgba(255,255,255,.76); border-radius: 27px; background: rgba(244,244,244,.66);
         box-shadow: 0 12px 34px rgba(15,15,15,.16), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(255,255,255,.38);
         transform: translate3d(-50%,0,0);
         -webkit-backdrop-filter: blur(28px) saturate(185%); backdrop-filter: blur(28px) saturate(185%);
       }
-      .nav-liquid-indicator { position: absolute; z-index: 0; top: 1px; left: 5px; display: block; width: calc((100% - 10px) / 3); height: 64px; overflow: hidden; border: 1px solid rgba(255,255,255,.92); border-radius: 22px; background: linear-gradient(145deg, rgba(255,255,255,.88), rgba(220,232,244,.5) 48%, rgba(255,255,255,.72)); box-shadow: none; opacity: 0; transform: translate3d(calc(var(--active-index) * 100%),0,0) scale(.82); transform-origin: center; transition: opacity 150ms ease; will-change: transform, opacity, border-radius; -webkit-backdrop-filter: blur(22px) saturate(190%); backdrop-filter: blur(22px) saturate(190%); }
+      .nav-liquid-indicator { position: absolute; z-index: 0; top: 1px; left: 5px; display: block; width: calc((100% - 10px) / 4); height: 64px; overflow: hidden; border: 1px solid rgba(255,255,255,.92); border-radius: 22px; background: linear-gradient(145deg, rgba(255,255,255,.88), rgba(220,232,244,.5) 48%, rgba(255,255,255,.72)); box-shadow: none; opacity: 0; transform: translate3d(calc(var(--active-index) * 100%),0,0) scale(.82); transform-origin: center; transition: opacity 150ms ease; will-change: transform, opacity, border-radius; -webkit-backdrop-filter: blur(22px) saturate(190%); backdrop-filter: blur(22px) saturate(190%); }
       .nav-liquid-indicator::before { content: ""; position: absolute; inset: 3px 10% auto; height: 42%; border-radius: 18px 18px 50% 50%; background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,255,255,.08)); filter: blur(3px); opacity: .92; pointer-events: none; }
       .nav-liquid-indicator::after { content: ""; position: absolute; top: -22%; bottom: -22%; left: -52%; width: 42%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.92), transparent); opacity: 0; transform: skewX(-14deg); pointer-events: none; }
       .topbar .topbar-tabs .tab-button { position: relative; z-index: 1; min-height: 54px; border-radius: 20px; transition: color 140ms ease, opacity 140ms ease, transform 220ms cubic-bezier(.2,.9,.25,1); }
@@ -4189,8 +4189,32 @@ function pageHtml() {
       .onboarding-template-action { align-items: stretch; flex-direction: column; }
       .onboarding-template-action button { width: 100%; }
     }
+
+    .ads-cmo-toolbar, .ads-cmo-kpis, .ads-cmo-two-column { display: grid; gap: 14px; }
+    .ads-cmo-toolbar { grid-template-columns: minmax(220px, 1.4fr) minmax(160px, .7fr) auto; align-items: end; }
+    .ads-cmo-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 18px 0; }
+    .ads-cmo-kpi, .ads-cmo-section { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .ads-cmo-kpi small { display: block; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .ads-cmo-kpi strong { display: block; margin-top: 7px; font-size: clamp(18px, 2vw, 25px); }
+    .ads-cmo-two-column { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 14px; }
+    .ads-cmo-section h2, .ads-cmo-section h3 { margin-top: 0; }
+    .ads-cmo-section ul { margin: 0; padding-left: 20px; }
+    .ads-cmo-section li + li { margin-top: 7px; }
+    .ads-cmo-scorecard { width: 100%; border-collapse: collapse; }
+    .ads-cmo-scorecard th, .ads-cmo-scorecard td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+    .ads-cmo-scorecard th { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+    .ads-cmo-status { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 999px; background: var(--blue-soft); font-size: 12px; font-weight: 800; }
+    .ads-cmo-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .ads-cmo-product-rule { display: grid; grid-template-columns: 1fr 1.4fr .9fr repeat(3, .7fr) auto; gap: 8px; align-items: end; margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+    .ads-cmo-empty { padding: 28px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); text-align: center; }
+    @media (max-width: 820px) {
+      .ads-cmo-toolbar, .ads-cmo-settings-grid, .ads-cmo-two-column { grid-template-columns: 1fr; }
+      .ads-cmo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ads-cmo-product-rule { grid-template-columns: 1fr 1fr; }
+      .ads-cmo-product-rule .danger { grid-column: 1 / -1; }
+    }
   </style>
-  <link rel="stylesheet" href="/buddypilot-redesign.css?v=1">
+  <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
 </head>
 <body>
   <main>
@@ -4203,6 +4227,7 @@ function pageHtml() {
       <nav class="tabs topbar-tabs" aria-label="Main tabs">
         <span class="nav-liquid-indicator" aria-hidden="true"></span>
         <button class="tab-button active" type="button" data-tab-target="dashboard"><svg class="icon" aria-hidden="true"><use href="/icons.svg#layout-dashboard"></use></svg><span>Dashboard</span></button>
+        <button class="tab-button" type="button" data-tab-target="adscmo"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart"></use></svg><span>Ads CMO</span></button>
         <button class="tab-button" type="button" data-tab-target="personalpostpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#send"></use></svg><span>Post Pilot</span></button>
         <button class="tab-button" type="button" data-tab-target="clientpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Client Pilot</span></button>
       </nav>
@@ -4318,6 +4343,59 @@ function pageHtml() {
           <div class="dashboard-section-header"><h2>Recent operations</h2><span class="dashboard-section-kicker">Last 30 days</span></div>
           <div id="operationsRecent" class="operations-recent"></div>
         </section>
+      </section>
+    </section>
+
+    <section id="tab-adscmo" class="tab-panel" data-tab-panel="adscmo">
+      <section class="card app-panel">
+        <div class="section-heading">
+          <div>
+            <h1>Ads CMO</h1>
+            <p class="note">Daily profitability brief peribadi daripada AdFlow. Read-only — tiada perubahan dibuat pada Meta Ads.</p>
+          </div>
+          <span id="adsCmoStatus" class="ads-cmo-status">Belum dimuatkan</span>
+        </div>
+
+        <div class="ads-cmo-toolbar">
+          <div><label for="adsCmoAccount">Ads account</label><select id="adsCmoAccount"></select></div>
+          <div><label for="adsCmoReportDate">Report date</label><input id="adsCmoReportDate" type="date"></div>
+          <button id="adsCmoLoadButton" type="button">Load Report</button>
+        </div>
+
+        <details id="adsCmoSettings" class="advanced-panel" style="margin-top:16px">
+          <summary>Account & Profit Settings</summary>
+          <div class="ads-cmo-settings-grid" style="margin-top:14px">
+            <label class="check-row"><input id="adsCmoAutoEnabled" type="checkbox"> Auto report setiap pagi</label>
+            <div><label for="adsCmoProspectingKeywords">Prospecting keywords</label><input id="adsCmoProspectingKeywords" type="text"></div>
+            <div><label for="adsCmoRetargetingKeywords">Retargeting keywords</label><input id="adsCmoRetargetingKeywords" type="text"></div>
+          </div>
+          <div class="section-heading" style="margin-top:18px"><div><h3>Product Rules</h3><p class="note">Padankan campaign dengan harga, margin atau allowable CPA.</p></div><button id="adsCmoAddProductButton" class="secondary" type="button">Add Product</button></div>
+          <div id="adsCmoProductRules"></div>
+          <div class="actions"><button id="adsCmoSaveSettingsButton" type="button">Save Settings</button></div>
+        </details>
+
+        <section class="ads-cmo-section" style="margin-top:16px">
+          <div class="section-heading"><div><h2>Morning Push</h2><p id="adsCmoPushNote" class="note">Aktifkan pada setiap browser, Android atau iOS Home Screen yang anda mahu gunakan.</p></div><button id="adsCmoPushButton" class="secondary" type="button">Aktifkan Notifikasi</button></div>
+        </section>
+
+        <div id="adsCmoResult" class="result"></div>
+        <section id="adsCmoReport" hidden>
+          <div id="adsCmoKpis" class="ads-cmo-kpis"></div>
+          <section class="ads-cmo-section"><h2>Executive Summary</h2><ul id="adsCmoExecutive"></ul></section>
+          <section class="ads-cmo-section" style="margin-top:14px"><h2>KPI Scorecard · 7 Days vs Previous 7 Days</h2><div style="overflow:auto"><table class="ads-cmo-scorecard"><thead><tr><th>KPI</th><th>Current</th><th>Previous</th><th>Difference</th></tr></thead><tbody id="adsCmoScorecard"></tbody></table></div></section>
+          <div class="ads-cmo-two-column">
+            <section class="ads-cmo-section"><h2>What Is Working</h2><div id="adsCmoWorking"></div></section>
+            <section class="ads-cmo-section"><h2>What Is Leaking Money</h2><div id="adsCmoLeaks"></div></section>
+          </div>
+          <div class="ads-cmo-two-column">
+            <section class="ads-cmo-section"><h2>Confirmed Evidence</h2><ul id="adsCmoEvidence"></ul></section>
+            <section class="ads-cmo-section"><h2>Likely Causes</h2><ul id="adsCmoHypotheses"></ul></section>
+          </div>
+          <section class="ads-cmo-section" style="margin-top:14px"><h2>Recommended Actions</h2><div id="adsCmoActions" class="ads-cmo-two-column"></div></section>
+          <section class="ads-cmo-section" style="margin-top:14px"><h2>Tracking Warnings</h2><ul id="adsCmoWarnings"></ul></section>
+        </section>
+        <div id="adsCmoEmpty" class="ads-cmo-empty">Pilih account dan load snapshot. Jika belum tersedia, gunakan Retry Report.</div>
+        <div class="actions"><button id="adsCmoRetryButton" class="secondary" type="button" hidden>Retry Report</button></div>
       </section>
     </section>
 
@@ -5476,6 +5554,31 @@ Review retargeting when the warm audience is ready</textarea>
     const connectTikTokButton = document.getElementById("connectTikTokButton");
     const enablePushNotificationsButton = document.getElementById("enablePushNotificationsButton");
     const pushNotificationNote = document.getElementById("pushNotificationNote");
+    const adsCmoAccount = document.getElementById("adsCmoAccount");
+    const adsCmoReportDate = document.getElementById("adsCmoReportDate");
+    const adsCmoLoadButton = document.getElementById("adsCmoLoadButton");
+    const adsCmoRetryButton = document.getElementById("adsCmoRetryButton");
+    const adsCmoStatus = document.getElementById("adsCmoStatus");
+    const adsCmoAutoEnabled = document.getElementById("adsCmoAutoEnabled");
+    const adsCmoProspectingKeywords = document.getElementById("adsCmoProspectingKeywords");
+    const adsCmoRetargetingKeywords = document.getElementById("adsCmoRetargetingKeywords");
+    const adsCmoProductRules = document.getElementById("adsCmoProductRules");
+    const adsCmoAddProductButton = document.getElementById("adsCmoAddProductButton");
+    const adsCmoSaveSettingsButton = document.getElementById("adsCmoSaveSettingsButton");
+    const adsCmoPushButton = document.getElementById("adsCmoPushButton");
+    const adsCmoPushNote = document.getElementById("adsCmoPushNote");
+    const adsCmoResult = document.getElementById("adsCmoResult");
+    const adsCmoReport = document.getElementById("adsCmoReport");
+    const adsCmoEmpty = document.getElementById("adsCmoEmpty");
+    const adsCmoKpis = document.getElementById("adsCmoKpis");
+    const adsCmoExecutive = document.getElementById("adsCmoExecutive");
+    const adsCmoScorecard = document.getElementById("adsCmoScorecard");
+    const adsCmoWorking = document.getElementById("adsCmoWorking");
+    const adsCmoLeaks = document.getElementById("adsCmoLeaks");
+    const adsCmoEvidence = document.getElementById("adsCmoEvidence");
+    const adsCmoHypotheses = document.getElementById("adsCmoHypotheses");
+    const adsCmoActions = document.getElementById("adsCmoActions");
+    const adsCmoWarnings = document.getElementById("adsCmoWarnings");
     const disconnectTikTokButton = document.getElementById("disconnectTikTokButton");
     const mobileContextTitle = document.getElementById("mobileContextTitle");
     const mobileNavigation = document.querySelector(".topbar-tabs");
@@ -5516,8 +5619,8 @@ Review retargeting when the warm audience is ready</textarea>
     const LAST_REPORT_CLIENT_KEY = "buddypilot-last-report-client-v1";
     const TODAY_CACHE_KEY = "buddypilot-operations-cache-v1";
     const OPERATIONS_CACHE_MS = 5 * 60 * 1000;
-    const NAV_ITEMS = ["dashboard", "personalpostpilot", "clientpilot"];
-    const NAV_TITLES = { dashboard: "Hari Ini", personalpostpilot: "Post Pilot", clientpilot: "Client Pilot" };
+    const NAV_ITEMS = ["dashboard", "adscmo", "personalpostpilot", "clientpilot"];
+    const NAV_TITLES = { dashboard: "Hari Ini", adscmo: "Ads CMO", personalpostpilot: "Post Pilot", clientpilot: "Client Pilot" };
     let currentPreview = null;
     let seenVariations = [];
     let preparedCreativeFile = null;
@@ -5563,6 +5666,7 @@ Review retargeting when the warm audience is ready</textarea>
     let currentClientOnboardingStep = "details";
     let currentAdflowAccounts = [];
     let currentTikTokAccounts = [];
+    let currentAdsCmoAccounts = [];
     let currentBankAccounts = [];
     let currentBankStatus = null;
     let reportFileNameTouched = false;
@@ -8674,6 +8778,154 @@ Review retargeting when the warm audience is ready</textarea>
       }
     }
 
+    function selectedAdsCmoAccount() {
+      return currentAdsCmoAccounts.find((item) => item.accountId === adsCmoAccount.value) || null;
+    }
+
+    function adsCmoRuleMarkup(rule = {}) {
+      const metric = rule.primaryMetric || "purchase";
+      return '<div class="ads-cmo-product-rule">' +
+        '<div><label>Product</label><input data-cmo-field="name" value="' + escapeHtml(rule.name || "") + '" placeholder="KM"></div>' +
+        '<div><label>Campaign keywords</label><input data-cmo-field="campaignKeywords" value="' + escapeHtml((rule.campaignKeywords || []).join(", ")) + '" placeholder="KM, K-Method"></div>' +
+        '<div><label>Primary result</label><select data-cmo-field="primaryMetric"><option value="purchase"' + (metric === "purchase" ? " selected" : "") + '>Purchase</option><option value="lead"' + (metric === "lead" ? " selected" : "") + '>Lead</option><option value="messaging_conversation"' + (metric === "messaging_conversation" ? " selected" : "") + '>Conversation</option></select></div>' +
+        '<div><label>Selling price</label><input data-cmo-field="sellingPrice" type="number" min="0" step="0.01" value="' + Number(rule.sellingPrice || 0) + '"></div>' +
+        '<div><label>Gross margin %</label><input data-cmo-field="grossMarginPercent" type="number" min="0" max="100" step="0.1" value="' + Number(rule.grossMarginPercent || 0) + '"></div>' +
+        '<div><label>Allowable CPA</label><input data-cmo-field="allowableCpa" type="number" min="0" step="0.01" value="' + Number(rule.allowableCpa || 0) + '"></div>' +
+        '<button class="danger ads-cmo-remove-rule" type="button">Remove</button></div>';
+    }
+
+    function renderAdsCmoProductRules(rules = []) {
+      adsCmoProductRules.innerHTML = rules.length ? rules.map(adsCmoRuleMarkup).join("") : '<p class="note">Belum ada product rule. Profit tidak akan dilabel sehingga rule ditambah.</p>';
+    }
+
+    function collectAdsCmoProductRules() {
+      return [...adsCmoProductRules.querySelectorAll(".ads-cmo-product-rule")].map((row, index) => {
+        const value = (name) => row.querySelector('[data-cmo-field="' + name + '"]').value;
+        return {
+          id: "product-" + (index + 1), name: value("name").trim(),
+          campaignKeywords: value("campaignKeywords").split(/[,\\n]/).map((item) => item.trim()).filter(Boolean),
+          primaryMetric: value("primaryMetric"), sellingPrice: Number(value("sellingPrice") || 0),
+          grossMarginPercent: Number(value("grossMarginPercent") || 0), allowableCpa: Number(value("allowableCpa") || 0),
+        };
+      }).filter((rule) => rule.name && rule.campaignKeywords.length);
+    }
+
+    function populateAdsCmoSettings() {
+      const account = selectedAdsCmoAccount();
+      if (!account) return;
+      adsCmoAutoEnabled.checked = Boolean(account.autoReportEnabled);
+      adsCmoProspectingKeywords.value = (account.prospectingKeywords || []).join(", ");
+      adsCmoRetargetingKeywords.value = (account.retargetingKeywords || []).join(", ");
+      renderAdsCmoProductRules(account.productRules || []);
+    }
+
+    function formatAdsCmoValue(value, format, currency) {
+      if (value == null) return "N/A";
+      if (format === "money") return new Intl.NumberFormat("en-MY", { style: "currency", currency: currency || "MYR", maximumFractionDigits: 2 }).format(Number(value || 0));
+      if (format === "percent") return Number(value || 0).toFixed(2) + "%";
+      if (format === "decimal") return Number(value || 0).toFixed(2);
+      return new Intl.NumberFormat("en-MY", { maximumFractionDigits: 2 }).format(Number(value || 0));
+    }
+
+    function renderAdsCmoList(node, values, emptyText) {
+      node.innerHTML = values?.length ? values.map((value) => "<li>" + escapeHtml(value) + "</li>").join("") : "<li>" + escapeHtml(emptyText || "Tiada data.") + "</li>";
+    }
+
+    function renderAdsCmoPerformance(items, currency) {
+      if (!items?.length) return '<p class="note">Tiada data yang mencukupi.</p>';
+      return items.map((item) => '<div style="padding:10px 0;border-bottom:1px solid var(--line)"><strong>' + escapeHtml(item.name || item.campaignName || "N/A") + '</strong><small style="display:block;color:var(--muted);margin-top:4px">' + escapeHtml(item.product || "") + ' · Spend ' + escapeHtml(formatAdsCmoValue(item.spend, "money", currency)) + ' · Result ' + Number(item.primaryResults || 0) + ' · CPA ' + escapeHtml(formatAdsCmoValue(item.primaryCpa, "money", currency)) + (item.profit == null ? "" : ' · Profit ' + escapeHtml(formatAdsCmoValue(item.profit, "money", currency))) + '</small></div>').join("");
+    }
+
+    function renderAdsCmoReportData(report) {
+      const yesterday = report.yesterday;
+      const diagnosis = report.diagnosis || {};
+      const currency = yesterday.currency || selectedAdsCmoAccount()?.currency || "MYR";
+      const profit = yesterday.profitability?.contributionProfit;
+      const kpis = [
+        ["Spend", formatAdsCmoValue(yesterday.total.spend, "money", currency)],
+        ["Revenue", formatAdsCmoValue(yesterday.total.revenue, "money", currency)],
+        ["Purchases", formatAdsCmoValue(yesterday.total.purchases, "number", currency)],
+        ["Leads", formatAdsCmoValue(yesterday.total.leads, "number", currency)],
+        ["Conversations", formatAdsCmoValue(yesterday.total.messaging, "number", currency)],
+        ["Est. Profit", formatAdsCmoValue(profit, "money", currency)],
+      ];
+      adsCmoKpis.innerHTML = kpis.map((item) => '<div class="ads-cmo-kpi"><small>' + escapeHtml(item[0]) + '</small><strong>' + escapeHtml(item[1]) + '</strong></div>').join("");
+      renderAdsCmoList(adsCmoExecutive, diagnosis.executiveSummary, "Belum ada executive summary.");
+      adsCmoScorecard.innerHTML = (diagnosis.scorecard || []).map((item) => '<tr><td>' + escapeHtml(item.metric) + '</td><td>' + escapeHtml(formatAdsCmoValue(item.current, item.format, currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(item.previous, item.format, currency)) + '</td><td>' + (item.differencePercent == null ? "N/A" : (item.differencePercent > 0 ? "+" : "") + item.differencePercent + "%") + '</td></tr>').join("");
+      adsCmoWorking.innerHTML = '<h3>Campaigns</h3>' + renderAdsCmoPerformance(diagnosis.working?.campaigns, currency) + '<h3 style="margin-top:16px">Ads</h3>' + renderAdsCmoPerformance(diagnosis.working?.ads, currency);
+      adsCmoLeaks.innerHTML = '<h3>Campaigns</h3>' + renderAdsCmoPerformance(diagnosis.leaks?.campaigns, currency) + '<h3 style="margin-top:16px">Ads</h3>' + renderAdsCmoPerformance(diagnosis.leaks?.ads, currency);
+      renderAdsCmoList(adsCmoEvidence, diagnosis.confirmedEvidence);
+      renderAdsCmoList(adsCmoHypotheses, diagnosis.hypotheses);
+      const actions = diagnosis.actions || {};
+      adsCmoActions.innerHTML = [["Do now", actions.doNow], ["Monitor", actions.monitor], ["Test next", actions.testNext], ["Do not touch", actions.doNotTouch]].map((group) => '<div><h3>' + group[0] + '</h3><ul>' + (group[1] || []).map((item) => '<li>' + escapeHtml(item) + '</li>').join("") + '</ul></div>').join("");
+      renderAdsCmoList(adsCmoWarnings, diagnosis.warnings, "Tiada tracking warning dikesan.");
+      adsCmoStatus.textContent = "Ready · " + report.report_date;
+      adsCmoReport.hidden = false;
+      adsCmoEmpty.hidden = true;
+      adsCmoRetryButton.hidden = true;
+    }
+
+    async function loadAdsCmoReport() {
+      const accountId = adsCmoAccount.value;
+      const reportDate = adsCmoReportDate.value;
+      if (!accountId || !reportDate) return;
+      const finishButton = setButtonBusy(adsCmoLoadButton, "Loading...");
+      try {
+        const response = await fetch("/api/personal-ads/reports?accountId=" + encodeURIComponent(accountId) + "&reportDate=" + encodeURIComponent(reportDate));
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Report Ads CMO gagal dimuatkan.");
+        if (json.report?.status === "ready") renderAdsCmoReportData(json.report);
+        else {
+          adsCmoReport.hidden = true; adsCmoEmpty.hidden = false; adsCmoRetryButton.hidden = false;
+          adsCmoStatus.textContent = json.report?.status === "failed" ? "Failed" : "Belum tersedia";
+          adsCmoEmpty.textContent = json.report?.error_message || "Snapshot belum tersedia untuk tarikh ini. Tekan Retry Report untuk jana sekarang.";
+        }
+        finishButton("Loaded");
+      } catch (error) { finishButton(); setMessage(adsCmoResult, "err", error.message || String(error)); }
+    }
+
+    async function loadAdsCmoAccounts() {
+      try {
+        const response = await fetch("/api/personal-ads/accounts");
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Ads CMO accounts gagal dimuatkan.");
+        currentAdsCmoAccounts = json.accounts || [];
+        const requestedAccount = new URLSearchParams(location.search).get("accountId");
+        adsCmoAccount.innerHTML = currentAdsCmoAccounts.map((item) => '<option value="' + escapeHtml(item.accountId) + '">' + escapeHtml(item.accountName) + (item.autoReportEnabled ? " · Auto" : "") + '</option>').join("");
+        if (requestedAccount && currentAdsCmoAccounts.some((item) => item.accountId === requestedAccount)) adsCmoAccount.value = requestedAccount;
+        adsCmoReportDate.value = new URLSearchParams(location.search).get("reportDate") || json.defaultReportDate;
+        populateAdsCmoSettings();
+        if (new URLSearchParams(location.search).get("tab") === "adscmo") await loadAdsCmoReport();
+      } catch (error) { setMessage(adsCmoResult, "err", error.message || String(error)); }
+    }
+
+    async function saveAdsCmoSettings() {
+      const account = selectedAdsCmoAccount();
+      if (!account) return;
+      const finishButton = setButtonBusy(adsCmoSaveSettingsButton, "Saving...");
+      try {
+        const payload = { ...account, autoReportEnabled: adsCmoAutoEnabled.checked, prospectingKeywords: adsCmoProspectingKeywords.value.split(/[,\\n]/).map((item) => item.trim()).filter(Boolean), retargetingKeywords: adsCmoRetargetingKeywords.value.split(/[,\\n]/).map((item) => item.trim()).filter(Boolean), productRules: collectAdsCmoProductRules() };
+        const response = await fetch("/api/personal-ads/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Settings Ads CMO gagal disimpan.");
+        const index = currentAdsCmoAccounts.findIndex((item) => item.accountId === account.accountId);
+        currentAdsCmoAccounts[index] = json.setting;
+        setMessage(adsCmoResult, "ok", "Settings Ads CMO berjaya disimpan.");
+        finishButton("Saved");
+      } catch (error) { finishButton(); setMessage(adsCmoResult, "err", error.message || String(error)); }
+    }
+
+    async function retryAdsCmoReport() {
+      const finishButton = setButtonBusy(adsCmoRetryButton, "Generating...");
+      try {
+        const response = await fetch("/api/personal-ads/generate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ accountId: adsCmoAccount.value, reportDate: adsCmoReportDate.value }) });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Report Ads CMO gagal dijana.");
+        renderAdsCmoReportData(json.report);
+        finishButton("Ready");
+      } catch (error) { finishButton(); setMessage(adsCmoResult, "err", error.message || String(error)); }
+    }
+
     function urlBase64ToUint8Array(value) {
       const padding = "=".repeat((4 - value.length % 4) % 4);
       const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -8688,30 +8940,30 @@ Review retargeting when the warm audience is ready</textarea>
       return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
     }
 
-    async function setupPushNotifications({ requestPermission = false } = {}) {
+    async function setupPushNotifications({ requestPermission = false, button = enablePushNotificationsButton, note = pushNotificationNote, purpose = "Amaran TikTok Ads" } = {}) {
       if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-        enablePushNotificationsButton.hidden = true;
-        pushNotificationNote.textContent = "Peranti atau browser ini tidak menyokong Web Push.";
+        button.hidden = true;
+        note.textContent = "Peranti atau browser ini tidak menyokong Web Push.";
         return;
       }
       if (isIosDevice() && !isStandaloneApp()) {
-        pushNotificationNote.textContent = "iPhone/iPad: tekan Share > Add to Home Screen, buka BuddyPilot dari Home Screen, kemudian aktifkan notifikasi.";
-        enablePushNotificationsButton.textContent = "Perlu Home Screen";
-        enablePushNotificationsButton.disabled = true;
+        note.textContent = "iPhone/iPad: tekan Share > Add to Home Screen, buka BuddyPilot dari Home Screen, kemudian aktifkan notifikasi.";
+        button.textContent = "Perlu Home Screen";
+        button.disabled = true;
         return;
       }
       const registration = await navigator.serviceWorker.register("/sw.js");
       let subscription = await registration.pushManager.getSubscription();
       if (subscription) {
-        enablePushNotificationsButton.textContent = "Notifikasi Aktif";
-        enablePushNotificationsButton.disabled = true;
-        pushNotificationNote.textContent = "Amaran TikTok Ads akan dihantar ke peranti ini.";
+        button.textContent = "Notifikasi Aktif";
+        button.disabled = true;
+        note.textContent = purpose + " akan dihantar ke peranti ini.";
         return;
       }
       if (!requestPermission) {
         if (Notification.permission === "denied") {
-          enablePushNotificationsButton.textContent = "Notifikasi Disekat";
-          pushNotificationNote.textContent = "Benarkan notification dalam tetapan browser/peranti dahulu.";
+          button.textContent = "Notifikasi Disekat";
+          note.textContent = "Benarkan notification dalam tetapan browser/peranti dahulu.";
         }
         return;
       }
@@ -8731,11 +8983,11 @@ Review retargeting when the warm audience is ready</textarea>
       });
       const json = await readApiJson(response);
       if (!response.ok || !json.ok) throw new Error(json.error || "Gagal menyimpan push subscription.");
-      enablePushNotificationsButton.textContent = "Notifikasi Aktif";
-      enablePushNotificationsButton.disabled = true;
-      pushNotificationNote.textContent = "Amaran TikTok Ads akan dihantar ke peranti ini.";
+      button.textContent = "Notifikasi Aktif";
+      button.disabled = true;
+      note.textContent = purpose + " akan dihantar ke peranti ini.";
       await registration.showNotification("Notifikasi BuddyPilot aktif", {
-        body: "Peranti ini akan menerima amaran apabila authorization TikTok Ads berbaki 7 hari atau kurang.",
+        body: "Peranti ini akan menerima " + purpose.toLowerCase() + ".",
         icon: "/icons/app-icon-192x192.png",
         badge: "/icons/app-icon-96x96.png",
         tag: "buddypilot-push-enabled",
@@ -11194,6 +11446,27 @@ Review retargeting when the warm audience is ready</textarea>
         pushNotificationNote.textContent = error?.message || String(error);
       });
     });
+    adsCmoAccount.addEventListener("change", () => {
+      populateAdsCmoSettings();
+      adsCmoReport.hidden = true;
+      adsCmoEmpty.hidden = false;
+      adsCmoStatus.textContent = "Pilih tarikh dan load";
+    });
+    adsCmoLoadButton.addEventListener("click", loadAdsCmoReport);
+    adsCmoReportDate.addEventListener("change", () => { adsCmoReport.hidden = true; adsCmoEmpty.hidden = false; });
+    adsCmoRetryButton.addEventListener("click", retryAdsCmoReport);
+    adsCmoSaveSettingsButton.addEventListener("click", saveAdsCmoSettings);
+    adsCmoAddProductButton.addEventListener("click", () => {
+      if (!adsCmoProductRules.querySelector(".ads-cmo-product-rule")) adsCmoProductRules.innerHTML = "";
+      adsCmoProductRules.insertAdjacentHTML("beforeend", adsCmoRuleMarkup({}));
+    });
+    adsCmoProductRules.addEventListener("click", (event) => {
+      const button = event.target.closest(".ads-cmo-remove-rule");
+      if (button) button.closest(".ads-cmo-product-rule")?.remove();
+    });
+    adsCmoPushButton.addEventListener("click", () => {
+      setupPushNotifications({ requestPermission: true, button: adsCmoPushButton, note: adsCmoPushNote, purpose: "Ads CMO morning report" }).catch((error) => { adsCmoPushNote.textContent = error?.message || String(error); });
+    });
     previewReportButton.addEventListener("click", () => {
       previewReportPdf().catch(showReportError);
     });
@@ -11245,6 +11518,8 @@ Review retargeting when the warm audience is ready</textarea>
     loadAdflowAccounts();
     loadTikTokConnection();
     setupPushNotifications().catch(() => {});
+    setupPushNotifications({ button: adsCmoPushButton, note: adsCmoPushNote, purpose: "Ads CMO morning report" }).catch(() => {});
+    loadAdsCmoAccounts();
     loadSettings();
     loadBankAccounts();
     loadActivity();

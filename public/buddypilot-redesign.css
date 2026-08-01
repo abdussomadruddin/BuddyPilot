@@ -737,6 +737,7 @@ textarea:focus {
     width: min(361px, calc(100% - 32px));
     height: 76px;
     padding: 8px 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     border: 1px solid rgba(255,255,255,.78);
     border-radius: 28px;
     background: rgba(255,255,255,.80);
@@ -760,6 +761,7 @@ textarea:focus {
   }
 
   .nav-liquid-indicator {
+    width: calc((100% - 10px) / 4);
     background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(218,230,255,.70) 52%, rgba(255,255,255,.78));
   }
 
@@ -1610,5 +1612,200 @@ textarea:focus {
   .agency-calendar-tasks article {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+/* iPhone layout hardening: keep every workspace inside the visible canvas. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.tab-panel,
+.subtab-panel,
+.app-panel,
+.client-form,
+.client-grid,
+.form-section,
+.toolbar,
+.advanced-panel,
+.preview,
+.saved-viral-panel,
+.ads-cmo-toolbar,
+.ads-cmo-settings-grid,
+.ads-cmo-two-column,
+.agency-overview,
+.agency-client-detail {
+  min-width: 0;
+  max-width: 100%;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+input[type="date"],
+input[type="month"],
+input[type="week"],
+input[type="time"] {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .tab-panel {
+    width: calc(100% - 32px);
+  }
+
+  .tab-panel *,
+  .subtab-panel * {
+    max-width: 100%;
+  }
+
+  .tab-panel p,
+  .tab-panel li,
+  .tab-panel dd,
+  .tab-panel small,
+  .tab-panel strong,
+  .tab-panel span {
+    overflow-wrap: anywhere;
+  }
+
+  .client-form,
+  #postForm,
+  .preview,
+  .saved-viral-panel,
+  .agency-client-detail {
+    padding: 14px;
+  }
+
+  .client-grid,
+  .agency-form-row,
+  .agency-template-form,
+  .ads-cmo-toolbar,
+  .ads-cmo-settings-grid,
+  .ads-cmo-two-column,
+  .ads-cmo-product-rule {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .client-grid .full,
+  .agency-template-form > label:first-of-type,
+  .agency-template-form > .inline-actions,
+  .agency-template-form > .agency-checkbox,
+  .ads-cmo-product-rule .danger {
+    grid-column: 1;
+  }
+
+  .inline-actions,
+  .section-heading,
+  .agency-panel-heading {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .section-heading {
+    gap: 10px;
+  }
+
+  .section-heading > *,
+  .inline-actions > *,
+  .toolbar > *,
+  .ads-cmo-toolbar > *,
+  .ads-cmo-settings-grid > *,
+  .ads-cmo-two-column > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .toolbar input,
+  .toolbar input.money-input {
+    min-width: 0;
+  }
+
+  .advanced-panel[open] {
+    padding-bottom: 14px;
+  }
+
+  .advanced-panel[open] > :not(summary) {
+    width: auto;
+    margin-right: 14px !important;
+    margin-left: 14px !important;
+  }
+
+  .ads-cmo-section,
+  .ads-cmo-kpi {
+    padding: 14px;
+    border-radius: var(--bp-radius);
+  }
+
+  .ads-cmo-product-rule {
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--bp-radius);
+  }
+
+  .ads-cmo-scorecard,
+  .report-breakdown table,
+  .invoice-list,
+  .client-list,
+  .bank-list {
+    max-width: 100%;
+  }
+
+  .report-breakdown,
+  .invoice-list,
+  .client-list,
+  .bank-list,
+  .ads-cmo-section > div[style*="overflow"] {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  input[type="date"],
+  input[type="month"],
+  input[type="week"],
+  input[type="time"] {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    max-inline-size: 100% !important;
+    min-height: 48px;
+    padding-inline: 12px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .agency-form-row > label,
+  .agency-template-form label {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .tab-panel label:has(> input[type="date"]),
+  .tab-panel label:has(> input[type="month"]),
+  .tab-panel label:has(> input[type="week"]),
+  .tab-panel label:has(> input[type="time"]) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 }

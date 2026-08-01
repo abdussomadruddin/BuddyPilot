@@ -13,7 +13,10 @@ test("Post Pilot has no periodic Vercel queue polling", () => {
   assert.match(background, /processRemoteQueue\(\)\.catch/);
 });
 
-test("Vercel uses one combined daily cron", () => {
+test("Vercel keeps Telegram and personal Ads CMO on isolated daily crons", () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, "vercel.json"), "utf8"));
-  assert.deepEqual(config.crons, [{ path: "/api/cron/daily-ads-report", schedule: "0 22 * * *" }]);
+  assert.deepEqual(config.crons, [
+    { path: "/api/cron/daily-ads-report", schedule: "0 22 * * *" },
+    { path: "/api/cron/personal-ads-report", schedule: "0 22 * * *" },
+  ]);
 });

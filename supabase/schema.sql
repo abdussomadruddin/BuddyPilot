@@ -25,6 +25,49 @@ create table if not exists public.push_subscriptions (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.personal_ads_accounts (
+  account_id text primary key,
+  account_name text not null default '',
+  currency text not null default 'MYR',
+  auto_report_enabled boolean not null default false,
+  prospecting_keywords jsonb not null default '["prospecting","pros","cold","tof"]'::jsonb,
+  retargeting_keywords jsonb not null default '["retargeting","retarget","rtg","warm","remarketing"]'::jsonb,
+  product_rules jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.personal_ads_daily_reports (
+  id uuid primary key default gen_random_uuid(),
+  account_id text not null references public.personal_ads_accounts(account_id) on update cascade on delete cascade,
+  report_date date not null,
+  status text not null default 'processing' check (status in ('processing', 'ready', 'failed')),
+  yesterday jsonb,
+  current_period jsonb,
+  comparison_period jsonb,
+  diagnosis jsonb,
+  error_message text not null default '',
+  generated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (account_id, report_date)
+);
+
+create table if not exists public.personal_ads_report_runs (
+  report_date date primary key,
+  status text not null default 'processing' check (status in ('processing', 'ready', 'partial', 'failed')),
+  selected_count integer not null default 0,
+  ready_count integer not null default 0,
+  failed_count integer not null default 0,
+  push_sent_at timestamptz,
+  push_result jsonb not null default '{}'::jsonb,
+  error_message text not null default '',
+  started_at timestamptz not null default now(),
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.invoice_clients (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
@@ -585,6 +628,8 @@ create index if not exists bank_accounts_active_idx on public.bank_accounts (is_
 create index if not exists app_activity_created_at_idx on public.app_activity (created_at desc);
 create index if not exists telegram_daily_deliveries_report_date_idx on public.telegram_daily_deliveries (report_date desc);
 create index if not exists push_subscriptions_updated_at_idx on public.push_subscriptions (updated_at desc);
+create index if not exists personal_ads_daily_reports_account_date_idx on public.personal_ads_daily_reports (account_id, report_date desc);
+create index if not exists personal_ads_daily_reports_status_idx on public.personal_ads_daily_reports (status, report_date desc);
 create index if not exists operations_health_status_idx on public.operations_health (status, updated_at desc);
 create index if not exists operations_incidents_open_idx on public.operations_incidents (status, severity, last_seen_at desc);
 
@@ -674,6 +719,21 @@ create trigger push_subscriptions_touch_updated_at
 before update on public.push_subscriptions
 for each row execute function public.touch_updated_at();
 
+drop trigger if exists personal_ads_accounts_touch_updated_at on public.personal_ads_accounts;
+create trigger personal_ads_accounts_touch_updated_at
+before update on public.personal_ads_accounts
+for each row execute function public.touch_updated_at();
+
+drop trigger if exists personal_ads_daily_reports_touch_updated_at on public.personal_ads_daily_reports;
+create trigger personal_ads_daily_reports_touch_updated_at
+before update on public.personal_ads_daily_reports
+for each row execute function public.touch_updated_at();
+
+drop trigger if exists personal_ads_report_runs_touch_updated_at on public.personal_ads_report_runs;
+create trigger personal_ads_report_runs_touch_updated_at
+before update on public.personal_ads_report_runs
+for each row execute function public.touch_updated_at();
+
 drop trigger if exists operations_health_touch_updated_at on public.operations_health;
 create trigger operations_health_touch_updated_at
 before update on public.operations_health
@@ -692,6 +752,9 @@ alter table public.agency_client_health enable row level security;
 alter table public.agency_opportunities enable row level security;
 alter table public.tiktok_mcp_connections enable row level security;
 alter table public.push_subscriptions enable row level security;
+alter table public.personal_ads_accounts enable row level security;
+alter table public.personal_ads_daily_reports enable row level security;
+alter table public.personal_ads_report_runs enable row level security;
 alter table public.business_settings enable row level security;
 alter table public.invoice_uploads enable row level security;
 alter table public.bank_accounts enable row level security;
@@ -731,6 +794,12 @@ grant select, insert, update, delete on public.tiktok_mcp_connections to service
 revoke all on public.tiktok_mcp_connections from anon, authenticated;
 grant select, insert, update, delete on public.push_subscriptions to service_role;
 revoke all on public.push_subscriptions from anon, authenticated;
+grant select, insert, update, delete on public.personal_ads_accounts to service_role;
+grant select, insert, update, delete on public.personal_ads_daily_reports to service_role;
+grant select, insert, update, delete on public.personal_ads_report_runs to service_role;
+revoke all on public.personal_ads_accounts from anon, authenticated;
+revoke all on public.personal_ads_daily_reports from anon, authenticated;
+revoke all on public.personal_ads_report_runs from anon, authenticated;
 grant select, insert, update, delete on public.telegram_daily_deliveries to service_role;
 grant select, insert, update, delete on public.postpilot_extension_devices to service_role;
 grant select, insert, update, delete on public.postpilot_extension_pair_codes to service_role;
