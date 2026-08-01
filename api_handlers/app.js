@@ -4198,6 +4198,16 @@ function pageHtml() {
     .ads-cmo-kpi, .ads-cmo-section { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
     .ads-cmo-kpi small { display: block; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
     .ads-cmo-kpi strong { display: block; margin-top: 7px; font-size: clamp(18px, 2vw, 25px); }
+    .ads-cmo-overall-title { margin: 20px 0 0; font-size: 18px; }
+    .ads-cmo-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0 18px; }
+    .ads-cmo-product-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .ads-cmo-product-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .ads-cmo-product-card > header strong { overflow-wrap: anywhere; font-size: 17px; }
+    .ads-cmo-product-card > header small { color: var(--muted); white-space: nowrap; }
+    .ads-cmo-product-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    .ads-cmo-product-metric { min-width: 0; padding: 10px; border-radius: 8px; background: #f6f6f4; }
+    .ads-cmo-product-metric small { display: block; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+    .ads-cmo-product-metric strong { display: block; margin-top: 4px; overflow-wrap: anywhere; font-size: 16px; }
     .ads-cmo-two-column { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 14px; }
     .ads-cmo-section h2, .ads-cmo-section h3 { margin-top: 0; }
     .ads-cmo-section ul { margin: 0; padding-left: 20px; }
@@ -4240,6 +4250,8 @@ function pageHtml() {
       .ads-cmo-live-spend { align-items: flex-start; flex-direction: column; }
       .ads-cmo-live-groups { grid-template-columns: 1fr; }
       .ads-cmo-live-metrics, .ads-cmo-live-groups > section:first-child .ads-cmo-live-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ads-cmo-product-grid { grid-template-columns: 1fr; }
+      .ads-cmo-product-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 420px) {
       .ads-cmo-live-metrics, .ads-cmo-live-groups > section:first-child .ads-cmo-live-metrics { grid-template-columns: 1fr; }
@@ -4406,6 +4418,7 @@ function pageHtml() {
             <section><h3>Primary Data</h3><div id="adsCmoLivePrimary" class="ads-cmo-live-metrics"></div></section>
             <section><h3>Secondary Data</h3><div id="adsCmoLiveSecondary" class="ads-cmo-live-metrics"></div></section>
           </div>
+          <section class="ads-cmo-live-campaigns"><h3>Performance by Product</h3><div id="adsCmoLiveProducts" class="ads-cmo-product-grid"></div></section>
           <section class="ads-cmo-live-campaigns">
             <h3>Campaign Breakdown</h3>
             <div class="ads-cmo-table-scroll"><table><thead><tr><th>Campaign</th><th>Spend</th><th>Purchase</th><th>Lead</th><th>Conversation</th><th>Impressions</th><th>Reach</th><th>Clicks</th><th>Link Clicks</th><th>CTR</th><th>CPC</th><th>CPM</th><th>Frequency</th></tr></thead><tbody id="adsCmoLiveCampaigns"></tbody></table></div>
@@ -4431,7 +4444,9 @@ function pageHtml() {
 
         <div id="adsCmoResult" class="result"></div>
         <section id="adsCmoReport" hidden>
+          <h2 class="ads-cmo-overall-title">Overall Performance</h2>
           <div id="adsCmoKpis" class="ads-cmo-kpis"></div>
+          <section class="ads-cmo-section"><h2>Performance by Product</h2><div id="adsCmoProducts" class="ads-cmo-product-grid"></div></section>
           <section class="ads-cmo-section"><h2>Executive Summary</h2><ul id="adsCmoExecutive"></ul></section>
           <section class="ads-cmo-section" style="margin-top:14px"><h2>KPI Scorecard · 7 Days vs Previous 7 Days</h2><div style="overflow:auto"><table class="ads-cmo-scorecard"><thead><tr><th>KPI</th><th>Current</th><th>Previous</th><th>Difference</th></tr></thead><tbody id="adsCmoScorecard"></tbody></table></div></section>
           <div class="ads-cmo-two-column">
@@ -5623,6 +5638,7 @@ Review retargeting when the warm audience is ready</textarea>
     const adsCmoReport = document.getElementById("adsCmoReport");
     const adsCmoEmpty = document.getElementById("adsCmoEmpty");
     const adsCmoKpis = document.getElementById("adsCmoKpis");
+    const adsCmoProducts = document.getElementById("adsCmoProducts");
     const adsCmoExecutive = document.getElementById("adsCmoExecutive");
     const adsCmoScorecard = document.getElementById("adsCmoScorecard");
     const adsCmoWorking = document.getElementById("adsCmoWorking");
@@ -5636,6 +5652,7 @@ Review retargeting when the warm audience is ready</textarea>
     const adsCmoLiveSpend = document.getElementById("adsCmoLiveSpend");
     const adsCmoLivePrimary = document.getElementById("adsCmoLivePrimary");
     const adsCmoLiveSecondary = document.getElementById("adsCmoLiveSecondary");
+    const adsCmoLiveProducts = document.getElementById("adsCmoLiveProducts");
     const adsCmoLiveCampaigns = document.getElementById("adsCmoLiveCampaigns");
     const adsCmoLiveWarnings = document.getElementById("adsCmoLiveWarnings");
     const disconnectTikTokButton = document.getElementById("disconnectTikTokButton");
@@ -8899,6 +8916,49 @@ Review retargeting when the warm audience is ready</textarea>
       return '<div class="ads-cmo-live-metric"><small>' + escapeHtml(label) + '</small><strong>' + escapeHtml(value) + '</strong>' + (detail ? '<span>' + escapeHtml(detail) + '</span>' : '') + '</div>';
     }
 
+    function adsCmoRoas(value) {
+      return value == null ? "N/A" : formatAdsCmoValue(value, "decimal", "MYR") + "x";
+    }
+
+    function adsCmoProductBreakdown(period = {}) {
+      if (period.productBreakdown?.length) return period.productBreakdown;
+      const groups = new Map();
+      for (const campaign of period.campaigns || []) {
+        const product = campaign.product || "Other / Unmapped";
+        const current = groups.get(product) || { product, campaignCount: 0, spend: 0, revenue: 0, purchases: 0, leads: 0, conversations: 0, clicks: 0, profit: 0, profitCampaigns: 0 };
+        current.campaignCount += 1;
+        current.spend += Number(campaign.spend || 0);
+        current.revenue += Number(campaign.revenue || 0);
+        current.purchases += Number(campaign.purchases || 0);
+        current.leads += Number(campaign.leads || 0);
+        current.conversations += Number(campaign.messaging || campaign.conversations || 0);
+        current.clicks += Number(campaign.clicks || 0);
+        if (campaign.profit != null) { current.profit += Number(campaign.profit); current.profitCampaigns += 1; }
+        else if (!campaign.trackingAnomaly && Number(campaign.revenue || 0) > 0) { current.profit += Number(campaign.revenue) - Number(campaign.spend || 0); current.profitCampaigns += 1; }
+        groups.set(product, current);
+      }
+      return [...groups.values()].map((item) => ({ ...item, profit: item.profitCampaigns === item.campaignCount ? item.profit : null, cpp: item.purchases > 0 ? item.spend / item.purchases : null, roas: item.spend > 0 && item.revenue > 0 ? item.revenue / item.spend : null, cpc: item.clicks > 0 ? item.spend / item.clicks : null })).sort((a, b) => b.spend - a.spend);
+    }
+
+    function renderAdsCmoProducts(node, products, currency) {
+      if (!products?.length) {
+        node.innerHTML = '<div class="ads-cmo-empty">Belum ada product data. Semak product rule dan campaign keyword.</div>';
+        return;
+      }
+      node.innerHTML = products.map((item) => '<article class="ads-cmo-product-card"><header><strong>' + escapeHtml(item.product || "Other / Unmapped") + '</strong><small>' + Number(item.campaignCount || 0) + ' campaign</small></header><div class="ads-cmo-product-metrics">' + [
+        ["Spend", formatAdsCmoValue(item.spend, "money", currency)],
+        ["Revenue", formatAdsCmoValue(item.revenue, "money", currency)],
+        ["Est. Profit", formatAdsCmoValue(item.profit, "money", currency)],
+        ["Purchases", formatAdsCmoValue(item.purchases, "number", currency)],
+        ["CPP", formatAdsCmoValue(item.cpp, "money", currency)],
+        ["ROAS", adsCmoRoas(item.roas)],
+        ["Leads", formatAdsCmoValue(item.leads, "number", currency)],
+        ["Conversations", formatAdsCmoValue(item.conversations, "number", currency)],
+        ["Clicks", formatAdsCmoValue(item.clicks, "number", currency)],
+        ["CPC", formatAdsCmoValue(item.cpc, "money", currency)],
+      ].map((metric) => '<div class="ads-cmo-product-metric"><small>' + escapeHtml(metric[0]) + '</small><strong>' + escapeHtml(metric[1]) + '</strong></div>').join("") + '</div></article>').join("");
+    }
+
     function renderAdsCmoLiveData(snapshot) {
       const currency = snapshot.currency || selectedAdsCmoAccount()?.currency || "MYR";
       const primary = snapshot.primary || {};
@@ -8912,8 +8972,9 @@ Review retargeting when the warm audience is ready</textarea>
         adsCmoLiveMetric("Conversations", formatAdsCmoValue(primary.conversations, "number", currency), "Cost " + formatAdsCmoValue(primary.costPerConversation, "money", currency)),
       ].join("");
       adsCmoLiveSecondary.innerHTML = [
+        adsCmoLiveMetric("Est. profit", formatAdsCmoValue(snapshot.profit, "money", currency)),
         adsCmoLiveMetric("Revenue", formatAdsCmoValue(secondary.revenue, "money", currency)),
-        adsCmoLiveMetric("ROAS", formatAdsCmoValue(secondary.roas, "decimal", currency)),
+        adsCmoLiveMetric("ROAS", adsCmoRoas(secondary.roas)),
         adsCmoLiveMetric("Impressions", formatAdsCmoValue(secondary.impressions, "number", currency)),
         adsCmoLiveMetric("Reach", formatAdsCmoValue(secondary.reach, "number", currency)),
         adsCmoLiveMetric("Frequency", formatAdsCmoValue(secondary.frequency, "decimal", currency)),
@@ -8923,6 +8984,7 @@ Review retargeting when the warm audience is ready</textarea>
         adsCmoLiveMetric("CPC", formatAdsCmoValue(secondary.cpc, "money", currency)),
         adsCmoLiveMetric("CPM", formatAdsCmoValue(secondary.cpm, "money", currency)),
       ].join("");
+      renderAdsCmoProducts(adsCmoLiveProducts, snapshot.productBreakdown || [], currency);
       adsCmoLiveCampaigns.innerHTML = (snapshot.campaigns || []).length ? snapshot.campaigns.map((campaign) => '<tr><td><strong>' + escapeHtml(campaign.name || "N/A") + '</strong><small>' + escapeHtml(campaign.category || "other") + '</small></td><td>' + escapeHtml(formatAdsCmoValue(campaign.spend, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.purchases, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.leads, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.conversations, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.impressions, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.reach, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.clicks, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.linkClicks, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.ctr, "percent", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.cpc, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.cpm, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.frequency, "decimal", currency)) + '</td></tr>').join("") : '<tr><td colspan="13">Belum ada campaign data untuk hari ini.</td></tr>';
       adsCmoLiveWarnings.innerHTML = (snapshot.warnings || []).map((warning) => '<li>' + escapeHtml(warning) + '</li>').join("");
       adsCmoLiveWarnings.hidden = !(snapshot.warnings || []).length;
@@ -8951,16 +9013,21 @@ Review retargeting when the warm audience is ready</textarea>
       const yesterday = report.yesterday;
       const diagnosis = report.diagnosis || {};
       const currency = yesterday.currency || selectedAdsCmoAccount()?.currency || "MYR";
-      const profit = yesterday.profitability?.contributionProfit;
+      const hasTrackingAnomaly = (yesterday.campaigns || []).some((campaign) => campaign.profitStatus === "tracking_issue" || campaign.trackingAnomaly);
+      const profit = yesterday.profitability?.contributionProfit ?? (!hasTrackingAnomaly && Number(yesterday.total.revenue || 0) > 0 ? Number(yesterday.total.revenue) - Number(yesterday.total.spend || 0) : null);
+      const cpp = Number(yesterday.total.purchases || 0) > 0 ? Number(yesterday.total.spend || 0) / Number(yesterday.total.purchases) : null;
       const kpis = [
         ["Spend", formatAdsCmoValue(yesterday.total.spend, "money", currency)],
         ["Revenue", formatAdsCmoValue(yesterday.total.revenue, "money", currency)],
+        ["Est. Profit", formatAdsCmoValue(profit, "money", currency)],
         ["Purchases", formatAdsCmoValue(yesterday.total.purchases, "number", currency)],
+        ["CPP", formatAdsCmoValue(cpp, "money", currency)],
+        ["ROAS", adsCmoRoas(yesterday.total.roas)],
         ["Leads", formatAdsCmoValue(yesterday.total.leads, "number", currency)],
         ["Conversations", formatAdsCmoValue(yesterday.total.messaging, "number", currency)],
-        ["Est. Profit", formatAdsCmoValue(profit, "money", currency)],
       ];
       adsCmoKpis.innerHTML = kpis.map((item) => '<div class="ads-cmo-kpi"><small>' + escapeHtml(item[0]) + '</small><strong>' + escapeHtml(item[1]) + '</strong></div>').join("");
+      renderAdsCmoProducts(adsCmoProducts, adsCmoProductBreakdown(yesterday), currency);
       renderAdsCmoList(adsCmoExecutive, diagnosis.executiveSummary, "Belum ada executive summary.");
       adsCmoScorecard.innerHTML = (diagnosis.scorecard || []).map((item) => '<tr><td>' + escapeHtml(item.metric) + '</td><td>' + escapeHtml(formatAdsCmoValue(item.current, item.format, currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(item.previous, item.format, currency)) + '</td><td>' + (item.differencePercent == null ? "N/A" : (item.differencePercent > 0 ? "+" : "") + item.differencePercent + "%") + '</td></tr>').join("");
       adsCmoWorking.innerHTML = '<h3>Campaigns</h3>' + renderAdsCmoPerformance(diagnosis.working?.campaigns, currency) + '<h3 style="margin-top:16px">Ads</h3>' + renderAdsCmoPerformance(diagnosis.working?.ads, currency);

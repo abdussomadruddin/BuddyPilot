@@ -32,4 +32,8 @@ test("Ads CMO exposes a manual live snapshot with primary and secondary data", (
   assert.match(source, /<h3>Primary Data<\/h3>/);
   assert.match(source, /<h3>Secondary Data<\/h3>/);
   assert.match(source, /\/api\/personal-ads\/live\?accountId=/);
+  assert.match(source, /Overall Performance/);
+  assert.match(source, /Performance by Product/);
+  assert.match(source, /\["CPP",/);
+  assert.match(source, /\["ROAS",/);
 });

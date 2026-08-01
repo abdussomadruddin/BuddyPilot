@@ -68,6 +68,30 @@ test("lead economics use allowable CPA and unmapped spend remains explicit", () 
   assert.match(result.warnings.join(" "), /Other \/ Unmapped/);
 });
 
+test("reported revenue provides profit when campaign product mapping is incomplete", () => {
+  const result = assessPeriod(analytics([{
+    name: "All - Retargeting - Purchase", spend: 153.67, revenue: 194, purchases: 2,
+  }]), setting);
+  assert.equal(result.profitability.contributionProfit, 40.33);
+  assert.equal(result.profitability.profitSource, "reported_revenue_less_ads");
+  assert.match(result.warnings.join(" "), /reported revenue/);
+});
+
+test("report separates overall performance into product-level results", () => {
+  const result = assessPeriod(analytics([
+    { name: "KM Prospecting", spend: 100, revenue: 298, purchases: 2, clicks: 80 },
+    { name: "Service Leads", spend: 60, leads: 3, clicks: 40 },
+  ]), setting);
+  assert.equal(result.total.spend, 160);
+  assert.equal(result.productBreakdown.length, 2);
+  const km = result.productBreakdown.find((item) => item.product === "KM");
+  const service = result.productBreakdown.find((item) => item.product === "Service");
+  assert.equal(km.cpp, 50);
+  assert.equal(km.roas, 2.98);
+  assert.equal(service.leads, 3);
+  assert.equal(service.cpc, 1.5);
+});
+
 test("diagnosis stays concise and contains the requested decision sections", () => {
   const current = assessPeriod(analytics([{ name: "KM Prospecting", spend: 350, revenue: 745, purchases: 5, clicks: 100, impressions: 5000 }]), setting);
   const previous = assessPeriod(analytics([{ name: "KM Prospecting", spend: 300, revenue: 596, purchases: 4, clicks: 90, impressions: 4500 }]), setting);
@@ -101,4 +125,7 @@ test("live snapshot returns spend with every primary and secondary metric", () =
   assert.equal(snapshot.secondary.linkClicks, 180);
   assert.equal(snapshot.secondary.cpm, 10);
   assert.equal(snapshot.campaigns[0].leads, 6);
+  assert.equal(snapshot.productBreakdown[0].product, "KM");
+  assert.equal(snapshot.productBreakdown[0].cpp, 40);
+  assert.equal(snapshot.productBreakdown[0].roas, 2.5);
 });
