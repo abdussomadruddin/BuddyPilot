@@ -4239,6 +4239,22 @@ function pageHtml() {
     .ads-cmo-table-scroll th, .ads-cmo-table-scroll td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
     .ads-cmo-table-scroll th:first-child, .ads-cmo-table-scroll td:first-child { position: sticky; left: 0; z-index: 1; min-width: 220px; background: #fff; text-align: left; }
     .ads-cmo-table-scroll td small { display: block; margin-top: 3px; color: var(--muted); }
+    .ads-cmo-campaign-cards { display: none; }
+    .ads-cmo-campaign-card { border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .ads-cmo-campaign-card + .ads-cmo-campaign-card { margin-top: 8px; }
+    .ads-cmo-campaign-card summary { display: grid; grid-template-columns: minmax(0, 1fr) auto 18px; gap: 10px; align-items: center; padding: 11px; cursor: pointer; list-style: none; }
+    .ads-cmo-campaign-card summary::-webkit-details-marker { display: none; }
+    .ads-cmo-campaign-card summary::after { width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; content: ""; transform: rotate(45deg); transition: transform 180ms ease; }
+    .ads-cmo-campaign-card[open] summary::after { transform: rotate(225deg); }
+    .ads-cmo-campaign-title { min-width: 0; }
+    .ads-cmo-campaign-title strong, .ads-cmo-campaign-title small { display: block; overflow-wrap: anywhere; }
+    .ads-cmo-campaign-title small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .ads-cmo-campaign-spend { font-weight: 800; white-space: nowrap; }
+    .ads-cmo-campaign-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; padding: 1px; border-top: 1px solid var(--line); background: var(--line); }
+    .ads-cmo-campaign-detail div { min-width: 0; padding: 9px 10px; background: #fff; }
+    .ads-cmo-campaign-detail small, .ads-cmo-campaign-detail strong { display: block; }
+    .ads-cmo-campaign-detail small { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .ads-cmo-campaign-detail strong { margin-top: 3px; overflow-wrap: anywhere; font-size: 14px; }
     .ads-cmo-live-warnings { margin: 12px 0 0; padding: 12px 12px 12px 30px; border-radius: 8px; background: #fff4e5; color: #7b4c12; }
     @media (max-width: 820px) {
       .ads-cmo-toolbar, .ads-cmo-settings-grid, .ads-cmo-two-column { grid-template-columns: 1fr; }
@@ -4258,6 +4274,8 @@ function pageHtml() {
       .ads-cmo-live-metric span { font-size: 10px; }
       .ads-cmo-product-grid { grid-template-columns: 1fr; }
       .ads-cmo-product-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ads-cmo-live-campaigns .ads-cmo-table-scroll { display: none; }
+      .ads-cmo-campaign-cards { display: block; }
     }
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
@@ -4426,6 +4444,7 @@ function pageHtml() {
           <section class="ads-cmo-live-campaigns">
             <h3>Campaign Breakdown</h3>
             <div class="ads-cmo-table-scroll"><table><thead><tr><th>Campaign</th><th>Spend</th><th>Purchase</th><th>Lead</th><th>Conversation</th><th>Impressions</th><th>Reach</th><th>Clicks</th><th>Link Clicks</th><th>CTR</th><th>CPC</th><th>CPM</th><th>Frequency</th></tr></thead><tbody id="adsCmoLiveCampaigns"></tbody></table></div>
+            <div id="adsCmoLiveCampaignCards" class="ads-cmo-campaign-cards"></div>
           </section>
           <ul id="adsCmoLiveWarnings" class="ads-cmo-live-warnings"></ul>
         </section>
@@ -5657,6 +5676,7 @@ Review retargeting when the warm audience is ready</textarea>
     const adsCmoLiveSecondary = document.getElementById("adsCmoLiveSecondary");
     const adsCmoLiveProducts = document.getElementById("adsCmoLiveProducts");
     const adsCmoLiveCampaigns = document.getElementById("adsCmoLiveCampaigns");
+    const adsCmoLiveCampaignCards = document.getElementById("adsCmoLiveCampaignCards");
     const adsCmoLiveWarnings = document.getElementById("adsCmoLiveWarnings");
     const disconnectTikTokButton = document.getElementById("disconnectTikTokButton");
     const mobileContextTitle = document.getElementById("mobileContextTitle");
@@ -8989,7 +9009,24 @@ Review retargeting when the warm audience is ready</textarea>
         adsCmoLiveMetric("CPM", formatAdsCmoValue(secondary.cpm, "money", currency)),
       ].join("");
       renderAdsCmoProducts(adsCmoLiveProducts, snapshot.productBreakdown || [], currency);
-      adsCmoLiveCampaigns.innerHTML = (snapshot.campaigns || []).length ? snapshot.campaigns.map((campaign) => '<tr><td><strong>' + escapeHtml(campaign.name || "N/A") + '</strong><small>' + escapeHtml(campaign.category || "other") + '</small></td><td>' + escapeHtml(formatAdsCmoValue(campaign.spend, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.purchases, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.leads, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.conversations, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.impressions, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.reach, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.clicks, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.linkClicks, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.ctr, "percent", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.cpc, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.cpm, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.frequency, "decimal", currency)) + '</td></tr>').join("") : '<tr><td colspan="13">Belum ada campaign data untuk hari ini.</td></tr>';
+      const campaigns = snapshot.campaigns || [];
+      adsCmoLiveCampaigns.innerHTML = campaigns.length ? campaigns.map((campaign) => '<tr><td><strong>' + escapeHtml(campaign.name || "N/A") + '</strong><small>' + escapeHtml(campaign.category || "other") + '</small></td><td>' + escapeHtml(formatAdsCmoValue(campaign.spend, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.purchases, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.leads, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.conversations, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.impressions, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.reach, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.clicks, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.linkClicks, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.ctr, "percent", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.cpc, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.cpm, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.frequency, "decimal", currency)) + '</td></tr>').join("") : '<tr><td colspan="13">Belum ada campaign data untuk hari ini.</td></tr>';
+      adsCmoLiveCampaignCards.innerHTML = campaigns.length ? campaigns.map((campaign) => {
+        const metrics = [
+          ["Purchases", formatAdsCmoValue(campaign.purchases, "number", currency)],
+          ["Leads", formatAdsCmoValue(campaign.leads, "number", currency)],
+          ["Conversations", formatAdsCmoValue(campaign.conversations, "number", currency)],
+          ["Impressions", formatAdsCmoValue(campaign.impressions, "number", currency)],
+          ["Reach", formatAdsCmoValue(campaign.reach, "number", currency)],
+          ["Clicks", formatAdsCmoValue(campaign.clicks, "number", currency)],
+          ["Link clicks", formatAdsCmoValue(campaign.linkClicks, "number", currency)],
+          ["CTR", formatAdsCmoValue(campaign.ctr, "percent", currency)],
+          ["CPC", formatAdsCmoValue(campaign.cpc, "money", currency)],
+          ["CPM", formatAdsCmoValue(campaign.cpm, "money", currency)],
+          ["Frequency", formatAdsCmoValue(campaign.frequency, "decimal", currency)],
+        ];
+        return '<details class="ads-cmo-campaign-card"><summary><span class="ads-cmo-campaign-title"><strong>' + escapeHtml(campaign.name || "N/A") + '</strong><small>' + escapeHtml(campaign.category || "other") + '</small></span><span class="ads-cmo-campaign-spend">' + escapeHtml(formatAdsCmoValue(campaign.spend, "money", currency)) + '</span></summary><div class="ads-cmo-campaign-detail">' + metrics.map((metric) => '<div><small>' + escapeHtml(metric[0]) + '</small><strong>' + escapeHtml(metric[1]) + '</strong></div>').join("") + '</div></details>';
+      }).join("") : '<div class="ads-cmo-empty">Belum ada campaign data untuk hari ini.</div>';
       adsCmoLiveWarnings.innerHTML = (snapshot.warnings || []).map((warning) => '<li>' + escapeHtml(warning) + '</li>').join("");
       adsCmoLiveWarnings.hidden = !(snapshot.warnings || []).length;
       adsCmoLive.hidden = false;

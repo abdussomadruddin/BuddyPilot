@@ -42,3 +42,12 @@ test("Ads CMO keeps live metrics in two columns on iPhone", () => {
   assert.match(source, /\.ads-cmo-live-metrics, \.ads-cmo-live-groups > section:first-child \.ads-cmo-live-metrics \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
   assert.doesNotMatch(source, /@media \(max-width: 420px\)[\s\S]{0,300}\.ads-cmo-live-metrics[\s\S]{0,120}grid-template-columns: 1fr/);
 });
+
+test("Ads CMO campaign breakdown uses expandable cards on mobile", () => {
+  assert.match(source, /id="adsCmoLiveCampaignCards" class="ads-cmo-campaign-cards"/);
+  assert.match(source, /\.ads-cmo-live-campaigns \.ads-cmo-table-scroll \{ display: none; \}/);
+  assert.match(source, /<details class="ads-cmo-campaign-card">/);
+  for (const label of ["Purchases", "Leads", "Conversations", "Impressions", "Reach", "Clicks", "Link clicks", "CTR", "CPC", "CPM", "Frequency"]) {
+    assert.match(source, new RegExp('\\["' + label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + '",'));
+  }
+});
