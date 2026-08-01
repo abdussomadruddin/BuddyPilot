@@ -51,3 +51,8 @@ test("Ads CMO campaign breakdown uses expandable cards on mobile", () => {
     assert.match(source, new RegExp('\\["' + label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + '",'));
   }
 });
+
+test("Ads CMO defaults to DD1 unless an account is requested", () => {
+  assert.match(source, /const defaultAccount = currentAdsCmoAccounts\.find\([\s\S]*?toUpperCase\(\) === "DD1"/);
+  assert.match(source, /if \(requestedAccount[\s\S]*?adsCmoAccount\.value = requestedAccount;[\s\S]*?else if \(defaultAccount\) adsCmoAccount\.value = defaultAccount\.accountId;/);
+});
