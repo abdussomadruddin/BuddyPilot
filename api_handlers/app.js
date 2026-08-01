@@ -4752,23 +4752,25 @@ Review retargeting when the warm audience is ready</textarea>
         <div class="section-heading">
           <div>
             <h1>Client Pilot</h1>
-            <p class="note">Urus senarai pelanggan, folder Drive, status service, dan contact client.</p>
+            <p class="note">Urus agency clients, onboarding, service, billing dan operasi client.</p>
           </div>
         </div>
 
         <div class="subtabs" aria-label="Client tabs">
-          <button class="subtab-button active" type="button" data-subtab-group="client" data-subtab-target="client-list-panel">Senarai Pelanggan</button>
-          <button class="subtab-button" type="button" data-subtab-group="client" data-subtab-target="client-add-panel">Onboard Client</button>
+          <button class="subtab-button active" type="button" data-subtab-group="client" data-subtab-target="client-list-panel">Agency Clients</button>
+          <button class="subtab-button" type="button" data-subtab-group="client" data-subtab-target="client-add-panel">Add Agency Client</button>
         </div>
 
         <div id="client-list-panel" class="subtab-panel active" data-subtab-panel="client">
           <div class="client-mobile-tools">
             <label class="client-search"><input id="clientSearchInput" type="search" placeholder="Cari pelanggan" aria-label="Cari pelanggan"></label>
             <div class="client-filter-chips" aria-label="Filter pelanggan">
-              <button class="active" type="button" data-client-filter="all">Semua</button>
+              <button class="active" type="button" data-client-filter="all">Current</button>
+              <button type="button" data-client-filter="onboarding">Onboarding</button>
               <button type="button" data-client-filter="active">Active</button>
-              <button type="button" data-client-filter="setup">Setup</button>
-              <button type="button" data-client-filter="paused">Stopped</button>
+              <button type="button" data-client-filter="paused">Paused</button>
+              <button type="button" data-client-filter="completed">Completed</button>
+              <button type="button" data-client-filter="archived">Archived</button>
             </div>
           </div>
           <div class="actions">
@@ -4780,7 +4782,7 @@ Review retargeting when the warm audience is ready</textarea>
 
         <div id="client-add-panel" class="subtab-panel" data-subtab-panel="client">
           <form id="clientForm" class="client-form">
-            <h2>Onboard Client</h2>
+            <h2>Add Agency Client</h2>
             <input id="clientCode" name="clientCode" type="hidden">
             <ol id="clientOnboardingProgress" class="onboarding-progress" aria-label="Progress onboarding">
               <li class="active" data-onboarding-progress="details"><span>1</span><small>Client</small></li>
@@ -4802,11 +4804,11 @@ Review retargeting when the warm audience is ready</textarea>
               </div>
               <div>
                 <label for="clientContactName">Nama</label>
-                <input id="clientContactName" name="contactName" type="text" placeholder="Nama PIC / owner">
+                <input id="clientContactName" name="contactName" type="text" placeholder="Nama PIC / owner" required>
               </div>
               <div>
                 <label for="clientEmail">Emel</label>
-                <input id="clientEmail" name="email" type="email" placeholder="client@email.com">
+                <input id="clientEmail" name="email" type="email" placeholder="client@email.com" required>
               </div>
               <div>
                 <label for="clientPhone">No telefon</label>
@@ -4814,19 +4816,45 @@ Review retargeting when the warm audience is ready</textarea>
               </div>
               <div>
                 <label for="clientCompanyName">Nama syarikat</label>
-                <input id="clientCompanyName" name="companyName" type="text" placeholder="Nama syarikat">
+                <input id="clientCompanyName" name="companyName" type="text" placeholder="Nama syarikat" required>
               </div>
               <div>
                 <label for="clientRegistration">No Pendaftaran/SSM</label>
                 <input id="clientRegistration" name="registrationNumber" type="text" placeholder="No SSM">
               </div>
               <div>
-                <label for="clientRetainer">Harga service default</label>
-                <input id="clientRetainer" class="money-input" name="monthlyRetainer" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+                <label for="clientRetainer">Monthly service fee</label>
+                <input id="clientRetainer" class="money-input" name="monthlyRetainer" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required>
+              </div>
+              <div>
+                <label for="clientServiceType">Service type</label>
+                <input id="clientServiceType" name="serviceType" type="text" placeholder="Contoh: Meta Ads Management" required>
+              </div>
+              <div>
+                <label for="clientAdBudget">Monthly advertising budget</label>
+                <input id="clientAdBudget" class="money-input" name="monthlyAdBudget" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required>
+              </div>
+              <div>
+                <label for="clientStartDate">Start date</label>
+                <input id="clientStartDate" name="startDate" type="date" required>
+              </div>
+              <div>
+                <label for="clientAgencyStatus">Status</label>
+                <select id="clientAgencyStatus" name="agencyStatus" required>
+                  <option value="onboarding">Onboarding</option>
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                  <option value="completed">Completed</option>
+                  <option value="archived">Archived</option>
+                </select>
               </div>
               <div class="full">
                 <label for="clientAddress">Alamat</label>
                 <textarea id="clientAddress" name="billingAddress" placeholder="Alamat billing client"></textarea>
+              </div>
+              <div class="full">
+                <label for="clientNotes">Notes</label>
+                <textarea id="clientNotes" name="notes" placeholder="Catatan penting tentang client, service atau billing."></textarea>
               </div>
               </div>
             </section>
@@ -4890,6 +4918,32 @@ Review retargeting when the warm audience is ready</textarea>
               <button id="cancelClientEditButton" class="secondary" type="button" hidden>Cancel Edit</button>
             </div>
           </form>
+        </div>
+
+        <div id="client-detail-panel" class="subtab-panel" data-subtab-panel="client">
+          <section class="agency-client-detail" aria-live="polite">
+            <div id="clientDetailLoading" class="client-list-skeleton" hidden><span></span><span></span><span></span></div>
+            <div id="clientDetailContent" hidden>
+              <div class="section-heading agency-detail-heading">
+                <div>
+                  <span id="clientDetailStatus" class="agency-status-pill">Active</span>
+                  <h2 id="clientDetailName">Agency Client</h2>
+                  <p id="clientDetailService" class="note"></p>
+                </div>
+                <div class="inline-actions">
+                  <button id="editAgencyClientButton" class="secondary" type="button">Edit</button>
+                  <button id="archiveAgencyClientButton" class="danger" type="button">Archive</button>
+                </div>
+              </div>
+              <dl id="clientDetailGrid" class="agency-detail-grid"></dl>
+              <section class="agency-notes-section">
+                <h3>Notes</h3>
+                <p id="clientDetailNotes" class="note">Tiada notes.</p>
+              </section>
+              <button id="backToAgencyClientsButton" class="secondary" type="button">Back to Agency Clients</button>
+            </div>
+            <div id="clientDetailError" class="result"></div>
+          </section>
         </div>
       </section>
     </section>
@@ -5139,6 +5193,17 @@ Review retargeting when the warm audience is ready</textarea>
     const clientList = document.getElementById("clientList");
     const clientResult = document.getElementById("clientResult");
     const refreshClientsButton = document.getElementById("refreshClientsButton");
+    const clientDetailLoading = document.getElementById("clientDetailLoading");
+    const clientDetailContent = document.getElementById("clientDetailContent");
+    const clientDetailStatus = document.getElementById("clientDetailStatus");
+    const clientDetailName = document.getElementById("clientDetailName");
+    const clientDetailService = document.getElementById("clientDetailService");
+    const clientDetailGrid = document.getElementById("clientDetailGrid");
+    const clientDetailNotes = document.getElementById("clientDetailNotes");
+    const clientDetailError = document.getElementById("clientDetailError");
+    const editAgencyClientButton = document.getElementById("editAgencyClientButton");
+    const archiveAgencyClientButton = document.getElementById("archiveAgencyClientButton");
+    const backToAgencyClientsButton = document.getElementById("backToAgencyClientsButton");
     const dashboardClientCount = document.getElementById("dashboardClientCount");
     const dashboardInvoiceCount = document.getElementById("dashboardInvoiceCount");
     const dashboardRegistryStatus = document.getElementById("dashboardRegistryStatus");
@@ -5265,6 +5330,7 @@ Review retargeting when the warm audience is ready</textarea>
     let currentInvoices = [];
     let currentReceipts = [];
     let currentClients = [];
+    let currentAgencyClientCode = "";
     let currentClientOnboarding = null;
     let currentClientOnboardingStep = "details";
     let currentAdflowAccounts = [];
@@ -5841,9 +5907,24 @@ Review retargeting when the warm audience is ready</textarea>
     function applyClientFilters() {
       const query = String(clientSearchInput?.value || "").trim().toLowerCase();
       clientList.querySelectorAll(".client-row[data-client-search]").forEach((row) => {
-        const statusMatch = activeClientFilter === "all" || row.dataset.clientStatus === activeClientFilter;
+        const statusMatch = activeClientFilter === "all"
+          ? row.dataset.clientStatus !== "archived"
+          : row.dataset.clientStatus === activeClientFilter;
         row.hidden = !statusMatch || !row.dataset.clientSearch.includes(query);
       });
+      const visibleRows = [...clientList.querySelectorAll(".client-row[data-client-search]")].filter((row) => !row.hidden);
+      let emptyState = clientList.querySelector(".agency-filter-empty");
+      if (!visibleRows.length && currentClients.length) {
+        if (!emptyState) {
+          emptyState = document.createElement("div");
+          emptyState.className = "agency-filter-empty empty-state";
+          clientList.appendChild(emptyState);
+        }
+        emptyState.textContent = query ? "Tiada agency client sepadan dengan carian ini." : "Tiada agency client untuk status ini.";
+        emptyState.hidden = false;
+      } else if (emptyState) {
+        emptyState.hidden = true;
+      }
     }
 
     function activateTab(name) {
@@ -8569,13 +8650,27 @@ Review retargeting when the warm audience is ready</textarea>
       }
     }
 
+    function agencyClientStatus(client) {
+      const explicit = String(client?.agencyStatus || "").trim().toLowerCase();
+      if (["onboarding", "active", "paused", "completed", "archived"].includes(explicit)) return explicit;
+      if (client?.archivedAt || client?.deletedAt) return "archived";
+      if (client?.onboardingStatus === "in_progress") return "onboarding";
+      if (client?.serviceStatus === "paused") return "paused";
+      return "active";
+    }
+
+    function agencyStatusLabel(status) {
+      return ({ onboarding: "Onboarding", active: "Active", paused: "Paused", completed: "Completed", archived: "Archived" })[status] || "Active";
+    }
+
     function renderClientList(clients, registryStatus) {
       clients = [...(clients || [])].sort((left, right) => {
-        const rank = (client) => client.serviceStatus === "paused" ? 2 : (client.onboardingStatus === "in_progress" ? 1 : 0);
-        return rank(left) - rank(right);
+        const ranks = { active: 0, onboarding: 1, paused: 2, completed: 3, archived: 4 };
+        const rankDiff = (ranks[agencyClientStatus(left)] ?? 5) - (ranks[agencyClientStatus(right)] ?? 5);
+        return rankDiff || String(left.brandClient || left.name || "").localeCompare(String(right.brandClient || right.name || ""));
       });
       currentClients = clients;
-      setTextIfPresent(dashboardClientCount, String(clients.filter((client) => client.serviceStatus !== "paused" && client.onboardingStatus !== "in_progress").length));
+      setTextIfPresent(dashboardClientCount, String(clients.filter((client) => agencyClientStatus(client) === "active").length));
       setTextIfPresent(dashboardRegistryStatus, registryStatus?.ok
         ? (registryStatus.source === "supabase" ? "DB OK" : "Drive OK")
         : "Setup");
@@ -8583,18 +8678,20 @@ Review retargeting when the warm audience is ready</textarea>
       if (!clients.length) {
         currentClients = [];
         populateReportClientOptions();
-        clientList.innerHTML = "";
-        setMessage(clientResult, "err", "Belum ada pelanggan.");
+        clientList.innerHTML = '<div class="empty-state"><strong>Belum ada agency client.</strong><span>Gunakan Add Agency Client untuk mula menyimpan client pertama.</span></div>';
+        setMessage(clientResult, "", "");
         return;
       }
       populateReportClientOptions();
 
-      const rows = clients.map((client) => \`
-        <div class="client-row" data-client-code="\${escapeHtml(client.code)}" data-client-status="\${client.serviceStatus === "paused" ? "paused" : (client.onboardingStatus === "in_progress" ? "setup" : "active")}" data-client-search="\${escapeHtml([client.brandClient, client.code, client.contactName, client.name, client.companyName, client.email, client.phone].filter(Boolean).join(" ").toLowerCase())}">
-          <div class="client-card-brand" data-label="Brand">
+      const rows = clients.map((client) => {
+        const status = agencyClientStatus(client);
+        return \`
+        <div class="client-row" data-client-code="\${escapeHtml(client.code)}" data-client-status="\${status}" data-client-search="\${escapeHtml([client.brandClient, client.code, client.contactName, client.name, client.companyName, client.email, client.phone, client.serviceType, status].filter(Boolean).join(" ").toLowerCase())}">
+          <div class="client-card-brand" data-label="Agency client">
             <span class="invoice-client">\${escapeHtml(client.brandClient || client.name)}</span>
             <span class="invoice-muted">\${escapeHtml(client.code)}</span>
-            \${client.serviceStatus === "paused" ? '<span class="qr-pill">Stopped</span>' : (client.onboardingStatus === "in_progress" ? '<span class="qr-pill">Setup</span>' : '<span class="default-pill">Active</span>')}
+            <span class="agency-status-pill" data-status="\${status}">\${agencyStatusLabel(status)}</span>
           </div>
           <div class="client-card-identity" data-label="Nama / Syarikat">
             \${escapeHtml(client.contactName || "-")}
@@ -8604,9 +8701,9 @@ Review retargeting when the warm audience is ready</textarea>
             \${escapeHtml(client.email || "-")}
             <span class="invoice-muted">\${escapeHtml(client.phone || "-")}</span>
           </div>
-          <div class="client-card-price" data-label="Harga">
+          <div class="client-card-price" data-label="Service">
             \${escapeHtml(formatMoneyValue(client.monthlyRetainer || 0))}
-            <span class="invoice-muted">\${escapeHtml(client.source || "config")}</span>
+            <span class="invoice-muted">\${escapeHtml(client.serviceType || "Service belum ditetapkan")}</span>
           </div>
           <div class="client-card-telegram" data-label="Telegram Daily Report">
             \${(client.telegramReportConfig?.recipients || [{ slot: 1 }, { slot: 2 }]).map((recipient) => \`
@@ -8620,6 +8717,7 @@ Review retargeting when the warm audience is ready</textarea>
             <details class="action-menu">
               <summary>Actions</summary>
               <div class="action-menu-list">
+                <button class="secondary view-agency-client-button" type="button" data-client-code="\${escapeHtml(client.code)}">View Details</button>
                 \${client.onboardingStatus === "in_progress" ? '<button class="continue-onboarding-button" type="button" data-client-code="' + escapeHtml(client.code) + '">Continue Setup</button>' : ''}
                 <button class="secondary copy-drive-link-button" type="button" data-client-code="\${escapeHtml(client.code)}">Copy Drive Link</button>
                 <button class="secondary whatsapp-client-button" type="button" data-client-code="\${escapeHtml(client.code)}" data-whatsapp-type="invoice">WhatsApp Invoice</button>
@@ -8634,20 +8732,20 @@ Review retargeting when the warm audience is ready</textarea>
                   <button class="danger telegram-action-button" type="button" data-client-code="\${escapeHtml(client.code)}" data-recipient-slot="\${recipient.slot}" data-telegram-action="disconnect" \${recipient.connected ? "" : "hidden"}>Disconnect Penerima \${recipient.slot}</button>
                 \`).join("")}
                 <button class="secondary edit-client-button" type="button" data-client-code="\${escapeHtml(client.code)}">Edit</button>
-                <button class="secondary service-client-button" type="button" data-client-code="\${escapeHtml(client.code)}" data-next-status="\${client.serviceStatus === "paused" ? "active" : "paused"}">\${client.serviceStatus === "paused" ? "Recover" : "Stop Service"}</button>
+                <button class="secondary service-client-button" type="button" data-client-code="\${escapeHtml(client.code)}" data-next-status="\${client.serviceStatus === "paused" ? "active" : "paused"}" \${status === "archived" ? "hidden" : ""}>\${client.serviceStatus === "paused" ? "Recover" : "Stop Service"}</button>
                 <button class="danger delete-client-button" type="button" data-client-code="\${escapeHtml(client.code)}">Delete</button>
               </div>
             </details>
           </div>
         </div>
-      \`).join("");
+      \`; }).join("");
 
       clientList.innerHTML = \`
         <div class="client-row header">
-          <div>Brand</div>
+          <div>Agency client</div>
           <div>Nama / Syarikat</div>
           <div>Contact</div>
-          <div>Harga</div>
+          <div>Service</div>
           <div>Telegram Daily Report</div>
           <div>Action</div>
         </div>
@@ -8658,6 +8756,76 @@ Review retargeting when the warm audience is ready</textarea>
         setMessage(clientResult, "", "");
       } else {
         setMessage(clientResult, "err", \`Senarai config dimuat. \${registryStatus?.error || "Database belum tersedia."}\`);
+      }
+    }
+
+    function agencyDetailItem(label, value) {
+      return '<div><dt>' + escapeHtml(label) + '</dt><dd>' + escapeHtml(value || "-") + '</dd></div>';
+    }
+
+    function renderAgencyClientDetail(client) {
+      if (!client) throw new Error("Agency client tidak dijumpai.");
+      const status = agencyClientStatus(client);
+      currentAgencyClientCode = client.code;
+      clientDetailStatus.textContent = agencyStatusLabel(status);
+      clientDetailStatus.dataset.status = status;
+      clientDetailName.textContent = client.brandClient || client.name || client.code;
+      clientDetailService.textContent = [client.serviceType, client.code].filter(Boolean).join(" · ");
+      clientDetailGrid.innerHTML = [
+        agencyDetailItem("Contact person", client.contactName),
+        agencyDetailItem("Phone number", client.phone),
+        agencyDetailItem("Email", client.email),
+        agencyDetailItem("Company", client.companyName || client.billingName),
+        agencyDetailItem("Service type", client.serviceType),
+        agencyDetailItem("Monthly service fee", formatMoneyValue(client.monthlyRetainer || 0)),
+        agencyDetailItem("Monthly advertising budget", formatMoneyValue(client.monthlyAdBudget || 0)),
+        agencyDetailItem("Start date", client.startDate || "-"),
+        agencyDetailItem("Status", agencyStatusLabel(status)),
+        agencyDetailItem("Drive folder", client.driveFolderId ? "Connected" : "Not connected"),
+      ].join("");
+      clientDetailNotes.textContent = client.notes || "Tiada notes.";
+      archiveAgencyClientButton.hidden = status === "archived";
+      clientDetailLoading.hidden = true;
+      clientDetailContent.hidden = false;
+      setMessage(clientDetailError, "", "");
+    }
+
+    function openAgencyClientDetail(clientCode) {
+      clientDetailContent.hidden = true;
+      clientDetailLoading.hidden = false;
+      setMessage(clientDetailError, "", "");
+      activateSubtab("client", "client-detail-panel");
+      try {
+        renderAgencyClientDetail(currentClients.find((client) => client.code === clientCode));
+      } catch (error) {
+        clientDetailLoading.hidden = true;
+        setMessage(clientDetailError, "err", error.message || String(error));
+      }
+    }
+
+    async function archiveAgencyClient() {
+      const client = currentClients.find((item) => item.code === currentAgencyClientCode);
+      if (!client) return setMessage(clientDetailError, "err", "Agency client tidak dijumpai.");
+      const label = client.brandClient || client.name || client.code;
+      if (!window.confirm('Archive ' + label + '? Data, history dan folder Drive akan dikekalkan.')) return;
+      const finishButton = setButtonBusy(archiveAgencyClientButton, "Archiving...");
+      try {
+        const response = await fetch("/api/clients", {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ clientCode: client.code, agencyStatus: "archived" })
+        });
+        const json = await readApiJson(response);
+        if (response.status === 401) return void (window.location.href = "/login");
+        if (!response.ok || !json.ok) throw new Error(json.error || "Archive agency client gagal.");
+        await loadClients();
+        await loadActivity();
+        renderAgencyClientDetail(currentClients.find((item) => item.code === client.code) || json.client);
+        finishButton("Archived");
+        showToast(label + " sudah diarkibkan.", "ok");
+      } catch (error) {
+        finishButton();
+        setMessage(clientDetailError, "err", error.message || String(error));
       }
     }
 
@@ -8765,6 +8933,11 @@ Review retargeting when the warm audience is ready</textarea>
       clientForm.elements.companyName.value = client.companyName || client.billingName || "";
       clientForm.elements.registrationNumber.value = client.registrationNumber || "";
       clientForm.elements.monthlyRetainer.value = Number(client.monthlyRetainer || 0) ? client.monthlyRetainer : "";
+      clientForm.elements.serviceType.value = client.serviceType || "";
+      clientForm.elements.monthlyAdBudget.value = Number(client.monthlyAdBudget || 0);
+      clientForm.elements.startDate.value = client.startDate || "";
+      clientForm.elements.agencyStatus.value = agencyClientStatus(client);
+      clientForm.elements.notes.value = client.notes || "";
       clientForm.elements.billingAddress.value = client.billingAddress || "";
       const adsConfig = client.adsReportConfig || {};
       clientForm.elements.platform.value = adsConfig.platform === "tiktok" ? "tiktok" : "meta";
@@ -8847,7 +9020,10 @@ Review retargeting when the warm audience is ready</textarea>
       clientForm.dataset.mode = "create";
       clientForm.reset();
       clientForm.elements.clientCode.value = "";
-      clientForm.querySelector("h2").textContent = "Onboard Client";
+      clientForm.elements.agencyStatus.value = "onboarding";
+      clientForm.elements.monthlyAdBudget.value = "0";
+      clientForm.elements.startDate.value = localIsoDate(new Date());
+      clientForm.querySelector("h2").textContent = "Add Agency Client";
       clientAdsPlatform.value = "meta";
       populateAdsAccountOptions("", "meta");
       clientAdsAccountName.value = "";
@@ -10180,7 +10356,19 @@ Review retargeting when the warm audience is ready</textarea>
       setMessage(clientResult, "", "");
       activateSubtab("client", "client-list-panel");
     });
+    backToAgencyClientsButton.addEventListener("click", () => {
+      currentAgencyClientCode = "";
+      activateSubtab("client", "client-list-panel");
+    });
+    editAgencyClientButton.addEventListener("click", () => editClient(currentAgencyClientCode));
+    archiveAgencyClientButton.addEventListener("click", archiveAgencyClient);
     clientList.addEventListener("click", (event) => {
+      const detailButton = event.target.closest(".view-agency-client-button");
+      if (detailButton) {
+        closeActionMenu(detailButton);
+        openAgencyClientDetail(detailButton.dataset.clientCode);
+        return;
+      }
       const continueOnboardingButton = event.target.closest(".continue-onboarding-button");
       if (continueOnboardingButton) {
         closeActionMenu(continueOnboardingButton);

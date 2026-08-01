@@ -38,6 +38,12 @@ create table if not exists public.invoice_clients (
   billing_name text not null default '',
   billing_address text not null default '',
   monthly_retainer numeric(12, 2) not null default 0,
+  service_type text not null default '',
+  monthly_ad_budget numeric(12, 2) not null default 0,
+  start_date date,
+  agency_status text not null default 'active',
+  notes text not null default '',
+  archived_at timestamptz,
   drive_folder_id text not null default '',
   drive_folder_name text not null default '',
   weekly_report_folder_id text not null default '',
@@ -68,6 +74,40 @@ alter table public.invoice_clients add column if not exists service_recovered_at
 alter table public.invoice_clients add column if not exists deleted_at timestamptz;
 alter table public.invoice_clients add column if not exists deleted_drive_folder_id text not null default '';
 alter table public.invoice_clients add column if not exists deleted_drive_folder_name text not null default '';
+alter table public.invoice_clients add column if not exists service_type text not null default '';
+alter table public.invoice_clients add column if not exists monthly_ad_budget numeric(12, 2) not null default 0;
+alter table public.invoice_clients add column if not exists start_date date;
+alter table public.invoice_clients add column if not exists agency_status text;
+alter table public.invoice_clients add column if not exists notes text not null default '';
+alter table public.invoice_clients add column if not exists archived_at timestamptz;
+
+update public.invoice_clients
+set agency_status = case
+  when deleted_at is not null then 'archived'
+  when onboarding_status = 'in_progress' then 'onboarding'
+  when service_status = 'paused' then 'paused'
+  else 'active'
+end
+where agency_status is null
+   or agency_status not in ('onboarding', 'active', 'paused', 'completed', 'archived');
+
+alter table public.invoice_clients alter column agency_status set default 'active';
+alter table public.invoice_clients alter column agency_status set not null;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conrelid = 'public.invoice_clients'::regclass and conname = 'invoice_clients_agency_status_check') then
+    alter table public.invoice_clients
+      add constraint invoice_clients_agency_status_check
+      check (agency_status in ('onboarding', 'active', 'paused', 'completed', 'archived'));
+  end if;
+  if not exists (select 1 from pg_constraint where conrelid = 'public.invoice_clients'::regclass and conname = 'invoice_clients_monthly_ad_budget_check') then
+    alter table public.invoice_clients
+      add constraint invoice_clients_monthly_ad_budget_check
+      check (monthly_ad_budget >= 0);
+  end if;
+end
+$$;
 
 create table if not exists public.business_settings (
   id text primary key default 'default',
@@ -511,6 +551,8 @@ alter table public.operations_health enable row level security;
 alter table public.operations_incidents enable row level security;
 
 grant select, insert, update, delete on public.postpilot_hook_images to service_role;
+grant select, insert, update, delete on public.invoice_clients to service_role;
+revoke all on public.invoice_clients from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_products to service_role;
 revoke all on public.postpilot_products from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_voice_profiles to service_role;

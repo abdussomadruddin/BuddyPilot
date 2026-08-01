@@ -50,6 +50,12 @@ function publicClient(client) {
     billingName: client.billingName,
     billingAddress: client.billingAddress,
     monthlyRetainer: client.monthlyRetainer,
+    serviceType: client.serviceType || "",
+    monthlyAdBudget: Number(client.monthlyAdBudget || 0),
+    startDate: client.startDate || "",
+    agencyStatus: client.agencyStatus || (client.onboardingStatus === "in_progress" ? "onboarding" : (client.serviceStatus === "paused" ? "paused" : "active")),
+    notes: client.notes || "",
+    archivedAt: client.archivedAt || "",
     driveFolderId: client.driveFolderId,
     driveFolderName: client.driveFolderName,
     weeklyReportFolderId: client.weeklyReportFolderId,
@@ -114,10 +120,11 @@ module.exports = async function handler(req, res) {
     if (req.method === "PUT" || req.method === "PATCH") {
       const body = await readJsonBody(req);
       const saved = await updateClientDetails(body);
+      const archived = saved.client.agencyStatus === "archived";
       await recordActivity({
-        type: "client_updated",
-        title: `Pelanggan dikemaskini: ${saved.client.brandClient || saved.client.name}`,
-        description: "Detail pelanggan disimpan untuk invoice PDF.",
+        type: archived ? "client_archived" : "client_updated",
+        title: `${archived ? "Agency client diarkibkan" : "Pelanggan dikemaskini"}: ${saved.client.brandClient || saved.client.name}`,
+        description: archived ? "Rekod, folder dan sejarah client dikekalkan." : "Detail agency client disimpan.",
         entityType: "client",
         entityId: saved.client.code,
       });
