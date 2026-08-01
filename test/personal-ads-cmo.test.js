@@ -241,7 +241,15 @@ test("diagnosis stays concise and contains the requested decision sections", () 
   const yesterday = assessPeriod(analytics([{ name: "KM Prospecting", spend: 50, revenue: 149, purchases: 1 }]), setting);
   const result = diagnose(yesterday, current, previous, setting);
   assert.ok(result.executiveSummary.length <= 5);
-  assert.equal(result.scorecard.length, 7);
+  assert.equal(result.scorecard.length, 8);
+  const profit = result.scorecard.find((item) => item.metric === "Est. Profit");
+  assert.deepEqual(profit, {
+    metric: "Est. Profit",
+    current: 171.5,
+    previous: 117.2,
+    differencePercent: 46.3,
+    format: "money",
+  });
   assert.ok(result.actions.doNow.length);
   assert.ok(result.actions.monitor.length);
   assert.ok(result.actions.testNext.length);
