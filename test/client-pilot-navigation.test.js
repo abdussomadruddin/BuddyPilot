@@ -37,3 +37,8 @@ test("Ads CMO exposes a manual live snapshot with primary and secondary data", (
   assert.match(source, /\["CPP",/);
   assert.match(source, /\["ROAS",/);
 });
+
+test("Ads CMO keeps live metrics in two columns on iPhone", () => {
+  assert.match(source, /\.ads-cmo-live-metrics, \.ads-cmo-live-groups > section:first-child \.ads-cmo-live-metrics \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
+  assert.doesNotMatch(source, /@media \(max-width: 420px\)[\s\S]{0,300}\.ads-cmo-live-metrics[\s\S]{0,120}grid-template-columns: 1fr/);
+});

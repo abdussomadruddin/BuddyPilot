@@ -4247,15 +4247,17 @@ function pageHtml() {
       .ads-cmo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .ads-cmo-product-rule { grid-template-columns: 1fr 1fr; }
       .ads-cmo-product-rule .danger { grid-column: 1 / -1; }
-      .ads-cmo-live { padding: 14px; }
+      .ads-cmo-live { padding: 12px; }
       .ads-cmo-live-spend { align-items: flex-start; flex-direction: column; }
-      .ads-cmo-live-groups { grid-template-columns: 1fr; }
+      .ads-cmo-live-groups { grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+      .ads-cmo-live-groups > section, .ads-cmo-live-campaigns { padding: 10px; }
+      .ads-cmo-live-groups h3, .ads-cmo-live-campaigns h3 { margin-bottom: 8px; font-size: 17px; }
       .ads-cmo-live-metrics, .ads-cmo-live-groups > section:first-child .ads-cmo-live-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ads-cmo-live-metric { min-height: 82px; padding: 9px; }
+      .ads-cmo-live-metric strong { margin: 3px 0; font-size: 18px; }
+      .ads-cmo-live-metric span { font-size: 10px; }
       .ads-cmo-product-grid { grid-template-columns: 1fr; }
       .ads-cmo-product-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 420px) {
-      .ads-cmo-live-metrics, .ads-cmo-live-groups > section:first-child .ads-cmo-live-metrics { grid-template-columns: 1fr; }
     }
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
