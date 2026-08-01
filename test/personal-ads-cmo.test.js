@@ -268,6 +268,9 @@ test("live snapshot returns spend with every primary and secondary metric", () =
   assert.equal(snapshot.secondary.linkClicks, 180);
   assert.equal(snapshot.secondary.cpm, 10);
   assert.equal(snapshot.campaigns[0].leads, 6);
+  assert.equal(snapshot.campaigns[0].cpp, 40);
+  assert.equal(snapshot.campaigns[0].roas, 2.5);
+  assert.equal(snapshot.campaigns[0].profit, 90);
   assert.equal(snapshot.productBreakdown[0].product, "KM");
   assert.equal(snapshot.productBreakdown[0].cpp, 40);
   assert.equal(snapshot.productBreakdown[0].roas, 2.5);
