@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { jobToPublic, validatePayload } = require("../lib/postpilot-remote");
+const { DEVICE_ONLINE_MS, deviceToPublic, jobToPublic, validatePayload } = require("../lib/postpilot-remote");
 
 test("remote Facebook jobs require an image reference for every post", () => {
   assert.throws(
@@ -28,4 +28,11 @@ test("public job status never exposes the private payload", () => {
   });
   assert.equal(job.id, "job-1");
   assert.equal("payload" in job, false);
+});
+
+test("paired Mac stays online between lightweight health syncs", () => {
+  const now = Date.now();
+  assert.equal(DEVICE_ONLINE_MS, 15 * 60 * 1000);
+  assert.equal(deviceToPublic({ id: "mac", last_seen_at: new Date(now - 14 * 60 * 1000).toISOString() }).status, "online");
+  assert.equal(deviceToPublic({ id: "mac", last_seen_at: new Date(now - 16 * 60 * 1000).toISOString() }).status, "offline");
 });

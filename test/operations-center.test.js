@@ -71,3 +71,14 @@ test("active automation exposes persisted recovery progress", () => {
   assert.equal(overview.activeOperations[0].recovery.maxAttempts, 2);
   assert.equal(overview.activeOperations[0].recovery.failureClass, "transient");
 });
+
+test("Mac extension health and incident count as one attention item", () => {
+  const overview = buildOperationsOverview({
+    remote: { device: { id: "mac", status: "offline", lastSeenAt: "2026-07-22T01:00:00.000Z" }, jobs: [] },
+    healthRows: [{ service_name: "mac_extension", status: "warning", detail: "Chrome Mac offline.", last_checked_at: "2026-07-22T01:00:00.000Z" }],
+    incidentRows: [{ fingerprint: "service:mac_extension", service_name: "mac_extension", severity: "warning", status: "open", title: "mac_extension perlukan perhatian" }],
+    now: new Date("2026-07-22T02:00:00.000Z"),
+  });
+  assert.equal(overview.summary.attention, 1);
+  assert.equal(overview.incidents.length, 1);
+});

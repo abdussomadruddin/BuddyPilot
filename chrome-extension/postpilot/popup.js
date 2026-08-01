@@ -10,6 +10,7 @@ const remoteMeta = document.getElementById("remoteMeta");
 const pairCode = document.getElementById("pairCode");
 const pairButton = document.getElementById("pairButton");
 const checkRemoteButton = document.getElementById("checkRemoteButton");
+const resetAutomationButton = document.getElementById("resetAutomationButton");
 const unpairButton = document.getElementById("unpairButton");
 
 let currentDraft = null;
@@ -67,7 +68,7 @@ async function loadRemoteState() {
   try {
     const response = await sendMessage({ type: "GET_REMOTE_STATE" });
     if (response.paired) {
-      remoteMeta.textContent = `${response.device?.name || "Mac Chrome"} paired${response.realtime ? " | realtime ready" : " | polling 30s"}. ${response.status || "Menunggu arahan phone."}`;
+      remoteMeta.textContent = `${response.device?.name || "Mac Chrome"} paired${response.realtime ? " | realtime ready" : " | health sync ready"}. ${response.status || "Menunggu arahan phone."}`;
       pairCode.hidden = true;
       pairButton.hidden = true;
       unpairButton.hidden = false;
@@ -111,6 +112,22 @@ checkRemoteButton.addEventListener("click", async () => {
     await loadRemoteState();
   } catch (error) {
     setStatus(error.message || String(error), true);
+  }
+});
+
+resetAutomationButton.addEventListener("click", async () => {
+  resetAutomationButton.disabled = true;
+  resetAutomationButton.textContent = "Resetting...";
+  try {
+    const response = await sendMessage({ type: "RESET_POSTPILOT_AUTOMATION" });
+    setStatus(response.message || "Automation sudah direset.");
+    await loadRemoteState();
+    await loadDraft();
+  } catch (error) {
+    setStatus(error.message || String(error), true);
+  } finally {
+    resetAutomationButton.disabled = false;
+    resetAutomationButton.textContent = "Reset Automation";
   }
 });
 

@@ -15,6 +15,8 @@ const REMOTE_ACTIVE_JOB_KEY = "postpilotRemoteActiveJob";
 const REMOTE_RECOVERY_KEY = "postpilotRemoteRecovery";
 const REMOTE_RECOVERY_ALARM = "postpilotRemoteRecoveryAlarm";
 const LEGACY_REMOTE_POLL_ALARM = "postpilotRemotePoll";
+const REMOTE_HEALTH_ALARM = "postpilotRemoteHealth";
+const REMOTE_HEALTH_PERIOD_MINUTES = 10;
 const REMOTE_RUN_SESSION_KEY = "postpilotRemoteRunSession";
 const REMOTE_RUN_LEASE_MS = 7 * 60_000;
 const REMOTE_RECOVERY_DELAYS_MS = [5_000, 15_000];
@@ -161,6 +163,57 @@ async function connectRemoteRealtime() {
 
 async function clearLegacyRemotePolling() {
   await chrome.alarms.clear(LEGACY_REMOTE_POLL_ALARM);
+}
+
+async function ensureRemoteHealthAlarm() {
+  await clearLegacyRemotePolling();
+  const remote = await getRemoteConfig();
+  if (!remote?.token) {
+    await chrome.alarms.clear(REMOTE_HEALTH_ALARM);
+    return;
+  }
+  chrome.alarms.create(REMOTE_HEALTH_ALARM, { periodInMinutes: REMOTE_HEALTH_PERIOD_MINUTES });
+}
+
+async function resetPostPilotAutomation() {
+  const state = await chrome.storage.local.get([REMOTE_ACTIVE_JOB_KEY, POSTPILOT_BATCH_KEY, "currentDraft"]);
+  const jobIds = [...new Set([
+    state[REMOTE_ACTIVE_JOB_KEY]?.id,
+    state[POSTPILOT_BATCH_KEY]?.remoteJobId,
+    state.currentDraft?.remoteJobId,
+  ].filter(Boolean))];
+  await Promise.all(jobIds.map((jobId) => remoteFetch("/api/postpilot-extension/complete", {
+    body: { job_id: jobId, status: "cancelled", progress: { phase: "cancelled", message: "Automation direset dari extension Mac." } },
+  }).catch(() => null)));
+  await Promise.all([
+    chrome.alarms.clear(POSTPILOT_BATCH_ALARM),
+    chrome.alarms.clear(REMOTE_RECOVERY_ALARM),
+  ]);
+  await chrome.storage.local.remove([
+    REMOTE_ACTIVE_JOB_KEY,
+    REMOTE_RECOVERY_KEY,
+    POSTPILOT_BATCH_KEY,
+    POSTPILOT_BATCH_FACEBOOK_TAB_KEY,
+    POSTPILOT_BATCH_THREADS_TAB_KEY,
+    "currentDraft",
+    "postpilotRunLock",
+    "postpilotStartedAutomationId",
+    "postpilotCompletedAutomationId",
+    THREADS_RUN_LOCK_KEY,
+    THREADS_LAUNCH_KEY,
+    THREADS_STARTED_KEY,
+    THREADS_COMPLETED_KEY,
+    "postpilotLastError",
+  ]);
+  await clearRemoteRunSession();
+  const tabs = await chrome.tabs.query({});
+  await Promise.all(tabs.filter((tab) => FACEBOOK_URL_PATTERN.test(tab.url || "") || THREADS_URL_PATTERN.test(tab.url || ""))
+    .map((tab) => chrome.tabs.reload(tab.id).catch(() => null)));
+  await chrome.storage.local.set({ postpilotAutomationStatus: "Automation direset. Mac sedia menerima arahan baru." });
+  clearRemoteSocket();
+  await ensureRemoteHealthAlarm();
+  await connectRemoteRealtime().catch(() => {});
+  await processRemoteQueue();
 }
 
 function arrayBufferToBase64(buffer) {
@@ -614,6 +667,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     if (message?.type === "PAIR_REMOTE_EXTENSION") {
       const remote = await pairRemoteExtension(message.code, message.name || "Mac Chrome");
+      await ensureRemoteHealthAlarm();
       sendResponse({ ok: true, remote: { device: remote.device, pairedAt: remote.pairedAt, realtime: Boolean(remote.realtime) } });
       return;
     }
@@ -639,9 +693,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return;
     }
 
+    if (message?.type === "RESET_POSTPILOT_AUTOMATION") {
+      await resetPostPilotAutomation();
+      sendResponse({ ok: true, message: "Automation, lock dan job tersangkut sudah direset. Pairing Mac dikekalkan." });
+      return;
+    }
+
     if (message?.type === "UNPAIR_REMOTE_EXTENSION") {
       clearRemoteSocket();
       await clearLegacyRemotePolling();
+      await chrome.alarms.clear(REMOTE_HEALTH_ALARM);
       await clearRemoteRecovery();
       await chrome.storage.local.remove([REMOTE_CONFIG_KEY, REMOTE_ACTIVE_JOB_KEY]);
       await clearRemoteRunSession();
@@ -916,6 +977,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === REMOTE_HEALTH_ALARM) {
+    processRemoteQueue().catch(() => {});
+    return;
+  }
   if (alarm.name === REMOTE_RECOVERY_ALARM) {
     resumeRemoteRecovery().catch(async (error) => {
       const state = await chrome.storage.local.get(REMOTE_RECOVERY_KEY);
@@ -971,11 +1036,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.runtime.onInstalled.addListener(() => {
-  clearLegacyRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
+  ensureRemoteHealthAlarm().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  clearLegacyRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
+  ensureRemoteHealthAlarm().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
 });
 
-clearLegacyRemotePolling().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
+ensureRemoteHealthAlarm().then(() => connectRemoteRealtime()).then(() => processRemoteQueue()).catch(() => {});
