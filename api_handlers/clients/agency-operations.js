@@ -2,6 +2,7 @@ const { requireAuth } = require("../../lib/auth");
 const { readJsonBody } = require("../../lib/postpilot");
 const { recordActivity } = require("../../lib/supabase-db");
 const {
+  createAgencyOpportunity,
   createAgencyService,
   createAgencyTask,
   createAgencyTemplate,
@@ -9,6 +10,7 @@ const {
   listAgencyOperations,
   saveAgencyHealth,
   updateAgencyService,
+  updateAgencyOpportunity,
   updateAgencyTask,
   updateAgencyTemplate,
 } = require("../../lib/agency-operations");
@@ -40,11 +42,12 @@ module.exports = async function handler(req, res) {
       else if (resource === "task") saved = req.method === "POST" ? await createAgencyTask(body) : await updateAgencyTask(body);
       else if (resource === "template") saved = req.method === "POST" ? await createAgencyTemplate(body) : await updateAgencyTemplate(body);
       else if (resource === "health") saved = await saveAgencyHealth(body);
+      else if (resource === "opportunity") saved = req.method === "POST" ? await createAgencyOpportunity(body) : await updateAgencyOpportunity(body);
       else throw new Error("Jenis agency operation tidak sah.");
 
       await recordActivity({
         type: `${resource}_${req.method === "POST" ? "created" : "updated"}`,
-        title: `${resource === "service" ? "Service" : resource === "template" ? "Recurring delivery" : resource === "health" ? "Client health" : "Task"} agency ${req.method === "POST" ? "ditambah" : "dikemaskini"}`,
+        title: `${resource === "service" ? "Service" : resource === "template" ? "Recurring delivery" : resource === "health" ? "Client health" : resource === "opportunity" ? "Growth opportunity" : "Task"} agency ${req.method === "POST" ? "ditambah" : "dikemaskini"}`,
         description: saved.name || saved.title || "",
         entityType: resource,
         entityId: saved.id,

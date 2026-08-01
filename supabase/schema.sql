@@ -145,6 +145,20 @@ create table if not exists public.agency_client_health (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.agency_opportunities (
+  id uuid primary key default gen_random_uuid(),
+  client_code text not null references public.invoice_clients(code) on update cascade on delete cascade,
+  title text not null,
+  opportunity_type text not null default 'upsell' check (opportunity_type in ('upsell', 'cross_sell', 'renewal', 'expansion')),
+  stage text not null default 'idea' check (stage in ('idea', 'discovery', 'proposal', 'won', 'lost')),
+  estimated_monthly_value numeric(12, 2) not null default 0 check (estimated_monthly_value >= 0),
+  target_date date,
+  owner text not null default '',
+  notes text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.agency_tasks add column if not exists template_id uuid references public.agency_task_templates(id) on delete set null;
 alter table public.agency_tasks add column if not exists work_type text not null default 'general';
 alter table public.agency_services add column if not exists internal_monthly_cost numeric(12, 2);
@@ -562,6 +576,8 @@ create unique index if not exists agency_tasks_template_due_uidx on public.agenc
 create index if not exists agency_tasks_due_idx on public.agency_tasks (due_date) where status in ('todo', 'in_progress');
 create index if not exists agency_client_health_next_check_in_idx on public.agency_client_health (next_check_in) where next_check_in is not null;
 create index if not exists agency_client_health_relationship_idx on public.agency_client_health (relationship_status);
+create index if not exists agency_opportunities_client_stage_idx on public.agency_opportunities (client_code, stage);
+create index if not exists agency_opportunities_target_date_idx on public.agency_opportunities (target_date) where stage not in ('won', 'lost');
 create index if not exists invoice_uploads_period_idx on public.invoice_uploads (period);
 create index if not exists invoice_uploads_client_code_idx on public.invoice_uploads (client_code);
 create unique index if not exists bank_accounts_one_default_idx on public.bank_accounts (is_default) where is_default = true and is_active = true and deleted_at is null;
@@ -606,6 +622,11 @@ for each row execute function public.touch_updated_at();
 drop trigger if exists agency_client_health_touch_updated_at on public.agency_client_health;
 create trigger agency_client_health_touch_updated_at
 before update on public.agency_client_health
+for each row execute function public.touch_updated_at();
+
+drop trigger if exists agency_opportunities_touch_updated_at on public.agency_opportunities;
+create trigger agency_opportunities_touch_updated_at
+before update on public.agency_opportunities
 for each row execute function public.touch_updated_at();
 
 drop trigger if exists business_settings_touch_updated_at on public.business_settings;
@@ -668,6 +689,7 @@ alter table public.agency_services enable row level security;
 alter table public.agency_tasks enable row level security;
 alter table public.agency_task_templates enable row level security;
 alter table public.agency_client_health enable row level security;
+alter table public.agency_opportunities enable row level security;
 alter table public.tiktok_mcp_connections enable row level security;
 alter table public.push_subscriptions enable row level security;
 alter table public.business_settings enable row level security;
@@ -693,10 +715,12 @@ grant select, insert, update, delete on public.agency_services to service_role;
 grant select, insert, update, delete on public.agency_tasks to service_role;
 grant select, insert, update, delete on public.agency_task_templates to service_role;
 grant select, insert, update, delete on public.agency_client_health to service_role;
+grant select, insert, update, delete on public.agency_opportunities to service_role;
 revoke all on public.agency_services from anon, authenticated;
 revoke all on public.agency_tasks from anon, authenticated;
 revoke all on public.agency_task_templates from anon, authenticated;
 revoke all on public.agency_client_health from anon, authenticated;
+revoke all on public.agency_opportunities from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_products to service_role;
 revoke all on public.postpilot_products from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_voice_profiles to service_role;

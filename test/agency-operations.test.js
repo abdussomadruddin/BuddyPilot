@@ -124,3 +124,30 @@ test("Phase 5 health scoring has no background polling", () => {
   assert.match(dataSource, /Renewal belum dimulakan/);
   assert.doesNotMatch(appSource, /setInterval\([^)]*health/i);
 });
+
+test("Phase 6 adds renewal forecast and growth opportunity controls", () => {
+  for (const id of ["agencyRenewalValue", "agencyPipelineValue", "agencyWeightedForecast", "agencyAtRiskRevenue", "agencyGrowthForecast", "agencyOpportunityForm", "agencyOpportunityList"]) {
+    assert.match(appSource, new RegExp(`id="${id}"`));
+  }
+  assert.match(appSource, /Renewal & Growth Pipeline/);
+  assert.match(appSource, /saveAgencyOperation\("opportunity"/);
+  assert.match(apiSource, /resource === "opportunity"/);
+  assert.match(dataSource, /calculateGrowthPipeline/);
+  assert.match(dataSource, /weightedForecast/);
+});
+
+test("Phase 6 growth pipeline is additive and service-role only", () => {
+  assert.match(schemaSource, /create table if not exists public\.agency_opportunities/);
+  assert.match(schemaSource, /opportunity_type in \('upsell', 'cross_sell', 'renewal', 'expansion'\)/);
+  assert.match(schemaSource, /stage in \('idea', 'discovery', 'proposal', 'won', 'lost'\)/);
+  assert.match(schemaSource, /alter table public\.agency_opportunities enable row level security/);
+  assert.match(schemaSource, /grant select, insert, update, delete on public\.agency_opportunities to service_role/);
+  assert.match(schemaSource, /revoke all on public\.agency_opportunities from anon, authenticated/);
+  assert.doesNotMatch(schemaSource, /drop table (if exists )?public\.agency_opportunities/);
+});
+
+test("Phase 6 forecast is request-driven without new polling", () => {
+  assert.match(dataSource, /setUTCDate\(horizon\.getUTCDate\(\) \+ 90\)/);
+  assert.match(dataSource, /const weights = \{ idea: 0\.1, discovery: 0\.3, proposal: 0\.6 \}/);
+  assert.doesNotMatch(appSource, /setInterval\([^)]*(growth|opportunity|forecast)/i);
+});

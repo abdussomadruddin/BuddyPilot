@@ -1023,7 +1023,8 @@ textarea:focus {
 .agency-delivery-calendar,
 .agency-recurring-panel,
 .agency-performance-panel,
-.agency-health-panel {
+.agency-health-panel,
+.agency-growth-panel {
   min-width: 0;
   padding: 16px;
   border: 1px solid var(--bp-line);
@@ -1039,6 +1040,99 @@ textarea:focus {
 .agency-health-panel {
   display: grid;
   gap: 14px;
+}
+
+.agency-growth-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.agency-growth-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.agency-growth-metrics article {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-soft);
+}
+
+.agency-growth-metrics span,
+.agency-growth-metrics small {
+  display: block;
+  color: var(--bp-muted);
+  font-size: 12px;
+}
+
+.agency-growth-metrics strong {
+  display: block;
+  margin: 5px 0 3px;
+  overflow-wrap: anywhere;
+  font-size: 22px;
+}
+
+.agency-growth-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.agency-growth-grid h4,
+.agency-opportunity-form h4 {
+  margin: 0 0 9px;
+}
+
+.agency-growth-forecast,
+.agency-opportunity-list {
+  display: grid;
+  gap: 8px;
+}
+
+.agency-growth-forecast article,
+.agency-opportunity-item {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.agency-growth-forecast article {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.agency-growth-forecast article > div:last-child {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+}
+
+.agency-growth-forecast span,
+.agency-growth-forecast small,
+.agency-opportunity-item span {
+  display: block;
+  color: var(--bp-muted);
+  font-size: 12px;
+}
+
+.agency-opportunity-item {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+}
+
+.agency-opportunity-item > div:nth-child(2) {
+  text-align: right;
+}
+
+.agency-opportunity-list {
+  padding-top: 2px;
 }
 
 .agency-health-metrics {
@@ -1447,6 +1541,8 @@ textarea:focus {
   .agency-performance-grid,
   .agency-health-metrics,
   .agency-health-grid,
+  .agency-growth-metrics,
+  .agency-growth-grid,
   .agency-workspace-grid,
   .agency-form-row,
   .agency-template-form,
@@ -1466,6 +1562,10 @@ textarea:focus {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .agency-growth-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .agency-health-item {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -1475,6 +1575,21 @@ textarea:focus {
   }
 
   .agency-health-item button {
+    width: 100%;
+  }
+
+  .agency-growth-forecast article,
+  .agency-opportunity-item {
+    grid-template-columns: 1fr;
+  }
+
+  .agency-growth-forecast article > div:last-child,
+  .agency-opportunity-item > div:nth-child(2) {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .agency-opportunity-item button {
     width: 100%;
   }
 

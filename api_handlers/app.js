@@ -4825,6 +4825,41 @@ Review retargeting when the warm audience is ready</textarea>
                 </form>
               </div>
             </section>
+            <section class="agency-growth-panel">
+              <div class="agency-panel-heading">
+                <div><h3>Renewal & Growth Pipeline</h3><p class="note">Forecast 90 hari untuk lindungi recurring revenue dan susun peluang growth client.</p></div>
+                <span class="agency-performance-period">90-day view</span>
+              </div>
+              <div class="agency-growth-metrics">
+                <article><span>Renewal value</span><strong id="agencyRenewalValue">RM 0.00</strong><small id="agencyRenewalCount">0 renewals</small></article>
+                <article><span>Open pipeline</span><strong id="agencyPipelineValue">RM 0.00</strong><small id="agencyPipelineCount">0 opportunities</small></article>
+                <article><span>Weighted forecast</span><strong id="agencyWeightedForecast">RM 0.00</strong><small>Stage adjusted</small></article>
+                <article><span>Revenue at risk</span><strong id="agencyAtRiskRevenue">RM 0.00</strong><small>Risk or churn clients</small></article>
+              </div>
+              <div class="agency-growth-grid">
+                <div>
+                  <h4>90-day forecast</h4>
+                  <div id="agencyGrowthForecast" class="agency-growth-forecast"></div>
+                </div>
+                <form id="agencyOpportunityForm" class="agency-inline-form agency-opportunity-form">
+                  <input name="id" type="hidden">
+                  <h4>Add growth opportunity</h4>
+                  <label>Opportunity<input name="title" type="text" placeholder="Contoh: Tambah creative package" required></label>
+                  <div class="agency-form-row">
+                    <label>Type<select name="opportunityType"><option value="upsell">Upsell</option><option value="cross_sell">Cross-sell</option><option value="renewal">Renewal</option><option value="expansion">Expansion</option></select></label>
+                    <label>Stage<select name="stage"><option value="idea">Idea</option><option value="discovery">Discovery</option><option value="proposal">Proposal</option><option value="won">Won</option><option value="lost">Lost</option></select></label>
+                  </div>
+                  <div class="agency-form-row">
+                    <label>Estimated monthly value<input name="estimatedMonthlyValue" type="number" min="0" step="0.01" inputmode="decimal" value="0" required></label>
+                    <label>Target date<input name="targetDate" type="date"></label>
+                  </div>
+                  <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
+                  <label>Notes<textarea name="notes" rows="2" placeholder="Next action atau context"></textarea></label>
+                  <div class="inline-actions"><button type="submit">Save Opportunity</button><button id="cancelAgencyOpportunityEdit" class="secondary" type="button" hidden>Cancel</button></div>
+                </form>
+              </div>
+              <div id="agencyOpportunityList" class="agency-opportunity-list"></div>
+            </section>
             <div id="agencyAttentionList" class="agency-attention-list"></div>
             <section class="agency-delivery-calendar">
               <div class="agency-panel-heading">
@@ -5368,6 +5403,16 @@ Review retargeting when the warm audience is ready</textarea>
     const agencyCheckInsDue = document.getElementById("agencyCheckInsDue");
     const agencyHealthBoard = document.getElementById("agencyHealthBoard");
     const agencyHealthForm = document.getElementById("agencyHealthForm");
+    const agencyRenewalValue = document.getElementById("agencyRenewalValue");
+    const agencyRenewalCount = document.getElementById("agencyRenewalCount");
+    const agencyPipelineValue = document.getElementById("agencyPipelineValue");
+    const agencyPipelineCount = document.getElementById("agencyPipelineCount");
+    const agencyWeightedForecast = document.getElementById("agencyWeightedForecast");
+    const agencyAtRiskRevenue = document.getElementById("agencyAtRiskRevenue");
+    const agencyGrowthForecast = document.getElementById("agencyGrowthForecast");
+    const agencyOpportunityForm = document.getElementById("agencyOpportunityForm");
+    const agencyOpportunityList = document.getElementById("agencyOpportunityList");
+    const cancelAgencyOpportunityEdit = document.getElementById("cancelAgencyOpportunityEdit");
     const agencyAttentionList = document.getElementById("agencyAttentionList");
     const agencyDeliveryCalendar = document.getElementById("agencyDeliveryCalendar");
     const generateAgencyRecurringButton = document.getElementById("generateAgencyRecurringButton");
@@ -5512,6 +5557,7 @@ Review retargeting when the warm audience is ready</textarea>
     let currentAgencyTemplates = [];
     let currentAgencyInsights = {};
     let currentAgencyHealth = { records: [], clients: [], summary: {} };
+    let currentAgencyGrowth = { summary: {}, renewals: [], opportunities: [] };
     let currentAgencyClientCode = "";
     let currentClientOnboarding = null;
     let currentClientOnboardingStep = "details";
@@ -8859,7 +8905,7 @@ Review retargeting when the warm audience is ready</textarea>
       form.elements.id.value = "";
       cancelButton.hidden = true;
       const submit = form.querySelector('button[type="submit"]');
-      submit.textContent = form === agencyServiceForm ? "Save Service" : form === agencyTemplateForm ? "Save Recurring Delivery" : "Save Task";
+      submit.textContent = form === agencyServiceForm ? "Save Service" : form === agencyTemplateForm ? "Save Recurring Delivery" : form === agencyOpportunityForm ? "Save Opportunity" : "Save Task";
     }
 
     function populateAgencyServiceOptions(selectedCode) {
@@ -8944,6 +8990,49 @@ Review retargeting when the warm audience is ready</textarea>
       populateAgencyHealthForm(selectedCode);
     }
 
+    function agencyOpportunityTypeLabel(type) {
+      return ({ upsell: "Upsell", cross_sell: "Cross-sell", renewal: "Renewal", expansion: "Expansion" })[type] || type;
+    }
+
+    function agencyOpportunityStageLabel(stage) {
+      return ({ idea: "Idea", discovery: "Discovery", proposal: "Proposal", won: "Won", lost: "Lost" })[stage] || stage;
+    }
+
+    function populateAgencyOpportunityForm(selectedCode) {
+      const editing = Boolean(agencyOpportunityForm.elements.id.value);
+      [...agencyOpportunityForm.elements].forEach((element) => { element.disabled = !selectedCode; });
+      if (!selectedCode && editing) resetAgencyOperationForm(agencyOpportunityForm, cancelAgencyOpportunityEdit);
+    }
+
+    function renderAgencyGrowth(selectedCode) {
+      const growth = currentAgencyGrowth || { summary: {}, renewals: [], opportunities: [] };
+      const opportunities = (growth.opportunities || []).filter((item) => !selectedCode || item.clientCode === selectedCode);
+      const renewals = (growth.renewals || []).filter((item) => !selectedCode || item.clientCode === selectedCode);
+      const open = opportunities.filter((item) => ["idea", "discovery", "proposal"].includes(item.stage));
+      const weights = { idea: 0.1, discovery: 0.3, proposal: 0.6 };
+      const atRiskCodes = new Set((currentAgencyHealth.clients || []).filter((item) => item.status === "risk" && (!selectedCode || item.clientCode === selectedCode)).map((item) => item.clientCode));
+      const atRiskValue = currentAgencyServices.filter((item) => item.status === "active" && atRiskCodes.has(item.clientCode)).reduce((sum, item) => sum + Number(item.monthlyFee || 0), 0);
+      const renewalValue = renewals.reduce((sum, item) => sum + Number(item.monthlyFee || 0), 0);
+      const pipelineValue = open.reduce((sum, item) => sum + Number(item.estimatedMonthlyValue || 0), 0);
+      const weightedValue = open.reduce((sum, item) => sum + Number(item.estimatedMonthlyValue || 0) * weights[item.stage], 0);
+
+      agencyRenewalValue.textContent = formatMoneyValue(renewalValue);
+      agencyRenewalCount.textContent = renewals.length + (renewals.length === 1 ? " renewal" : " renewals");
+      agencyPipelineValue.textContent = formatMoneyValue(pipelineValue);
+      agencyPipelineCount.textContent = open.length + (open.length === 1 ? " opportunity" : " opportunities");
+      agencyWeightedForecast.textContent = formatMoneyValue(weightedValue);
+      agencyAtRiskRevenue.textContent = formatMoneyValue(atRiskValue);
+
+      const forecastRows = [
+        ...renewals.map((item) => ({ kind: "Renewal", clientCode: item.clientCode, title: item.name, value: item.monthlyFee, date: item.renewalDate, stage: "renewal" })),
+        ...open.map((item) => ({ kind: agencyOpportunityTypeLabel(item.opportunityType), clientCode: item.clientCode, title: item.title, value: item.estimatedMonthlyValue, date: item.targetDate, stage: item.stage })),
+      ].sort((left, right) => (left.date || "9999-12-31").localeCompare(right.date || "9999-12-31"));
+      agencyGrowthForecast.innerHTML = forecastRows.length ? forecastRows.slice(0, 10).map((item) => '<article><div><span>' + escapeHtml(item.kind) + '</span><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(agencyClientLabel(item.clientCode)) + ' · ' + escapeHtml(item.date || "No target date") + '</small></div><div><strong>' + escapeHtml(formatMoneyValue(item.value || 0)) + '</strong><span class="agency-status-pill" data-status="' + escapeHtml(item.stage) + '">' + escapeHtml(agencyOpportunityStageLabel(item.stage)) + '</span></div></article>').join("") : '<div class="empty-state compact"><strong>Tiada forecast 90 hari.</strong><span>Tambah renewal date atau growth opportunity.</span></div>';
+
+      agencyOpportunityList.innerHTML = opportunities.length ? opportunities.map((item) => '<article class="agency-opportunity-item" data-stage="' + escapeHtml(item.stage) + '"><div><strong>' + escapeHtml(item.title) + '</strong><span>' + escapeHtml(agencyClientLabel(item.clientCode)) + ' · ' + escapeHtml(agencyOpportunityTypeLabel(item.opportunityType)) + ' · ' + escapeHtml(item.owner || "No owner") + '</span></div><div><strong>' + escapeHtml(formatMoneyValue(item.estimatedMonthlyValue || 0)) + '</strong><span>' + escapeHtml(item.targetDate || "No target date") + '</span></div><span class="agency-status-pill" data-status="' + escapeHtml(item.stage) + '">' + escapeHtml(agencyOpportunityStageLabel(item.stage)) + '</span><button class="secondary edit-agency-opportunity" type="button" data-opportunity-id="' + escapeHtml(item.id) + '">Edit</button></article>').join("") : '<div class="empty-state compact"><strong>Belum ada growth opportunity.</strong><span>Pilih client dan simpan peluang pertama.</span></div>';
+      populateAgencyOpportunityForm(selectedCode);
+    }
+
     function renderAgencyOperations() {
       populateAgencyWorkspaceClients();
       const activeClients = currentClients.filter((client) => agencyClientStatus(client) === "active");
@@ -8959,6 +9048,7 @@ Review retargeting when the warm audience is ready</textarea>
       agencyOpenTasks.textContent = String(openTasks.length);
       renderAgencyPerformance(selectedCode);
       renderAgencyHealth(selectedCode);
+      renderAgencyGrowth(selectedCode);
 
       const today = localIsoDate(new Date());
       const soon = new Date();
@@ -9015,6 +9105,7 @@ Review retargeting when the warm audience is ready</textarea>
         currentAgencyTemplates = json.templates || [];
         currentAgencyInsights = json.insights || {};
         currentAgencyHealth = json.health || { records: [], clients: [], summary: {} };
+        currentAgencyGrowth = json.growth || { summary: {}, renewals: [], opportunities: [] };
         renderAgencyOperations();
         setMessage(agencyOperationsResult, "", "");
         if (json.generated) showToast(json.generated + " recurring task dijana.", "ok");
@@ -9043,10 +9134,10 @@ Review retargeting when the warm audience is ready</textarea>
         const json = await readApiJson(response);
         if (response.status === 401) return void (window.location.href = "/login");
         if (!response.ok || !json.ok) throw new Error(json.error || "Agency operation gagal disimpan.");
-        resetAgencyOperationForm(form, resource === "service" ? cancelAgencyServiceEdit : resource === "template" ? cancelAgencyTemplateEdit : cancelAgencyTaskEdit);
+        resetAgencyOperationForm(form, resource === "service" ? cancelAgencyServiceEdit : resource === "template" ? cancelAgencyTemplateEdit : resource === "opportunity" ? cancelAgencyOpportunityEdit : cancelAgencyTaskEdit);
         await loadAgencyOperations({ silent: true });
         finishButton("Saved");
-        showToast(resource === "service" ? "Service disimpan." : resource === "template" ? "Recurring delivery disimpan." : "Task disimpan.", "ok");
+        showToast(resource === "service" ? "Service disimpan." : resource === "template" ? "Recurring delivery disimpan." : resource === "opportunity" ? "Growth opportunity disimpan." : "Task disimpan.", "ok");
       } catch (error) {
         finishButton();
         setMessage(agencyOperationsResult, "err", error.message || String(error));
@@ -9129,6 +9220,7 @@ Review retargeting when the warm audience is ready</textarea>
         currentAgencyTemplates = json.templates || [];
         currentAgencyInsights = json.insights || {};
         currentAgencyHealth = json.health || { records: [], clients: [], summary: {} };
+        currentAgencyGrowth = json.growth || { summary: {}, renewals: [], opportunities: [] };
         renderAgencyOperations();
         finishButton("Synced");
         showToast(json.generated ? json.generated + " recurring task dijana." : "Semua recurring task sudah terkini.", "ok");
@@ -10840,6 +10932,7 @@ Review retargeting when the warm audience is ready</textarea>
       resetAgencyOperationForm(agencyServiceForm, cancelAgencyServiceEdit);
       resetAgencyOperationForm(agencyTaskForm, cancelAgencyTaskEdit);
       resetAgencyOperationForm(agencyTemplateForm, cancelAgencyTemplateEdit);
+      resetAgencyOperationForm(agencyOpportunityForm, cancelAgencyOpportunityEdit);
       renderAgencyOperations();
     });
     agencyServiceForm.addEventListener("submit", (event) => {
@@ -10855,9 +10948,14 @@ Review retargeting when the warm audience is ready</textarea>
       saveAgencyOperation("template", agencyTemplateForm);
     });
     agencyHealthForm.addEventListener("submit", saveAgencyHealth);
+    agencyOpportunityForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveAgencyOperation("opportunity", agencyOpportunityForm);
+    });
     cancelAgencyServiceEdit.addEventListener("click", () => resetAgencyOperationForm(agencyServiceForm, cancelAgencyServiceEdit));
     cancelAgencyTaskEdit.addEventListener("click", () => resetAgencyOperationForm(agencyTaskForm, cancelAgencyTaskEdit));
     cancelAgencyTemplateEdit.addEventListener("click", () => resetAgencyOperationForm(agencyTemplateForm, cancelAgencyTemplateEdit));
+    cancelAgencyOpportunityEdit.addEventListener("click", () => resetAgencyOperationForm(agencyOpportunityForm, cancelAgencyOpportunityEdit));
     agencyServiceList.addEventListener("click", (event) => {
       const button = event.target.closest(".edit-agency-service");
       if (!button) return;
@@ -10926,6 +11024,20 @@ Review retargeting when the warm audience is ready</textarea>
       agencyWorkspaceClient.value = button.dataset.clientCode;
       renderAgencyOperations();
       agencyHealthForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    agencyOpportunityList.addEventListener("click", (event) => {
+      const button = event.target.closest(".edit-agency-opportunity");
+      if (!button) return;
+      const opportunity = (currentAgencyGrowth.opportunities || []).find((item) => item.id === button.dataset.opportunityId);
+      if (!opportunity) return;
+      agencyWorkspaceClient.value = opportunity.clientCode;
+      renderAgencyOperations();
+      for (const name of ["id", "title", "opportunityType", "stage", "estimatedMonthlyValue", "targetDate", "owner", "notes"]) {
+        if (agencyOpportunityForm.elements[name]) agencyOpportunityForm.elements[name].value = opportunity[name] ?? "";
+      }
+      agencyOpportunityForm.querySelector('button[type="submit"]').textContent = "Update Opportunity";
+      cancelAgencyOpportunityEdit.hidden = false;
+      agencyOpportunityForm.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     copyClientOnboardingTemplateButton.addEventListener("click", copyClientOnboardingTemplate);
     clientOnboardingBackButton.addEventListener("click", () => {
