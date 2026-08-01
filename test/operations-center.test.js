@@ -82,3 +82,15 @@ test("Mac extension health and incident count as one attention item", () => {
   assert.equal(overview.summary.attention, 1);
   assert.equal(overview.incidents.length, 1);
 });
+
+test("healthy Mac extension suppresses a stale offline incident", () => {
+  const overview = buildOperationsOverview({
+    remote: { device: { id: "mac", status: "online", lastSeenAt: "2026-07-22T01:59:00.000Z" }, jobs: [] },
+    healthRows: [{ service_name: "mac_extension", status: "healthy", detail: "Online", last_checked_at: "2026-07-22T01:59:00.000Z" }],
+    incidentRows: [{ fingerprint: "service:mac_extension", service_name: "mac_extension", severity: "warning", status: "open", title: "mac_extension perlukan perhatian" }],
+    now: new Date("2026-07-22T02:00:00.000Z"),
+  });
+  assert.equal(overview.overall, "operational");
+  assert.equal(overview.summary.attention, 0);
+  assert.equal(overview.incidents.length, 0);
+});
