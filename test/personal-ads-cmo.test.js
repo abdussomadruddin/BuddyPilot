@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   assessPeriod,
+  buildLiveSnapshot,
   diagnose,
   normalizeAccountSetting,
   yesterdayDate,
@@ -78,4 +79,26 @@ test("diagnosis stays concise and contains the requested decision sections", () 
   assert.ok(result.actions.monitor.length);
   assert.ok(result.actions.testNext.length);
   assert.ok(result.actions.doNotTouch.length);
+});
+
+test("live snapshot returns spend with every primary and secondary metric", () => {
+  const source = analytics([{
+    id: "campaign-1", name: "KM Prospecting", spend: 120, revenue: 300, purchases: 3,
+    leads: 6, messaging: 4, impressions: 12000, reach: 9000, clicks: 240, linkClicks: 180,
+    ctr: 2, cpc: 0.5, cpm: 10, frequency: 1.33,
+  }], { total: { linkClicks: 180, frequency: 1.33, cpm: 10 } });
+  const snapshot = buildLiveSnapshot(source, setting, {
+    capturedAt: "2026-08-01T04:00:00.000Z",
+    reportDate: "2026-08-01",
+  });
+  assert.equal(snapshot.spend, 120);
+  assert.deepEqual(snapshot.primary, {
+    purchases: 3, costPerPurchase: 40,
+    leads: 6, costPerLead: 20,
+    conversations: 4, costPerConversation: 30,
+  });
+  assert.equal(snapshot.secondary.impressions, 12000);
+  assert.equal(snapshot.secondary.linkClicks, 180);
+  assert.equal(snapshot.secondary.cpm, 10);
+  assert.equal(snapshot.campaigns[0].leads, 6);
 });

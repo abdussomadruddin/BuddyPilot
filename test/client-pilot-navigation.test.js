@@ -26,3 +26,10 @@ test("Ads CMO keyword separators stay valid inside the generated page script", (
   assert.doesNotMatch(source, /split\(\/\[,\\n\]\//);
   assert.match(source, /split\(\/\[,\\\\n\]\//);
 });
+
+test("Ads CMO exposes a manual live snapshot with primary and secondary data", () => {
+  assert.match(source, /id="adsCmoLiveButton"[^>]*>Live Data/);
+  assert.match(source, /<h3>Primary Data<\/h3>/);
+  assert.match(source, /<h3>Secondary Data<\/h3>/);
+  assert.match(source, /\/api\/personal-ads\/live\?accountId=/);
+});

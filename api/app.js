@@ -56,6 +56,7 @@ const routes = {
   "personal-ads/accounts": require("../api_handlers/personal-ads/accounts"),
   "personal-ads/settings": require("../api_handlers/personal-ads/settings"),
   "personal-ads/reports": require("../api_handlers/personal-ads/reports"),
+  "personal-ads/live": require("../api_handlers/personal-ads/live"),
   "personal-ads/generate": require("../api_handlers/personal-ads/generate"),
   "cron/personal-ads-report": require("../api_handlers/cron/personal-ads-report"),
   "personal-post-regenerate": require("../api_handlers/personal-post-regenerate"),

@@ -4192,6 +4192,8 @@ function pageHtml() {
 
     .ads-cmo-toolbar, .ads-cmo-kpis, .ads-cmo-two-column { display: grid; gap: 14px; }
     .ads-cmo-toolbar { grid-template-columns: minmax(220px, 1.4fr) minmax(160px, .7fr) auto; align-items: end; }
+    .ads-cmo-toolbar-actions { display: flex; gap: 8px; }
+    .ads-cmo-toolbar-actions button { margin: 0; white-space: nowrap; }
     .ads-cmo-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 18px 0; }
     .ads-cmo-kpi, .ads-cmo-section { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
     .ads-cmo-kpi small { display: block; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
@@ -4207,11 +4209,40 @@ function pageHtml() {
     .ads-cmo-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .ads-cmo-product-rule { display: grid; grid-template-columns: 1fr 1.4fr .9fr repeat(3, .7fr) auto; gap: 8px; align-items: end; margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
     .ads-cmo-empty { padding: 28px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); text-align: center; }
+    .ads-cmo-live { margin-top: 18px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .ads-cmo-live-badge { align-self: flex-start; padding: 6px 9px; border-radius: 999px; background: #e8f6ef; color: #24705a; font-size: 11px; font-weight: 800; }
+    .ads-cmo-live-spend { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-top: 14px; padding: 16px; border-radius: 10px; background: #111; color: #fff; }
+    .ads-cmo-live-spend small { color: #d8d8d8; font-weight: 700; }
+    .ads-cmo-live-spend strong { font-size: clamp(24px, 4vw, 38px); }
+    .ads-cmo-live-groups { display: grid; grid-template-columns: .75fr 1.25fr; gap: 14px; margin-top: 14px; }
+    .ads-cmo-live-groups > section, .ads-cmo-live-campaigns { padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
+    .ads-cmo-live-groups h3, .ads-cmo-live-campaigns h3 { margin: 0 0 12px; }
+    .ads-cmo-live-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .ads-cmo-live-groups > section:first-child .ads-cmo-live-metrics { grid-template-columns: 1fr; }
+    .ads-cmo-live-metric { min-width: 0; padding: 11px; border-radius: 8px; background: #f6f6f4; }
+    .ads-cmo-live-metric small, .ads-cmo-live-metric span { display: block; color: var(--muted); }
+    .ads-cmo-live-metric strong { display: block; margin: 4px 0; font-size: 20px; }
+    .ads-cmo-live-metric span { font-size: 11px; }
+    .ads-cmo-live-campaigns { margin-top: 14px; }
+    .ads-cmo-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ads-cmo-table-scroll table { min-width: 1280px; border-collapse: collapse; }
+    .ads-cmo-table-scroll th, .ads-cmo-table-scroll td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+    .ads-cmo-table-scroll th:first-child, .ads-cmo-table-scroll td:first-child { position: sticky; left: 0; z-index: 1; min-width: 220px; background: #fff; text-align: left; }
+    .ads-cmo-table-scroll td small { display: block; margin-top: 3px; color: var(--muted); }
+    .ads-cmo-live-warnings { margin: 12px 0 0; padding: 12px 12px 12px 30px; border-radius: 8px; background: #fff4e5; color: #7b4c12; }
     @media (max-width: 820px) {
       .ads-cmo-toolbar, .ads-cmo-settings-grid, .ads-cmo-two-column { grid-template-columns: 1fr; }
+      .ads-cmo-toolbar-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .ads-cmo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .ads-cmo-product-rule { grid-template-columns: 1fr 1fr; }
       .ads-cmo-product-rule .danger { grid-column: 1 / -1; }
+      .ads-cmo-live { padding: 14px; }
+      .ads-cmo-live-spend { align-items: flex-start; flex-direction: column; }
+      .ads-cmo-live-groups { grid-template-columns: 1fr; }
+      .ads-cmo-live-metrics, .ads-cmo-live-groups > section:first-child .ads-cmo-live-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 420px) {
+      .ads-cmo-live-metrics, .ads-cmo-live-groups > section:first-child .ads-cmo-live-metrics { grid-template-columns: 1fr; }
     }
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
@@ -4359,8 +4390,28 @@ function pageHtml() {
         <div class="ads-cmo-toolbar">
           <div><label for="adsCmoAccount">Ads account</label><select id="adsCmoAccount"></select></div>
           <div><label for="adsCmoReportDate">Report date</label><input id="adsCmoReportDate" type="date"></div>
-          <button id="adsCmoLoadButton" type="button">Load Report</button>
+          <div class="ads-cmo-toolbar-actions">
+            <button id="adsCmoLiveButton" type="button">Live Data</button>
+            <button id="adsCmoLoadButton" class="secondary" type="button">Load Report</button>
+          </div>
         </div>
+
+        <section id="adsCmoLive" class="ads-cmo-live" hidden>
+          <div class="section-heading">
+            <div><h2>Live Data · Today</h2><p id="adsCmoLiveTimestamp" class="note"></p></div>
+            <span class="ads-cmo-live-badge">Manual snapshot</span>
+          </div>
+          <div id="adsCmoLiveSpend" class="ads-cmo-live-spend"></div>
+          <div class="ads-cmo-live-groups">
+            <section><h3>Primary Data</h3><div id="adsCmoLivePrimary" class="ads-cmo-live-metrics"></div></section>
+            <section><h3>Secondary Data</h3><div id="adsCmoLiveSecondary" class="ads-cmo-live-metrics"></div></section>
+          </div>
+          <section class="ads-cmo-live-campaigns">
+            <h3>Campaign Breakdown</h3>
+            <div class="ads-cmo-table-scroll"><table><thead><tr><th>Campaign</th><th>Spend</th><th>Purchase</th><th>Lead</th><th>Conversation</th><th>Impressions</th><th>Reach</th><th>Clicks</th><th>Link Clicks</th><th>CTR</th><th>CPC</th><th>CPM</th><th>Frequency</th></tr></thead><tbody id="adsCmoLiveCampaigns"></tbody></table></div>
+          </section>
+          <ul id="adsCmoLiveWarnings" class="ads-cmo-live-warnings"></ul>
+        </section>
 
         <details id="adsCmoSettings" class="advanced-panel" style="margin-top:16px">
           <summary>Account & Profit Settings</summary>
@@ -5556,6 +5607,7 @@ Review retargeting when the warm audience is ready</textarea>
     const pushNotificationNote = document.getElementById("pushNotificationNote");
     const adsCmoAccount = document.getElementById("adsCmoAccount");
     const adsCmoReportDate = document.getElementById("adsCmoReportDate");
+    const adsCmoLiveButton = document.getElementById("adsCmoLiveButton");
     const adsCmoLoadButton = document.getElementById("adsCmoLoadButton");
     const adsCmoRetryButton = document.getElementById("adsCmoRetryButton");
     const adsCmoStatus = document.getElementById("adsCmoStatus");
@@ -5579,6 +5631,13 @@ Review retargeting when the warm audience is ready</textarea>
     const adsCmoHypotheses = document.getElementById("adsCmoHypotheses");
     const adsCmoActions = document.getElementById("adsCmoActions");
     const adsCmoWarnings = document.getElementById("adsCmoWarnings");
+    const adsCmoLive = document.getElementById("adsCmoLive");
+    const adsCmoLiveTimestamp = document.getElementById("adsCmoLiveTimestamp");
+    const adsCmoLiveSpend = document.getElementById("adsCmoLiveSpend");
+    const adsCmoLivePrimary = document.getElementById("adsCmoLivePrimary");
+    const adsCmoLiveSecondary = document.getElementById("adsCmoLiveSecondary");
+    const adsCmoLiveCampaigns = document.getElementById("adsCmoLiveCampaigns");
+    const adsCmoLiveWarnings = document.getElementById("adsCmoLiveWarnings");
     const disconnectTikTokButton = document.getElementById("disconnectTikTokButton");
     const mobileContextTitle = document.getElementById("mobileContextTitle");
     const mobileNavigation = document.querySelector(".topbar-tabs");
@@ -8836,6 +8895,58 @@ Review retargeting when the warm audience is ready</textarea>
       return items.map((item) => '<div style="padding:10px 0;border-bottom:1px solid var(--line)"><strong>' + escapeHtml(item.name || item.campaignName || "N/A") + '</strong><small style="display:block;color:var(--muted);margin-top:4px">' + escapeHtml(item.product || "") + ' · Spend ' + escapeHtml(formatAdsCmoValue(item.spend, "money", currency)) + ' · Result ' + Number(item.primaryResults || 0) + ' · CPA ' + escapeHtml(formatAdsCmoValue(item.primaryCpa, "money", currency)) + (item.profit == null ? "" : ' · Profit ' + escapeHtml(formatAdsCmoValue(item.profit, "money", currency))) + '</small></div>').join("");
     }
 
+    function adsCmoLiveMetric(label, value, detail) {
+      return '<div class="ads-cmo-live-metric"><small>' + escapeHtml(label) + '</small><strong>' + escapeHtml(value) + '</strong>' + (detail ? '<span>' + escapeHtml(detail) + '</span>' : '') + '</div>';
+    }
+
+    function renderAdsCmoLiveData(snapshot) {
+      const currency = snapshot.currency || selectedAdsCmoAccount()?.currency || "MYR";
+      const primary = snapshot.primary || {};
+      const secondary = snapshot.secondary || {};
+      const captured = new Intl.DateTimeFormat("ms-MY", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(snapshot.capturedAt));
+      adsCmoLiveTimestamp.textContent = "Data hari ini ditarik daripada AdFlow pada " + captured + ". Tekan Live Data untuk refresh semula.";
+      adsCmoLiveSpend.innerHTML = '<small>Total ads spent hari ini</small><strong>' + escapeHtml(formatAdsCmoValue(snapshot.spend, "money", currency)) + '</strong>';
+      adsCmoLivePrimary.innerHTML = [
+        adsCmoLiveMetric("Purchases", formatAdsCmoValue(primary.purchases, "number", currency), "CPP " + formatAdsCmoValue(primary.costPerPurchase, "money", currency)),
+        adsCmoLiveMetric("Leads", formatAdsCmoValue(primary.leads, "number", currency), "CPL " + formatAdsCmoValue(primary.costPerLead, "money", currency)),
+        adsCmoLiveMetric("Conversations", formatAdsCmoValue(primary.conversations, "number", currency), "Cost " + formatAdsCmoValue(primary.costPerConversation, "money", currency)),
+      ].join("");
+      adsCmoLiveSecondary.innerHTML = [
+        adsCmoLiveMetric("Revenue", formatAdsCmoValue(secondary.revenue, "money", currency)),
+        adsCmoLiveMetric("ROAS", formatAdsCmoValue(secondary.roas, "decimal", currency)),
+        adsCmoLiveMetric("Impressions", formatAdsCmoValue(secondary.impressions, "number", currency)),
+        adsCmoLiveMetric("Reach", formatAdsCmoValue(secondary.reach, "number", currency)),
+        adsCmoLiveMetric("Frequency", formatAdsCmoValue(secondary.frequency, "decimal", currency)),
+        adsCmoLiveMetric("Clicks", formatAdsCmoValue(secondary.clicks, "number", currency)),
+        adsCmoLiveMetric("Link clicks", formatAdsCmoValue(secondary.linkClicks, "number", currency)),
+        adsCmoLiveMetric("CTR", formatAdsCmoValue(secondary.ctr, "percent", currency)),
+        adsCmoLiveMetric("CPC", formatAdsCmoValue(secondary.cpc, "money", currency)),
+        adsCmoLiveMetric("CPM", formatAdsCmoValue(secondary.cpm, "money", currency)),
+      ].join("");
+      adsCmoLiveCampaigns.innerHTML = (snapshot.campaigns || []).length ? snapshot.campaigns.map((campaign) => '<tr><td><strong>' + escapeHtml(campaign.name || "N/A") + '</strong><small>' + escapeHtml(campaign.category || "other") + '</small></td><td>' + escapeHtml(formatAdsCmoValue(campaign.spend, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.purchases, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.leads, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.conversations, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.impressions, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.reach, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.clicks, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.linkClicks, "number", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.ctr, "percent", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.cpc, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.cpm, "money", currency)) + '</td><td>' + escapeHtml(formatAdsCmoValue(campaign.frequency, "decimal", currency)) + '</td></tr>').join("") : '<tr><td colspan="13">Belum ada campaign data untuk hari ini.</td></tr>';
+      adsCmoLiveWarnings.innerHTML = (snapshot.warnings || []).map((warning) => '<li>' + escapeHtml(warning) + '</li>').join("");
+      adsCmoLiveWarnings.hidden = !(snapshot.warnings || []).length;
+      adsCmoLive.hidden = false;
+      adsCmoStatus.textContent = "Live · " + snapshot.reportDate;
+    }
+
+    async function loadAdsCmoLiveData() {
+      const accountId = adsCmoAccount.value;
+      if (!accountId) return setMessage(adsCmoResult, "err", "Pilih Ads account dahulu.");
+      const finishButton = setButtonBusy(adsCmoLiveButton, "Fetching...");
+      setMessage(adsCmoResult, "", "");
+      try {
+        const response = await fetch("/api/personal-ads/live?accountId=" + encodeURIComponent(accountId), { cache: "no-store" });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Live data Ads CMO gagal dimuatkan.");
+        renderAdsCmoLiveData(json.snapshot);
+        finishButton("Updated");
+      } catch (error) {
+        finishButton();
+        setMessage(adsCmoResult, "err", error.message || String(error));
+      }
+    }
+
     function renderAdsCmoReportData(report) {
       const yesterday = report.yesterday;
       const diagnosis = report.diagnosis || {};
@@ -11449,9 +11560,11 @@ Review retargeting when the warm audience is ready</textarea>
     adsCmoAccount.addEventListener("change", () => {
       populateAdsCmoSettings();
       adsCmoReport.hidden = true;
+      adsCmoLive.hidden = true;
       adsCmoEmpty.hidden = false;
       adsCmoStatus.textContent = "Pilih tarikh dan load";
     });
+    adsCmoLiveButton.addEventListener("click", loadAdsCmoLiveData);
     adsCmoLoadButton.addEventListener("click", loadAdsCmoReport);
     adsCmoReportDate.addEventListener("change", () => { adsCmoReport.hidden = true; adsCmoEmpty.hidden = false; });
     adsCmoRetryButton.addEventListener("click", retryAdsCmoReport);
