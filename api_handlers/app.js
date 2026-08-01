@@ -4191,6 +4191,9 @@ function pageHtml() {
     }
 
     .ads-cmo-toolbar, .ads-cmo-kpis, .ads-cmo-two-column { display: grid; gap: 14px; }
+    .ads-cmo-view-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 18px 0 14px; padding: 4px; border-radius: 10px; background: #e9e9e7; }
+    .ads-cmo-view-tab { width: 100%; margin: 0; padding: 11px 14px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); box-shadow: none; }
+    .ads-cmo-view-tab.active { background: #fff; color: #111; box-shadow: 0 1px 4px rgba(20, 20, 20, .12); }
     .ads-cmo-toolbar { grid-template-columns: minmax(220px, 1.4fr) minmax(160px, .7fr) auto; align-items: end; }
     .ads-cmo-toolbar-actions { display: flex; gap: 8px; }
     .ads-cmo-toolbar-actions button { margin: 0; white-space: nowrap; }
@@ -4449,9 +4452,14 @@ function pageHtml() {
           <span id="adsCmoStatus" class="ads-cmo-status">Belum dimuatkan</span>
         </div>
 
+        <div class="ads-cmo-view-tabs" role="tablist" aria-label="Ads CMO data view">
+          <button id="adsCmoLiveViewButton" class="ads-cmo-view-tab active" type="button" role="tab" aria-selected="true">Live Data</button>
+          <button id="adsCmoReportViewButton" class="ads-cmo-view-tab" type="button" role="tab" aria-selected="false">Load Report</button>
+        </div>
+
         <div class="ads-cmo-toolbar">
           <div><label for="adsCmoAccount">Ads account</label><select id="adsCmoAccount"></select></div>
-          <div><label for="adsCmoReportDate">Report date</label><input id="adsCmoReportDate" type="date"></div>
+          <div id="adsCmoReportDateField"><label for="adsCmoReportDate">Report date</label><input id="adsCmoReportDate" type="date"></div>
           <div class="ads-cmo-toolbar-actions">
             <button id="adsCmoLiveButton" type="button">Live Data</button>
             <button id="adsCmoLoadButton" class="secondary" type="button">Load Report</button>
@@ -5674,6 +5682,9 @@ Review retargeting when the warm audience is ready</textarea>
     const enablePushNotificationsButton = document.getElementById("enablePushNotificationsButton");
     const pushNotificationNote = document.getElementById("pushNotificationNote");
     const adsCmoAccount = document.getElementById("adsCmoAccount");
+    const adsCmoLiveViewButton = document.getElementById("adsCmoLiveViewButton");
+    const adsCmoReportViewButton = document.getElementById("adsCmoReportViewButton");
+    const adsCmoReportDateField = document.getElementById("adsCmoReportDateField");
     const adsCmoReportDate = document.getElementById("adsCmoReportDate");
     const adsCmoLiveButton = document.getElementById("adsCmoLiveButton");
     const adsCmoLoadButton = document.getElementById("adsCmoLoadButton");
@@ -8908,6 +8919,26 @@ Review retargeting when the warm audience is ready</textarea>
       }
     }
 
+    let activeAdsCmoView = "live";
+
+    function setAdsCmoView(view) {
+      activeAdsCmoView = view === "report" ? "report" : "live";
+      const liveActive = activeAdsCmoView === "live";
+      adsCmoLiveViewButton.classList.toggle("active", liveActive);
+      adsCmoReportViewButton.classList.toggle("active", !liveActive);
+      adsCmoLiveViewButton.setAttribute("aria-selected", String(liveActive));
+      adsCmoReportViewButton.setAttribute("aria-selected", String(!liveActive));
+      adsCmoReportDateField.hidden = liveActive;
+      adsCmoLiveButton.hidden = !liveActive;
+      adsCmoLoadButton.hidden = liveActive;
+      adsCmoRetryButton.hidden = liveActive;
+      adsCmoLive.hidden = !liveActive || adsCmoLive.dataset.loaded !== "true";
+      adsCmoReport.hidden = liveActive || adsCmoReport.dataset.loaded !== "true";
+      adsCmoEmpty.hidden = liveActive || adsCmoReport.dataset.loaded === "true";
+      if (liveActive && adsCmoLive.dataset.loaded !== "true") adsCmoStatus.textContent = "Live data belum dimuatkan";
+      if (!liveActive && adsCmoReport.dataset.loaded !== "true") adsCmoStatus.textContent = "Report belum dimuatkan";
+    }
+
     function selectedAdsCmoAccount() {
       return currentAdsCmoAccounts.find((item) => item.accountId === adsCmoAccount.value) || null;
     }
@@ -9063,13 +9094,15 @@ Review retargeting when the warm audience is ready</textarea>
       }).join("") : '<div class="ads-cmo-empty">Belum ada campaign data untuk hari ini.</div>';
       adsCmoLiveWarnings.innerHTML = (snapshot.warnings || []).map((warning) => '<li>' + escapeHtml(warning) + '</li>').join("");
       adsCmoLiveWarnings.hidden = !(snapshot.warnings || []).length;
-      adsCmoLive.hidden = false;
+      adsCmoLive.dataset.loaded = "true";
       adsCmoStatus.textContent = "Live · " + snapshot.reportDate;
+      setAdsCmoView("live");
     }
 
     async function loadAdsCmoLiveData() {
       const accountId = adsCmoAccount.value;
       if (!accountId) return setMessage(adsCmoResult, "err", "Pilih Ads account dahulu.");
+      setAdsCmoView("live");
       const finishButton = setButtonBusy(adsCmoLiveButton, "Fetching...");
       setMessage(adsCmoResult, "", "");
       try {
@@ -9113,14 +9146,15 @@ Review retargeting when the warm audience is ready</textarea>
       adsCmoActions.innerHTML = [["Do now", actions.doNow], ["Monitor", actions.monitor], ["Test next", actions.testNext], ["Do not touch", actions.doNotTouch]].map((group) => '<div><h3>' + group[0] + '</h3><ul>' + (group[1] || []).map((item) => '<li>' + escapeHtml(item) + '</li>').join("") + '</ul></div>').join("");
       renderAdsCmoList(adsCmoWarnings, diagnosis.warnings, "Tiada tracking warning dikesan.");
       adsCmoStatus.textContent = "Ready · " + report.report_date;
-      adsCmoReport.hidden = false;
-      adsCmoEmpty.hidden = true;
+      adsCmoReport.dataset.loaded = "true";
+      setAdsCmoView("report");
     }
 
     async function loadAdsCmoReport() {
       const accountId = adsCmoAccount.value;
       const reportDate = adsCmoReportDate.value;
       if (!accountId || !reportDate) return;
+      setAdsCmoView("report");
       const finishButton = setButtonBusy(adsCmoLoadButton, "Loading...");
       try {
         const response = await fetch("/api/personal-ads/reports?accountId=" + encodeURIComponent(accountId) + "&reportDate=" + encodeURIComponent(reportDate));
@@ -9128,9 +9162,10 @@ Review retargeting when the warm audience is ready</textarea>
         if (!response.ok || !json.ok) throw new Error(json.error || "Report Ads CMO gagal dimuatkan.");
         if (json.report?.status === "ready") renderAdsCmoReportData(json.report);
         else {
-          adsCmoReport.hidden = true; adsCmoEmpty.hidden = false; adsCmoRetryButton.hidden = false;
+          adsCmoReport.dataset.loaded = "false";
           adsCmoStatus.textContent = json.report?.status === "failed" ? "Failed" : "Belum tersedia";
           adsCmoEmpty.textContent = json.report?.error_message || "Snapshot belum tersedia untuk tarikh ini. Tekan Retry Report untuk jana sekarang.";
+          setAdsCmoView("report");
         }
         finishButton("Loaded");
       } catch (error) { finishButton(); setMessage(adsCmoResult, "err", error.message || String(error)); }
@@ -9149,7 +9184,10 @@ Review retargeting when the warm audience is ready</textarea>
         else if (defaultAccount) adsCmoAccount.value = defaultAccount.accountId;
         adsCmoReportDate.value = new URLSearchParams(location.search).get("reportDate") || json.defaultReportDate;
         populateAdsCmoSettings();
-        if (new URLSearchParams(location.search).get("tab") === "adscmo") await loadAdsCmoReport();
+        if (new URLSearchParams(location.search).get("tab") === "adscmo") {
+          setAdsCmoView("report");
+          await loadAdsCmoReport();
+        } else setAdsCmoView("live");
       } catch (error) { setMessage(adsCmoResult, "err", error.message || String(error)); }
     }
 
@@ -11703,14 +11741,18 @@ Review retargeting when the warm audience is ready</textarea>
     });
     adsCmoAccount.addEventListener("change", () => {
       populateAdsCmoSettings();
-      adsCmoReport.hidden = true;
-      adsCmoLive.hidden = true;
-      adsCmoEmpty.hidden = false;
-      adsCmoStatus.textContent = "Pilih tarikh dan load";
+      adsCmoReport.dataset.loaded = "false";
+      adsCmoLive.dataset.loaded = "false";
+      setAdsCmoView(activeAdsCmoView);
     });
+    adsCmoLiveViewButton.addEventListener("click", () => setAdsCmoView("live"));
+    adsCmoReportViewButton.addEventListener("click", () => setAdsCmoView("report"));
     adsCmoLiveButton.addEventListener("click", loadAdsCmoLiveData);
     adsCmoLoadButton.addEventListener("click", loadAdsCmoReport);
-    adsCmoReportDate.addEventListener("change", () => { adsCmoReport.hidden = true; adsCmoEmpty.hidden = false; });
+    adsCmoReportDate.addEventListener("change", () => {
+      adsCmoReport.dataset.loaded = "false";
+      setAdsCmoView("report");
+    });
     adsCmoRetryButton.addEventListener("click", retryAdsCmoReport);
     adsCmoSaveSettingsButton.addEventListener("click", saveAdsCmoSettings);
     adsCmoAddProductButton.addEventListener("click", () => {
