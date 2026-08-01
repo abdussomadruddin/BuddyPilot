@@ -9143,7 +9143,7 @@ Review retargeting when the warm audience is ready</textarea>
         if (!response.ok || !json.ok) throw new Error(json.error || "Ads CMO accounts gagal dimuatkan.");
         currentAdsCmoAccounts = json.accounts || [];
         const requestedAccount = new URLSearchParams(location.search).get("accountId");
-        const defaultAccount = currentAdsCmoAccounts.find((item) => [item.accountId, item.accountName].some((value) => String(value || "").trim().toUpperCase() === "DD1"));
+        const defaultAccount = currentAdsCmoAccounts.find((item) => [item.accountId, item.accountName].some((value) => String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "") === "DD1"));
         adsCmoAccount.innerHTML = currentAdsCmoAccounts.map((item) => '<option value="' + escapeHtml(item.accountId) + '">' + escapeHtml(item.accountName) + (item.autoReportEnabled ? " · Auto" : "") + '</option>').join("");
         if (requestedAccount && currentAdsCmoAccounts.some((item) => item.accountId === requestedAccount)) adsCmoAccount.value = requestedAccount;
         else if (defaultAccount) adsCmoAccount.value = defaultAccount.accountId;

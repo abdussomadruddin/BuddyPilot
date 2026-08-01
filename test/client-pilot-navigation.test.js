@@ -52,7 +52,7 @@ test("Ads CMO campaign breakdown uses expandable cards on mobile", () => {
   }
 });
 
-test("Ads CMO defaults to DD1 unless an account is requested", () => {
-  assert.match(source, /const defaultAccount = currentAdsCmoAccounts\.find\([\s\S]*?toUpperCase\(\) === "DD1"/);
+test("Ads CMO defaults to DD1 variants unless an account is requested", () => {
+  assert.ok(source.includes('toUpperCase().replace(/[^A-Z0-9]/g, "") === "DD1"'));
   assert.match(source, /if \(requestedAccount[\s\S]*?adsCmoAccount\.value = requestedAccount;[\s\S]*?else if \(defaultAccount\) adsCmoAccount\.value = defaultAccount\.accountId;/);
 });
