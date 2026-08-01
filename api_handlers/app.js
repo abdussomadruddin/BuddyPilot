@@ -4222,6 +4222,9 @@ function pageHtml() {
     .ads-cmo-settings-panel { margin-top: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
     .ads-cmo-settings-panel > summary { padding: 16px 18px; background: #f7f7f5; font-size: 16px; font-weight: 800; }
     .ads-cmo-settings-content { padding: 18px; border-top: 1px solid var(--line); }
+    .ads-cmo-push-content { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .ads-cmo-push-content .note { margin: 0; }
+    .ads-cmo-push-content button { flex: 0 0 auto; }
     .ads-cmo-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 14px; border-radius: 12px; background: #f7f7f5; }
     .ads-cmo-settings-grid .check-row { grid-column: 1 / -1; min-height: 48px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
     .ads-cmo-settings-grid > div, .ads-cmo-product-rule > div { min-width: 0; }
@@ -4280,6 +4283,8 @@ function pageHtml() {
     @media (max-width: 820px) {
       .ads-cmo-toolbar, .ads-cmo-settings-grid, .ads-cmo-two-column { grid-template-columns: 1fr; }
       .ads-cmo-settings-content { padding: 12px; }
+      .ads-cmo-push-content { align-items: stretch; flex-direction: column; }
+      .ads-cmo-push-content button { width: 100%; }
       .ads-cmo-settings-grid { padding: 10px; }
       .ads-cmo-settings-grid .check-row { grid-column: auto; }
       .ads-cmo-rules-heading { align-items: stretch; }
@@ -4500,9 +4505,13 @@ function pageHtml() {
           </div>
         </details>
 
-        <section class="ads-cmo-section" style="margin-top:16px">
-          <div class="section-heading"><div><h2>Morning Push</h2><p id="adsCmoPushNote" class="note">Aktifkan pada setiap browser, Android atau iOS Home Screen yang anda mahu gunakan.</p></div><button id="adsCmoPushButton" class="secondary" type="button">Aktifkan Notifikasi</button></div>
-        </section>
+        <details class="advanced-panel ads-cmo-settings-panel">
+          <summary>Morning Push</summary>
+          <div class="ads-cmo-settings-content ads-cmo-push-content">
+            <p id="adsCmoPushNote" class="note">Aktifkan pada setiap browser, Android atau iOS Home Screen yang anda mahu gunakan.</p>
+            <button id="adsCmoPushButton" class="secondary" type="button">Aktifkan Notifikasi</button>
+          </div>
+        </details>
 
         <div id="adsCmoResult" class="result"></div>
         <section id="adsCmoReport" hidden>
