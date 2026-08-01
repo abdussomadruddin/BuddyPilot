@@ -6,6 +6,7 @@ const {
   buildLiveSnapshot,
   diagnose,
   normalizeAccountSetting,
+  recalculateStoredReport,
   yesterdayDate,
 } = require("../lib/personal-ads-cmo");
 
@@ -50,9 +51,10 @@ test("missing purchase revenue falls back to selling price with warning", () => 
   assert.match(result.warnings.join(" "), /revenue Meta tiada/);
 });
 
-test("unusual purchase value is a tracking anomaly, not profit", () => {
+test("unusual purchase value keeps a fallback profit and raises a tracking warning", () => {
   const result = assessPeriod(analytics([{ name: "KM Prospecting", spend: 100, revenue: 9000, purchases: 1 }]), setting);
-  assert.equal(result.campaigns[0].profit, null);
+  assert.equal(result.campaigns[0].profit, 8900);
+  assert.equal(result.campaigns[0].profitSource, "tracking_fallback");
   assert.equal(result.campaigns[0].profitStatus, "tracking_issue");
   assert.match(result.warnings.join(" "), /tidak sepadan/);
 });
@@ -75,6 +77,147 @@ test("reported revenue provides profit when campaign product mapping is incomple
   assert.equal(result.profitability.contributionProfit, 40.33);
   assert.equal(result.profitability.profitSource, "reported_revenue_less_ads");
   assert.match(result.warnings.join(" "), /reported revenue/);
+});
+
+test("unmapped spend is counted as a loss instead of hiding overall profit", () => {
+  const result = assessPeriod(analytics([
+    { name: "KM Prospecting", spend: 100, revenue: 149, purchases: 1 },
+    { name: "Unknown Retargeting", spend: 40, revenue: 0 },
+  ]), setting);
+  assert.equal(result.campaigns[1].profit, -40);
+  assert.equal(result.profitability.contributionProfit, -35.7);
+  assert.equal(result.productBreakdown.find((item) => item.product === "Other / Unmapped").profit, -40);
+});
+
+test("short campaign keyword matches a full token only", () => {
+  const shortKeywordSetting = normalizeAccountSetting({
+    accountId: "123",
+    productRules: [{ name: "Service Ads", campaignKeywords: ["sa"], primaryMetric: "lead", allowableCpa: 50 }],
+  });
+  const result = assessPeriod(analytics([
+    { name: "SA | Lead Gen", spend: 20, leads: 1 },
+    { name: "Sales Always On", spend: 30, leads: 1 },
+  ]), shortKeywordSetting);
+  assert.equal(result.campaigns[0].product, "Service Ads");
+  assert.equal(result.campaigns[1].product, "Other / Unmapped");
+});
+
+test("product keywords tolerate hyphen and spacing differences", () => {
+  const productSetting = normalizeAccountSetting({
+    accountId: "123",
+    productRules: [{ name: "K-Method", campaignKeywords: ["kmethod"], primaryMetric: "purchase", sellingPrice: 97, grossMarginPercent: 100 }],
+  });
+  const result = assessPeriod(analytics([{ name: "TOP | K-Method | Purchase", spend: 50, purchases: 1 }]), productSetting);
+  assert.equal(result.campaigns[0].product, "K-Method");
+  assert.equal(result.campaigns[0].profit, 47);
+});
+
+test("most specific product keyword wins when rules overlap", () => {
+  const overlapSetting = normalizeAccountSetting({
+    accountId: "123",
+    productRules: [
+      { name: "Generic", campaignKeywords: ["funnel"], primaryMetric: "purchase", sellingPrice: 100, grossMarginPercent: 100 },
+      { name: "Ads Funnel Mastery", campaignKeywords: ["ads funnel mastery"], primaryMetric: "purchase", sellingPrice: 200, grossMarginPercent: 100 },
+    ],
+  });
+  const result = assessPeriod(analytics([{ name: "TOP Ads Funnel Mastery", spend: 50, purchases: 1 }]), overlapSetting);
+  assert.equal(result.campaigns[0].product, "Ads Funnel Mastery");
+  assert.equal(result.campaigns[0].revenue, 200);
+  assert.equal(result.campaigns[0].profit, 150);
+});
+
+test("account-only metrics are reconciled into an explicit product group", () => {
+  const source = analytics([{ name: "KM Prospecting", spend: 80, revenue: 149, purchases: 1 }], {
+    total: { spend: 100, revenue: 246, purchases: 2, leads: 1 },
+  });
+  const result = assessPeriod(source, setting);
+  const residual = result.productBreakdown.find((item) => item.product === "Account-only / Unattributed");
+  assert.ok(residual);
+  assert.equal(residual.spend, 20);
+  assert.equal(residual.revenue, 97);
+  assert.equal(residual.purchases, 1);
+  assert.equal(residual.leads, 1);
+  assert.equal(residual.profit, 77);
+  assert.equal(result.profitability.contributionProfit, 101.3);
+});
+
+test("account totals without campaign rows still show product data and profit", () => {
+  const result = assessPeriod(analytics([], { total: { spend: 274.1, revenue: 97, purchases: 1, leads: 1 } }), setting);
+  assert.equal(result.productBreakdown.length, 1);
+  assert.equal(result.productBreakdown[0].product, "Account-only / Unattributed");
+  assert.equal(result.productBreakdown[0].profit, -177.1);
+  assert.equal(result.profitability.contributionProfit, -177.1);
+});
+
+test("zero revenue produces zero ROAS and a visible negative profit", () => {
+  const result = assessPeriod(analytics([{ name: "No Result Campaign", spend: 75, revenue: 0 }]), setting);
+  const product = result.productBreakdown[0];
+  assert.equal(product.roas, 0);
+  assert.equal(product.profit, -75);
+  assert.equal(result.profitability.contributionProfit, -75);
+});
+
+test("service product with reported revenue calculates profit even without conversations", () => {
+  const serviceSetting = normalizeAccountSetting({
+    accountId: "123",
+    productRules: [{
+      name: "Service Ads",
+      campaignKeywords: ["sa"],
+      primaryMetric: "messaging_conversation",
+      sellingPrice: 1500,
+      grossMarginPercent: 100,
+      allowableCpa: 500,
+    }],
+  });
+  const result = assessPeriod(analytics([{
+    name: "SA | Retargeting",
+    spend: 274.1,
+    revenue: 97,
+    purchases: 1,
+    leads: 1,
+    messaging: 0,
+  }]), serviceSetting);
+  assert.equal(result.productBreakdown.length, 1);
+  assert.equal(result.productBreakdown[0].product, "Service Ads");
+  assert.equal(result.productBreakdown[0].profit, -177.1);
+  assert.equal(result.profitability.contributionProfit, -177.1);
+});
+
+test("stress: product totals reconcile and never produce non-finite KPIs", () => {
+  let seed = 271828;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let run = 0; run < 500; run += 1) {
+    const campaigns = Array.from({ length: 1 + Math.floor(random() * 30) }, (_, index) => {
+      const mapped = random() > 0.3;
+      const purchases = Math.floor(random() * 5);
+      const leads = Math.floor(random() * 8);
+      return {
+        name: mapped ? (random() > 0.5 ? `KM Prospecting ${index}` : `Service Leads ${index}`) : `Unknown ${index}`,
+        spend: Math.round(random() * 10000) / 100,
+        revenue: purchases ? Math.round(random() * 10000) / 100 : 0,
+        purchases,
+        leads,
+        messaging: Math.floor(random() * 4),
+        clicks: Math.floor(random() * 300),
+        impressions: Math.floor(random() * 10000),
+      };
+    });
+    const result = assessPeriod(analytics(campaigns), setting);
+    const productSpend = result.productBreakdown.reduce((sum, item) => sum + item.spend, 0);
+    assert.ok(Math.abs(productSpend - result.total.spend) < 0.02);
+    for (const product of result.productBreakdown) {
+      for (const key of ["spend", "revenue", "profit", "purchases", "leads", "conversations", "clicks"]) {
+        assert.ok(product[key] == null || Number.isFinite(product[key]), `${key} must be finite`);
+      }
+      assert.ok(product.cpp == null || Number.isFinite(product.cpp));
+      assert.ok(product.roas == null || Number.isFinite(product.roas));
+      assert.ok(product.cpc == null || Number.isFinite(product.cpc));
+    }
+    assert.ok(result.profitability.contributionProfit == null || Number.isFinite(result.profitability.contributionProfit));
+  }
 });
 
 test("report separates overall performance into product-level results", () => {
@@ -128,4 +271,18 @@ test("live snapshot returns spend with every primary and secondary metric", () =
   assert.equal(snapshot.productBreakdown[0].product, "KM");
   assert.equal(snapshot.productBreakdown[0].cpp, 40);
   assert.equal(snapshot.productBreakdown[0].roas, 2.5);
+});
+
+test("stored legacy reports are recalculated with current product rules", () => {
+  const raw = analytics([{ name: "KM Prospecting", spend: 50, revenue: 149, purchases: 1 }]);
+  const report = recalculateStoredReport({
+    status: "ready",
+    yesterday: raw,
+    current_period: raw,
+    comparison_period: raw,
+    diagnosis: { executiveSummary: ["stale"] },
+  }, setting);
+  assert.equal(report.yesterday.productBreakdown[0].product, "KM");
+  assert.equal(report.yesterday.productBreakdown[0].profit, 54.3);
+  assert.notDeepEqual(report.diagnosis.executiveSummary, ["stale"]);
 });

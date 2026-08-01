@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { aggregateAdflowData, buildReportDraft, presetDateRange, validateCustomWeek } = require("../lib/adflow-ads");
+const { aggregateAdflowData, buildReportDraft, normalizeGraphRow, presetDateRange, validateCustomWeek } = require("../lib/adflow-ads");
 
 const config = {
   accountId: "123",
@@ -14,6 +14,39 @@ test("AdFlow presets calculate completed ranges across boundaries", () => {
   assert.deepEqual(presetDateRange("last_7d", now), { startDate: "2025-12-27", endDate: "2026-01-02" });
   assert.deepEqual(presetDateRange("last_month", now), { startDate: "2025-12-01", endDate: "2025-12-31" });
   assert.throws(() => presetDateRange("custom", now), /tidak sah/);
+});
+
+test("Meta Graph aliases preserve campaign purchases, leads, conversations and revenue", () => {
+  const row = normalizeGraphRow({
+    campaign_id: "c1",
+    campaign_name: "Alias campaign",
+    spend: "100.00",
+    actions: [
+      { action_type: "omni_purchase", value: "2" },
+      { action_type: "onsite_conversion.lead_grouped", value: "4" },
+      { action_type: "messaging_conversation_started_7d", value: "3" },
+    ],
+    action_values: [{ action_type: "omni_purchase", value: "194.00" }],
+  }, "campaign");
+  assert.equal(row.conversions, 2);
+  assert.equal(row.leads, 4);
+  assert.equal(row.messaging_conversations, 3);
+  assert.equal(row.revenue, 194);
+});
+
+test("Meta Graph aliases do not double count duplicate purchase representations", () => {
+  const row = normalizeGraphRow({
+    actions: [
+      { action_type: "purchase", value: "2" },
+      { action_type: "omni_purchase", value: "2" },
+    ],
+    action_values: [
+      { action_type: "purchase", value: "194" },
+      { action_type: "omni_purchase", value: "194" },
+    ],
+  }, "account");
+  assert.equal(row.conversions, 2);
+  assert.equal(row.revenue, 194);
 });
 
 test("manual report week must be exactly seven completed days", () => {

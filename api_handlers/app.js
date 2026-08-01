@@ -4243,6 +4243,7 @@ function pageHtml() {
     @media (max-width: 820px) {
       .ads-cmo-toolbar, .ads-cmo-settings-grid, .ads-cmo-two-column { grid-template-columns: 1fr; }
       .ads-cmo-toolbar-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #adsCmoRetryButton { grid-column: 1 / -1; }
       .ads-cmo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .ads-cmo-product-rule { grid-template-columns: 1fr 1fr; }
       .ads-cmo-product-rule .danger { grid-column: 1 / -1; }
@@ -4405,6 +4406,7 @@ function pageHtml() {
           <div class="ads-cmo-toolbar-actions">
             <button id="adsCmoLiveButton" type="button">Live Data</button>
             <button id="adsCmoLoadButton" class="secondary" type="button">Load Report</button>
+            <button id="adsCmoRetryButton" class="secondary" type="button">Refresh Report</button>
           </div>
         </div>
 
@@ -4461,7 +4463,6 @@ function pageHtml() {
           <section class="ads-cmo-section" style="margin-top:14px"><h2>Tracking Warnings</h2><ul id="adsCmoWarnings"></ul></section>
         </section>
         <div id="adsCmoEmpty" class="ads-cmo-empty">Pilih account dan load snapshot. Jika belum tersedia, gunakan Retry Report.</div>
-        <div class="actions"><button id="adsCmoRetryButton" class="secondary" type="button" hidden>Retry Report</button></div>
       </section>
     </section>
 
@@ -8933,11 +8934,12 @@ Review retargeting when the warm audience is ready</textarea>
         current.leads += Number(campaign.leads || 0);
         current.conversations += Number(campaign.messaging || campaign.conversations || 0);
         current.clicks += Number(campaign.clicks || 0);
-        if (campaign.profit != null) { current.profit += Number(campaign.profit); current.profitCampaigns += 1; }
-        else if (!campaign.trackingAnomaly && Number(campaign.revenue || 0) > 0) { current.profit += Number(campaign.revenue) - Number(campaign.spend || 0); current.profitCampaigns += 1; }
+        if (campaign.profit != null) current.profit += Number(campaign.profit);
+        else current.profit += Number(campaign.revenue || 0) - Number(campaign.spend || 0);
+        current.profitCampaigns += 1;
         groups.set(product, current);
       }
-      return [...groups.values()].map((item) => ({ ...item, profit: item.profitCampaigns === item.campaignCount ? item.profit : null, cpp: item.purchases > 0 ? item.spend / item.purchases : null, roas: item.spend > 0 && item.revenue > 0 ? item.revenue / item.spend : null, cpc: item.clicks > 0 ? item.spend / item.clicks : null })).sort((a, b) => b.spend - a.spend);
+      return [...groups.values()].map((item) => ({ ...item, profit: item.profit, cpp: item.purchases > 0 ? item.spend / item.purchases : null, roas: item.spend > 0 ? item.revenue / item.spend : null, cpc: item.clicks > 0 ? item.spend / item.clicks : null })).sort((a, b) => b.spend - a.spend);
     }
 
     function renderAdsCmoProducts(node, products, currency) {
@@ -8945,7 +8947,7 @@ Review retargeting when the warm audience is ready</textarea>
         node.innerHTML = '<div class="ads-cmo-empty">Belum ada product data. Semak product rule dan campaign keyword.</div>';
         return;
       }
-      node.innerHTML = products.map((item) => '<article class="ads-cmo-product-card"><header><strong>' + escapeHtml(item.product || "Other / Unmapped") + '</strong><small>' + Number(item.campaignCount || 0) + ' campaign</small></header><div class="ads-cmo-product-metrics">' + [
+      node.innerHTML = products.map((item) => '<article class="ads-cmo-product-card"><header><strong>' + escapeHtml(item.product || "Other / Unmapped") + '</strong><small>' + Number(item.campaignCount || 0) + ' campaign' + (item.profitComplete === false ? ' · estimated' : '') + '</small></header><div class="ads-cmo-product-metrics">' + [
         ["Spend", formatAdsCmoValue(item.spend, "money", currency)],
         ["Revenue", formatAdsCmoValue(item.revenue, "money", currency)],
         ["Est. Profit", formatAdsCmoValue(item.profit, "money", currency)],
@@ -9040,7 +9042,6 @@ Review retargeting when the warm audience is ready</textarea>
       adsCmoStatus.textContent = "Ready · " + report.report_date;
       adsCmoReport.hidden = false;
       adsCmoEmpty.hidden = true;
-      adsCmoRetryButton.hidden = true;
     }
 
     async function loadAdsCmoReport() {
@@ -9090,6 +9091,7 @@ Review retargeting when the warm audience is ready</textarea>
         currentAdsCmoAccounts[index] = json.setting;
         setMessage(adsCmoResult, "ok", "Settings Ads CMO berjaya disimpan.");
         finishButton("Saved");
+        if (adsCmoReportDate.value) await loadAdsCmoReport();
       } catch (error) { finishButton(); setMessage(adsCmoResult, "err", error.message || String(error)); }
     }
 
