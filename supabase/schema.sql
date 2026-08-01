@@ -86,6 +86,7 @@ create table if not exists public.agency_services (
   client_code text not null references public.invoice_clients(code) on update cascade on delete cascade,
   name text not null,
   monthly_fee numeric(12, 2) not null default 0 check (monthly_fee >= 0),
+  internal_monthly_cost numeric(12, 2) constraint agency_services_internal_cost_check check (internal_monthly_cost is null or internal_monthly_cost >= 0),
   status text not null default 'active' check (status in ('active', 'paused', 'completed')),
   start_date date,
   renewal_date date,
@@ -105,6 +106,7 @@ create table if not exists public.agency_task_templates (
   weekday smallint not null default 1 check (weekday between 0 and 6),
   month_day smallint not null default 1 check (month_day between 1 and 28),
   priority text not null default 'normal' check (priority in ('low', 'normal', 'high', 'urgent')),
+  estimated_minutes integer not null default 0 check (estimated_minutes between 0 and 10080),
   owner text not null default '',
   notes text not null default '',
   is_active boolean not null default true,
@@ -123,6 +125,7 @@ create table if not exists public.agency_tasks (
   title text not null,
   due_date date,
   priority text not null default 'normal' check (priority in ('low', 'normal', 'high', 'urgent')),
+  estimated_minutes integer not null default 0 check (estimated_minutes between 0 and 10080),
   status text not null default 'todo' check (status in ('todo', 'in_progress', 'done', 'cancelled')),
   owner text not null default '',
   notes text not null default '',
@@ -131,8 +134,42 @@ create table if not exists public.agency_tasks (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.agency_client_health (
+  client_code text primary key references public.invoice_clients(code) on update cascade on delete cascade,
+  relationship_status text not null default 'stable' check (relationship_status in ('strong', 'stable', 'watch', 'risk')),
+  renewal_stage text not null default 'none' check (renewal_stage in ('none', 'upcoming', 'proposed', 'renewed', 'churn_risk')),
+  last_check_in date,
+  next_check_in date,
+  notes text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.agency_tasks add column if not exists template_id uuid references public.agency_task_templates(id) on delete set null;
 alter table public.agency_tasks add column if not exists work_type text not null default 'general';
+alter table public.agency_services add column if not exists internal_monthly_cost numeric(12, 2);
+alter table public.agency_tasks add column if not exists estimated_minutes integer not null default 0;
+alter table public.agency_task_templates add column if not exists estimated_minutes integer not null default 0;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conrelid = 'public.agency_services'::regclass and conname = 'agency_services_internal_cost_check') then
+    alter table public.agency_services
+      add constraint agency_services_internal_cost_check
+      check (internal_monthly_cost is null or internal_monthly_cost >= 0);
+  end if;
+  if not exists (select 1 from pg_constraint where conrelid = 'public.agency_tasks'::regclass and conname = 'agency_tasks_estimated_minutes_check') then
+    alter table public.agency_tasks
+      add constraint agency_tasks_estimated_minutes_check
+      check (estimated_minutes between 0 and 10080);
+  end if;
+  if not exists (select 1 from pg_constraint where conrelid = 'public.agency_task_templates'::regclass and conname = 'agency_task_templates_estimated_minutes_check') then
+    alter table public.agency_task_templates
+      add constraint agency_task_templates_estimated_minutes_check
+      check (estimated_minutes between 0 and 10080);
+  end if;
+end
+$$;
 
 do $$
 begin
@@ -523,6 +560,8 @@ create index if not exists agency_tasks_service_id_idx on public.agency_tasks (s
 create index if not exists agency_tasks_template_id_idx on public.agency_tasks (template_id) where template_id is not null;
 create unique index if not exists agency_tasks_template_due_uidx on public.agency_tasks (template_id, due_date);
 create index if not exists agency_tasks_due_idx on public.agency_tasks (due_date) where status in ('todo', 'in_progress');
+create index if not exists agency_client_health_next_check_in_idx on public.agency_client_health (next_check_in) where next_check_in is not null;
+create index if not exists agency_client_health_relationship_idx on public.agency_client_health (relationship_status);
 create index if not exists invoice_uploads_period_idx on public.invoice_uploads (period);
 create index if not exists invoice_uploads_client_code_idx on public.invoice_uploads (client_code);
 create unique index if not exists bank_accounts_one_default_idx on public.bank_accounts (is_default) where is_default = true and is_active = true and deleted_at is null;
@@ -562,6 +601,11 @@ for each row execute function public.touch_updated_at();
 drop trigger if exists agency_task_templates_touch_updated_at on public.agency_task_templates;
 create trigger agency_task_templates_touch_updated_at
 before update on public.agency_task_templates
+for each row execute function public.touch_updated_at();
+
+drop trigger if exists agency_client_health_touch_updated_at on public.agency_client_health;
+create trigger agency_client_health_touch_updated_at
+before update on public.agency_client_health
 for each row execute function public.touch_updated_at();
 
 drop trigger if exists business_settings_touch_updated_at on public.business_settings;
@@ -623,6 +667,7 @@ alter table public.invoice_clients enable row level security;
 alter table public.agency_services enable row level security;
 alter table public.agency_tasks enable row level security;
 alter table public.agency_task_templates enable row level security;
+alter table public.agency_client_health enable row level security;
 alter table public.tiktok_mcp_connections enable row level security;
 alter table public.push_subscriptions enable row level security;
 alter table public.business_settings enable row level security;
@@ -647,9 +692,11 @@ revoke all on public.invoice_clients from anon, authenticated;
 grant select, insert, update, delete on public.agency_services to service_role;
 grant select, insert, update, delete on public.agency_tasks to service_role;
 grant select, insert, update, delete on public.agency_task_templates to service_role;
+grant select, insert, update, delete on public.agency_client_health to service_role;
 revoke all on public.agency_services from anon, authenticated;
 revoke all on public.agency_tasks from anon, authenticated;
 revoke all on public.agency_task_templates from anon, authenticated;
+revoke all on public.agency_client_health from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_products to service_role;
 revoke all on public.postpilot_products from anon, authenticated;
 grant select, insert, update, delete on public.postpilot_voice_profiles to service_role;

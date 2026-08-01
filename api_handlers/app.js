@@ -4777,10 +4777,54 @@ Review retargeting when the warm audience is ready</textarea>
               <article><span>Managed ad budget</span><strong id="agencyManagedBudget">RM 0.00</strong></article>
               <article><span>Open tasks</span><strong id="agencyOpenTasks">0</strong></article>
             </div>
+            <section class="agency-performance-panel">
+              <div class="agency-panel-heading">
+                <div><h3>Agency Performance</h3><p class="note">Profitability dan delivery health berdasarkan service serta task semasa.</p></div>
+                <span class="agency-performance-period">Last 30 days</span>
+              </div>
+              <div class="agency-performance-metrics">
+                <article><span>Gross profit</span><strong id="agencyGrossProfit">RM 0.00</strong><small id="agencyInternalCost">Cost RM 0.00</small></article>
+                <article><span>Gross margin</span><strong id="agencyGrossMargin">0%</strong><small>Active services</small></article>
+                <article><span>Completion rate</span><strong id="agencyCompletionRate">0%</strong><small id="agencyCompletionSample">No recent tasks</small></article>
+                <article><span>Overdue</span><strong id="agencyOverdueTasks">0</strong><small>Open tasks</small></article>
+              </div>
+              <div class="agency-performance-grid">
+                <div><h4>Client profitability</h4><div id="agencyClientProfitability" class="agency-performance-list"></div></div>
+                <div><h4>Team capacity</h4><div id="agencyTeamCapacity" class="agency-performance-list"></div></div>
+              </div>
+            </section>
             <div class="agency-workspace-toolbar">
               <label for="agencyWorkspaceClient">Working on client</label>
               <select id="agencyWorkspaceClient"><option value="">Semua agency clients</option></select>
             </div>
+            <section class="agency-health-panel">
+              <div class="agency-panel-heading">
+                <div><h3>Client Health & Retention</h3><p class="note">Nampak relationship risk, check-in dan renewal sebelum client terlepas.</p></div>
+                <span class="agency-performance-period">Live score</span>
+              </div>
+              <div class="agency-health-metrics">
+                <article><span>Healthy</span><strong id="agencyHealthyClients">0</strong></article>
+                <article><span>Watch</span><strong id="agencyWatchClients">0</strong></article>
+                <article><span>At risk</span><strong id="agencyRiskClients">0</strong></article>
+                <article><span>Check-ins due</span><strong id="agencyCheckInsDue">0</strong></article>
+              </div>
+              <div class="agency-health-grid">
+                <div><h4>Retention board</h4><div id="agencyHealthBoard" class="agency-health-board"></div></div>
+                <form id="agencyHealthForm" class="agency-inline-form agency-health-form">
+                  <h4>Update client health</h4>
+                  <div class="agency-form-row">
+                    <label>Relationship<select name="relationshipStatus"><option value="strong">Strong</option><option value="stable" selected>Stable</option><option value="watch">Watch</option><option value="risk">Risk</option></select></label>
+                    <label>Renewal stage<select name="renewalStage"><option value="none">Not started</option><option value="upcoming">Upcoming</option><option value="proposed">Proposal sent</option><option value="renewed">Renewed</option><option value="churn_risk">Churn risk</option></select></label>
+                  </div>
+                  <div class="agency-form-row">
+                    <label>Last check-in<input name="lastCheckIn" type="date"></label>
+                    <label>Next check-in<input name="nextCheckIn" type="date"></label>
+                  </div>
+                  <label>Retention notes<textarea name="notes" rows="3" placeholder="Feedback, concern atau next action"></textarea></label>
+                  <button type="submit">Save Health Check-in</button>
+                </form>
+              </div>
+            </section>
             <div id="agencyAttentionList" class="agency-attention-list"></div>
             <section class="agency-delivery-calendar">
               <div class="agency-panel-heading">
@@ -4797,12 +4841,13 @@ Review retargeting when the warm audience is ready</textarea>
                   <label>Service name<input name="name" type="text" placeholder="Contoh: Meta Ads Management" required></label>
                   <div class="agency-form-row">
                     <label>Monthly fee<input name="monthlyFee" type="number" min="0" step="0.01" inputmode="decimal" value="0" required></label>
-                    <label>Status<select name="status"><option value="active">Active</option><option value="paused">Paused</option><option value="completed">Completed</option></select></label>
+                    <label>Internal monthly cost<input name="internalMonthlyCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Isi untuk kira margin"></label>
                   </div>
                   <div class="agency-form-row">
+                    <label>Status<select name="status"><option value="active">Active</option><option value="paused">Paused</option><option value="completed">Completed</option></select></label>
                     <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
-                    <label>Renewal date<input name="renewalDate" type="date"></label>
                   </div>
+                  <label>Renewal date<input name="renewalDate" type="date"></label>
                   <div class="inline-actions"><button type="submit">Save Service</button><button id="cancelAgencyServiceEdit" class="secondary" type="button" hidden>Cancel</button></div>
                 </form>
                 <div id="agencyServiceList" class="agency-operation-list"></div>
@@ -4820,7 +4865,10 @@ Review retargeting when the warm audience is ready</textarea>
                     <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
                     <label>Status<select name="status"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></label>
                   </div>
-                  <label>Work type<select name="workType"><option value="general">General</option><option value="report">Weekly report</option><option value="invoice">Invoice</option><option value="creative">Creative</option><option value="campaign_review">Campaign review</option></select></label>
+                  <div class="agency-form-row">
+                    <label>Work type<select name="workType"><option value="general">General</option><option value="report">Weekly report</option><option value="invoice">Invoice</option><option value="creative">Creative</option><option value="campaign_review">Campaign review</option></select></label>
+                    <label>Estimated minutes<input name="estimatedMinutes" type="number" min="0" max="10080" step="15" inputmode="numeric" value="0"></label>
+                  </div>
                   <div class="inline-actions"><button type="submit">Save Task</button><button id="cancelAgencyTaskEdit" class="secondary" type="button" hidden>Cancel</button></div>
                 </form>
                 <div id="agencyTaskList" class="agency-operation-list"></div>
@@ -4847,6 +4895,7 @@ Review retargeting when the warm audience is ready</textarea>
                   <label>Priority<select name="priority"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option><option value="low">Low</option></select></label>
                   <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
                 </div>
+                <label>Estimated minutes per delivery<input name="estimatedMinutes" type="number" min="0" max="10080" step="15" inputmode="numeric" value="0"></label>
                 <label class="agency-checkbox"><input name="isActive" type="checkbox" checked> Active schedule</label>
                 <div class="inline-actions"><button type="submit">Save Recurring Delivery</button><button id="cancelAgencyTemplateEdit" class="secondary" type="button" hidden>Cancel</button></div>
               </form>
@@ -5305,6 +5354,20 @@ Review retargeting when the warm audience is ready</textarea>
     const agencyMonthlyRevenue = document.getElementById("agencyMonthlyRevenue");
     const agencyManagedBudget = document.getElementById("agencyManagedBudget");
     const agencyOpenTasks = document.getElementById("agencyOpenTasks");
+    const agencyGrossProfit = document.getElementById("agencyGrossProfit");
+    const agencyInternalCost = document.getElementById("agencyInternalCost");
+    const agencyGrossMargin = document.getElementById("agencyGrossMargin");
+    const agencyCompletionRate = document.getElementById("agencyCompletionRate");
+    const agencyCompletionSample = document.getElementById("agencyCompletionSample");
+    const agencyOverdueTasks = document.getElementById("agencyOverdueTasks");
+    const agencyClientProfitability = document.getElementById("agencyClientProfitability");
+    const agencyTeamCapacity = document.getElementById("agencyTeamCapacity");
+    const agencyHealthyClients = document.getElementById("agencyHealthyClients");
+    const agencyWatchClients = document.getElementById("agencyWatchClients");
+    const agencyRiskClients = document.getElementById("agencyRiskClients");
+    const agencyCheckInsDue = document.getElementById("agencyCheckInsDue");
+    const agencyHealthBoard = document.getElementById("agencyHealthBoard");
+    const agencyHealthForm = document.getElementById("agencyHealthForm");
     const agencyAttentionList = document.getElementById("agencyAttentionList");
     const agencyDeliveryCalendar = document.getElementById("agencyDeliveryCalendar");
     const generateAgencyRecurringButton = document.getElementById("generateAgencyRecurringButton");
@@ -5447,6 +5510,8 @@ Review retargeting when the warm audience is ready</textarea>
     let currentAgencyServices = [];
     let currentAgencyTasks = [];
     let currentAgencyTemplates = [];
+    let currentAgencyInsights = {};
+    let currentAgencyHealth = { records: [], clients: [], summary: {} };
     let currentAgencyClientCode = "";
     let currentClientOnboarding = null;
     let currentClientOnboardingStep = "details";
@@ -8827,6 +8892,58 @@ Review retargeting when the warm audience is ready</textarea>
       }).join("") : '<div class="empty-state compact"><strong>Tiada delivery dalam 14 hari.</strong><span>Tambah recurring delivery atau task dengan due date.</span></div>';
     }
 
+    function renderAgencyPerformance(selectedCode) {
+      const insights = currentAgencyInsights || {};
+      const grossProfitReady = insights.costReady && Number.isFinite(insights.grossProfit);
+      agencyGrossProfit.textContent = grossProfitReady ? formatMoneyValue(insights.grossProfit) : "Setup costs";
+      agencyInternalCost.textContent = grossProfitReady ? "Cost " + formatMoneyValue(insights.internalCost || 0) : "Isi internal cost pada semua service";
+      agencyGrossMargin.textContent = Number.isFinite(insights.marginPercent) ? insights.marginPercent.toFixed(1).replace(".0", "") + "%" : "-";
+      agencyCompletionRate.textContent = Number(insights.recentTaskCount || 0) ? Number(insights.completionRate || 0).toFixed(1).replace(".0", "") + "%" : "-";
+      agencyCompletionSample.textContent = Number(insights.recentTaskCount || 0) ? insights.recentTaskCount + " task created" : "No recent tasks";
+      agencyOverdueTasks.textContent = String(insights.overdueTaskCount || 0);
+
+      const clientRows = (insights.clients || []).filter((client) => !selectedCode || client.clientCode === selectedCode);
+      agencyClientProfitability.innerHTML = clientRows.length ? clientRows.map((client) => {
+        const margin = Number.isFinite(client.marginPercent) ? client.marginPercent.toFixed(1).replace(".0", "") + "% margin" : "Cost not set";
+        const profit = Number.isFinite(client.grossProfit) ? formatMoneyValue(client.grossProfit) : formatMoneyValue(client.revenue || 0) + " revenue";
+        return '<article><div><strong>' + escapeHtml(agencyClientLabel(client.clientCode)) + '</strong><span>' + escapeHtml(profit) + ' · ' + escapeHtml(margin) + '</span></div><div class="agency-performance-badges"><span>' + client.openTasks + ' open</span><span data-alert="' + (client.overdueTasks ? "true" : "false") + '">' + client.overdueTasks + ' overdue</span></div></article>';
+      }).join("") : '<div class="empty-state compact"><strong>Belum ada service aktif.</strong><span>Tambah service untuk mula mengira profitability.</span></div>';
+
+      const owners = insights.owners || [];
+      const maxMinutes = Math.max(1, ...owners.map((owner) => Number(owner.estimatedMinutes || 0)));
+      agencyTeamCapacity.innerHTML = owners.length ? owners.map((owner) => {
+        const minutes = Number(owner.estimatedMinutes || 0);
+        const width = minutes ? Math.max(8, Math.round((minutes / maxMinutes) * 100)) : 0;
+        const time = minutes ? (minutes / 60).toFixed(minutes % 60 ? 1 : 0) + "h estimated" : "Time not estimated";
+        return '<article class="agency-capacity-row"><div><strong>' + escapeHtml(owner.owner) + '</strong><span>' + owner.taskCount + ' open · ' + escapeHtml(time) + (owner.overdueCount ? ' · ' + owner.overdueCount + ' overdue' : '') + '</span></div><div class="agency-capacity-track" aria-hidden="true"><span style="width:' + width + '%"></span></div></article>';
+      }).join("") : '<div class="empty-state compact"><strong>Tiada workload terbuka.</strong><span>Task yang mempunyai owner akan muncul di sini.</span></div>';
+    }
+
+    function populateAgencyHealthForm(selectedCode) {
+      const record = (currentAgencyHealth.records || []).find((item) => item.clientCode === selectedCode);
+      agencyHealthForm.elements.relationshipStatus.value = record?.relationshipStatus || "stable";
+      agencyHealthForm.elements.renewalStage.value = record?.renewalStage || "none";
+      agencyHealthForm.elements.lastCheckIn.value = record?.lastCheckIn || "";
+      agencyHealthForm.elements.nextCheckIn.value = record?.nextCheckIn || "";
+      agencyHealthForm.elements.notes.value = record?.notes || "";
+      [...agencyHealthForm.elements].forEach((element) => { element.disabled = !selectedCode; });
+    }
+
+    function renderAgencyHealth(selectedCode) {
+      const summary = currentAgencyHealth.summary || {};
+      agencyHealthyClients.textContent = String(summary.healthy || 0);
+      agencyWatchClients.textContent = String(summary.watch || 0);
+      agencyRiskClients.textContent = String(summary.risk || 0);
+      agencyCheckInsDue.textContent = String(summary.checkInsDue || 0);
+      const clients = (currentAgencyHealth.clients || []).filter((client) => !selectedCode || client.clientCode === selectedCode);
+      agencyHealthBoard.innerHTML = clients.length ? clients.map((client) => {
+        const label = client.status === "healthy" ? "Healthy" : client.status === "risk" ? "At risk" : "Watch";
+        const detail = client.reasons.slice(0, 2).join(" · ");
+        return '<article class="agency-health-item" data-health-status="' + client.status + '"><div class="agency-health-score"><strong>' + client.score + '</strong><span>/100</span></div><div class="agency-health-copy"><strong>' + escapeHtml(agencyClientLabel(client.clientCode)) + '</strong><span>' + escapeHtml(detail) + '</span><small>' + escapeHtml(client.nextCheckIn ? "Next check-in " + client.nextCheckIn : "Check-in belum dijadualkan") + (client.renewalDate ? " · Renewal " + escapeHtml(client.renewalDate) : "") + '</small></div><span class="agency-health-status">' + label + '</span><button class="secondary review-agency-health" type="button" data-client-code="' + escapeHtml(client.clientCode) + '">Review</button></article>';
+      }).join("") : '<div class="empty-state compact"><strong>Tiada client untuk dinilai.</strong><span>Active dan paused clients akan muncul di sini.</span></div>';
+      populateAgencyHealthForm(selectedCode);
+    }
+
     function renderAgencyOperations() {
       populateAgencyWorkspaceClients();
       const activeClients = currentClients.filter((client) => agencyClientStatus(client) === "active");
@@ -8840,6 +8957,8 @@ Review retargeting when the warm audience is ready</textarea>
       agencyMonthlyRevenue.textContent = formatMoneyValue(activeClients.reduce((total, client) => total + Number(client.monthlyRetainer || 0), 0));
       agencyManagedBudget.textContent = formatMoneyValue(activeClients.reduce((total, client) => total + Number(client.monthlyAdBudget || 0), 0));
       agencyOpenTasks.textContent = String(openTasks.length);
+      renderAgencyPerformance(selectedCode);
+      renderAgencyHealth(selectedCode);
 
       const today = localIsoDate(new Date());
       const soon = new Date();
@@ -8858,7 +8977,7 @@ Review retargeting when the warm audience is ready</textarea>
 
       agencyServiceList.innerHTML = services.length ? services.map((service) => \`
         <article class="agency-operation-item">
-          <div><strong>\${escapeHtml(service.name)}</strong><span>\${escapeHtml(agencyClientLabel(service.clientCode))} · \${escapeHtml(formatMoneyValue(service.monthlyFee || 0))}</span></div>
+          <div><strong>\${escapeHtml(service.name)}</strong><span>\${escapeHtml(agencyClientLabel(service.clientCode))} · \${escapeHtml(formatMoneyValue(service.monthlyFee || 0))}\${Number.isFinite(service.internalMonthlyCost) ? " · Cost " + escapeHtml(formatMoneyValue(service.internalMonthlyCost)) : " · Cost not set"}</span></div>
           <div class="agency-operation-meta"><span class="agency-status-pill" data-status="\${escapeHtml(service.status)}">\${escapeHtml(agencyOperationStatusLabel(service.status))}</span><span>\${escapeHtml(service.renewalDate ? "Renew " + service.renewalDate : "No renewal date")}</span></div>
           <button class="secondary edit-agency-service" type="button" data-service-id="\${escapeHtml(service.id)}">Edit</button>
         </article>
@@ -8866,7 +8985,7 @@ Review retargeting when the warm audience is ready</textarea>
 
       agencyTaskList.innerHTML = tasks.length ? tasks.map((task) => \`
         <article class="agency-operation-item" data-priority="\${escapeHtml(task.priority)}">
-          <div><strong>\${escapeHtml(task.title)}</strong><span>\${escapeHtml(agencyClientLabel(task.clientCode))} · \${escapeHtml(agencyWorkTypeLabel(task.workType))} · \${escapeHtml(task.owner || "No owner")}</span></div>
+          <div><strong>\${escapeHtml(task.title)}</strong><span>\${escapeHtml(agencyClientLabel(task.clientCode))} · \${escapeHtml(agencyWorkTypeLabel(task.workType))} · \${escapeHtml(task.owner || "No owner")}\${task.estimatedMinutes ? " · " + escapeHtml(String(task.estimatedMinutes)) + " min" : ""}</span></div>
           <div class="agency-operation-meta"><span class="agency-status-pill" data-status="\${escapeHtml(task.status)}">\${escapeHtml(agencyOperationStatusLabel(task.status))}</span><span>\${escapeHtml(task.dueDate || "No due date")}</span></div>
           <div class="inline-actions">\${agencyModuleAction(task)}<button class="secondary toggle-agency-task" type="button" data-task-id="\${escapeHtml(task.id)}" data-next-status="\${task.status === "done" ? "todo" : "done"}">\${task.status === "done" ? "Reopen" : "Done"}</button><button class="secondary edit-agency-task" type="button" data-task-id="\${escapeHtml(task.id)}">Edit</button></div>
         </article>
@@ -8874,7 +8993,7 @@ Review retargeting when the warm audience is ready</textarea>
 
       agencyTemplateList.innerHTML = templates.length ? templates.map((template) => \`
         <article class="agency-operation-item" data-priority="\${escapeHtml(template.priority)}">
-          <div><strong>\${escapeHtml(template.title)}</strong><span>\${escapeHtml(agencyClientLabel(template.clientCode))} · \${escapeHtml(agencyWorkTypeLabel(template.workType))}</span></div>
+          <div><strong>\${escapeHtml(template.title)}</strong><span>\${escapeHtml(agencyClientLabel(template.clientCode))} · \${escapeHtml(agencyWorkTypeLabel(template.workType))}\${template.estimatedMinutes ? " · " + escapeHtml(String(template.estimatedMinutes)) + " min" : ""}</span></div>
           <div class="agency-operation-meta"><span class="agency-status-pill" data-status="\${template.isActive ? "active" : "paused"}">\${template.isActive ? "Active" : "Paused"}</span><span>\${template.cadence === "weekly" ? "Weekly" : "Monthly"} · Next \${escapeHtml(template.nextDueDate)}</span></div>
           <div class="inline-actions"><button class="secondary toggle-agency-template" type="button" data-template-id="\${escapeHtml(template.id)}" data-next-active="\${template.isActive ? "false" : "true"}">\${template.isActive ? "Pause" : "Resume"}</button><button class="secondary edit-agency-template" type="button" data-template-id="\${escapeHtml(template.id)}">Edit</button></div>
         </article>
@@ -8894,6 +9013,8 @@ Review retargeting when the warm audience is ready</textarea>
         currentAgencyServices = json.services || [];
         currentAgencyTasks = json.tasks || [];
         currentAgencyTemplates = json.templates || [];
+        currentAgencyInsights = json.insights || {};
+        currentAgencyHealth = json.health || { records: [], clients: [], summary: {} };
         renderAgencyOperations();
         setMessage(agencyOperationsResult, "", "");
         if (json.generated) showToast(json.generated + " recurring task dijana.", "ok");
@@ -8926,6 +9047,31 @@ Review retargeting when the warm audience is ready</textarea>
         await loadAgencyOperations({ silent: true });
         finishButton("Saved");
         showToast(resource === "service" ? "Service disimpan." : resource === "template" ? "Recurring delivery disimpan." : "Task disimpan.", "ok");
+      } catch (error) {
+        finishButton();
+        setMessage(agencyOperationsResult, "err", error.message || String(error));
+      }
+    }
+
+    async function saveAgencyHealth(event) {
+      event.preventDefault();
+      const clientCode = agencyWorkspaceClient.value;
+      if (!clientCode) return setMessage(agencyOperationsResult, "err", "Pilih Working on client dahulu.");
+      const submit = agencyHealthForm.querySelector('button[type="submit"]');
+      const finishButton = setButtonBusy(submit, "Saving...");
+      try {
+        const values = Object.fromEntries(new FormData(agencyHealthForm).entries());
+        const response = await fetch("/api/clients/agency-operations", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ...values, resource: "health", clientCode }),
+        });
+        const json = await readApiJson(response);
+        if (response.status === 401) return void (window.location.href = "/login");
+        if (!response.ok || !json.ok) throw new Error(json.error || "Client health gagal disimpan.");
+        await loadAgencyOperations({ silent: true });
+        finishButton("Saved");
+        showToast("Client health dikemaskini.", "ok");
       } catch (error) {
         finishButton();
         setMessage(agencyOperationsResult, "err", error.message || String(error));
@@ -8981,6 +9127,8 @@ Review retargeting when the warm audience is ready</textarea>
         currentAgencyServices = json.services || [];
         currentAgencyTasks = json.tasks || [];
         currentAgencyTemplates = json.templates || [];
+        currentAgencyInsights = json.insights || {};
+        currentAgencyHealth = json.health || { records: [], clients: [], summary: {} };
         renderAgencyOperations();
         finishButton("Synced");
         showToast(json.generated ? json.generated + " recurring task dijana." : "Semua recurring task sudah terkini.", "ok");
@@ -10706,6 +10854,7 @@ Review retargeting when the warm audience is ready</textarea>
       event.preventDefault();
       saveAgencyOperation("template", agencyTemplateForm);
     });
+    agencyHealthForm.addEventListener("submit", saveAgencyHealth);
     cancelAgencyServiceEdit.addEventListener("click", () => resetAgencyOperationForm(agencyServiceForm, cancelAgencyServiceEdit));
     cancelAgencyTaskEdit.addEventListener("click", () => resetAgencyOperationForm(agencyTaskForm, cancelAgencyTaskEdit));
     cancelAgencyTemplateEdit.addEventListener("click", () => resetAgencyOperationForm(agencyTemplateForm, cancelAgencyTemplateEdit));
@@ -10716,7 +10865,7 @@ Review retargeting when the warm audience is ready</textarea>
       if (!service) return;
       agencyWorkspaceClient.value = service.clientCode;
       renderAgencyOperations();
-      for (const name of ["id", "name", "monthlyFee", "status", "owner", "renewalDate"]) {
+      for (const name of ["id", "name", "monthlyFee", "internalMonthlyCost", "status", "owner", "renewalDate"]) {
         if (agencyServiceForm.elements[name]) agencyServiceForm.elements[name].value = service[name] || "";
       }
       agencyServiceForm.querySelector('button[type="submit"]').textContent = "Update Service";
@@ -10740,7 +10889,7 @@ Review retargeting when the warm audience is ready</textarea>
       if (!task) return;
       agencyWorkspaceClient.value = task.clientCode;
       renderAgencyOperations();
-      for (const name of ["id", "title", "dueDate", "priority", "owner", "status", "workType"]) {
+      for (const name of ["id", "title", "dueDate", "priority", "owner", "status", "workType", "estimatedMinutes"]) {
         if (agencyTaskForm.elements[name]) agencyTaskForm.elements[name].value = task[name] || "";
       }
       agencyTaskForm.querySelector('button[type="submit"]').textContent = "Update Task";
@@ -10759,7 +10908,7 @@ Review retargeting when the warm audience is ready</textarea>
       if (!template) return;
       agencyWorkspaceClient.value = template.clientCode;
       renderAgencyOperations();
-      for (const name of ["id", "title", "workType", "serviceId", "cadence", "nextDueDate", "weekday", "monthDay", "priority", "owner"]) {
+      for (const name of ["id", "title", "workType", "serviceId", "cadence", "nextDueDate", "weekday", "monthDay", "priority", "owner", "estimatedMinutes"]) {
         if (agencyTemplateForm.elements[name]) agencyTemplateForm.elements[name].value = template[name] ?? "";
       }
       agencyTemplateForm.elements.isActive.checked = template.isActive;
@@ -10770,6 +10919,13 @@ Review retargeting when the warm audience is ready</textarea>
     agencyDeliveryCalendar.addEventListener("click", (event) => {
       const button = event.target.closest(".open-agency-module");
       if (button) openAgencyWorkModule(button.dataset.workType, button.dataset.clientCode);
+    });
+    agencyHealthBoard.addEventListener("click", (event) => {
+      const button = event.target.closest(".review-agency-health");
+      if (!button) return;
+      agencyWorkspaceClient.value = button.dataset.clientCode;
+      renderAgencyOperations();
+      agencyHealthForm.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     copyClientOnboardingTemplateButton.addEventListener("click", copyClientOnboardingTemplate);
     clientOnboardingBackButton.addEventListener("click", () => {

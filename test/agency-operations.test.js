@@ -74,3 +74,53 @@ test("Phase 3 migration protects templates and links generated tasks", () => {
   assert.match(schemaSource, /grant select, insert, update, delete on public\.agency_task_templates to service_role/);
   assert.match(schemaSource, /revoke all on public\.agency_task_templates from anon, authenticated/);
 });
+
+test("Phase 4 adds agency profitability and team capacity", () => {
+  for (const id of ["agencyGrossProfit", "agencyGrossMargin", "agencyCompletionRate", "agencyOverdueTasks", "agencyClientProfitability", "agencyTeamCapacity"]) {
+    assert.match(appSource, new RegExp(`id="${id}"`));
+  }
+  assert.match(appSource, /Agency Performance/);
+  assert.match(appSource, /Team capacity/);
+  assert.match(dataSource, /calculateAgencyInsights/);
+  assert.match(dataSource, /completionRate/);
+  assert.match(dataSource, /overdueTaskCount/);
+});
+
+test("Phase 4 stores optional internal cost and task effort safely", () => {
+  assert.match(schemaSource, /internal_monthly_cost numeric\(12, 2\)/);
+  assert.match(schemaSource, /estimated_minutes integer not null default 0/);
+  assert.match(schemaSource, /agency_services_internal_cost_check/);
+  assert.match(schemaSource, /agency_tasks_estimated_minutes_check/);
+  assert.match(schemaSource, /agency_task_templates_estimated_minutes_check/);
+  assert.match(dataSource, /internal_monthly_cost: optionalMoney/);
+  assert.match(dataSource, /estimated_minutes: integer/);
+  assert.doesNotMatch(appSource, /setInterval\([^)]*agency/i);
+});
+
+test("Phase 5 adds client health and retention controls", () => {
+  for (const id of ["agencyHealthyClients", "agencyWatchClients", "agencyRiskClients", "agencyCheckInsDue", "agencyHealthBoard", "agencyHealthForm"]) {
+    assert.match(appSource, new RegExp(`id="${id}"`));
+  }
+  assert.match(appSource, /Client Health & Retention/);
+  assert.match(appSource, /Save Health Check-in/);
+  assert.match(apiSource, /resource === "health"/);
+  assert.match(dataSource, /calculateClientHealth/);
+  assert.match(dataSource, /saveAgencyHealth/);
+});
+
+test("Phase 5 health storage is additive and service-role only", () => {
+  assert.match(schemaSource, /create table if not exists public\.agency_client_health/);
+  assert.match(schemaSource, /relationship_status in \('strong', 'stable', 'watch', 'risk'\)/);
+  assert.match(schemaSource, /renewal_stage in \('none', 'upcoming', 'proposed', 'renewed', 'churn_risk'\)/);
+  assert.match(schemaSource, /alter table public\.agency_client_health enable row level security/);
+  assert.match(schemaSource, /grant select, insert, update, delete on public\.agency_client_health to service_role/);
+  assert.match(schemaSource, /revoke all on public\.agency_client_health from anon, authenticated/);
+  assert.doesNotMatch(schemaSource, /drop table (if exists )?public\.agency_client_health/);
+});
+
+test("Phase 5 health scoring has no background polling", () => {
+  assert.match(dataSource, /Health check belum diset/);
+  assert.match(dataSource, /Check-in overdue/);
+  assert.match(dataSource, /Renewal belum dimulakan/);
+  assert.doesNotMatch(appSource, /setInterval\([^)]*health/i);
+});

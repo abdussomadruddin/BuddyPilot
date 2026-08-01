@@ -7,6 +7,7 @@ const {
   createAgencyTemplate,
   generateDueAgencyTasks,
   listAgencyOperations,
+  saveAgencyHealth,
   updateAgencyService,
   updateAgencyTask,
   updateAgencyTemplate,
@@ -38,11 +39,12 @@ module.exports = async function handler(req, res) {
       if (resource === "service") saved = req.method === "POST" ? await createAgencyService(body) : await updateAgencyService(body);
       else if (resource === "task") saved = req.method === "POST" ? await createAgencyTask(body) : await updateAgencyTask(body);
       else if (resource === "template") saved = req.method === "POST" ? await createAgencyTemplate(body) : await updateAgencyTemplate(body);
+      else if (resource === "health") saved = await saveAgencyHealth(body);
       else throw new Error("Jenis agency operation tidak sah.");
 
       await recordActivity({
         type: `${resource}_${req.method === "POST" ? "created" : "updated"}`,
-        title: `${resource === "service" ? "Service" : resource === "template" ? "Recurring delivery" : "Task"} agency ${req.method === "POST" ? "ditambah" : "dikemaskini"}`,
+        title: `${resource === "service" ? "Service" : resource === "template" ? "Recurring delivery" : resource === "health" ? "Client health" : "Task"} agency ${req.method === "POST" ? "ditambah" : "dikemaskini"}`,
         description: saved.name || saved.title || "",
         entityType: resource,
         entityId: saved.id,
