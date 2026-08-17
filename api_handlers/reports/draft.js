@@ -3,10 +3,10 @@ const { getMergedClientsWithStatus } = require("../../lib/invoices");
 const { readJsonBody } = require("../../lib/postpilot");
 const {
   buildReportDraft,
-  fetchAdflowCustomReport,
+  fetchMetaCustomReport,
   normalizeAdsReportConfig,
   validateCustomWeek,
-} = require("../../lib/adflow-ads");
+} = require("../../lib/meta-ads");
 const { fetchTikTokCustomReport } = require("../../lib/tiktok-ads");
 const { reportOperationalFailure, reportOperationalSuccess } = require("../../lib/operations-events");
 
@@ -37,13 +37,13 @@ module.exports = async function handler(req, res) {
       currency: body.currency,
       resultMetric: body.resultMetric,
     });
-    serviceName = config.platform === "tiktok" ? "tiktok" : "meta_adflow";
+    serviceName = config.platform === "tiktok" ? "tiktok" : "meta_mcp";
     fetchStarted = true;
     const analytics = config.platform === "tiktok"
       ? await fetchTikTokCustomReport(config, startDate, endDate)
-      : await fetchAdflowCustomReport(config, startDate, endDate);
+      : await fetchMetaCustomReport(config, startDate, endDate);
     const draft = buildReportDraft(analytics, config);
-    await reportOperationalSuccess({ fingerprint: `${serviceName}:report:${clientCode}`, serviceName, detail: `${config.platform === "tiktok" ? "TikTok MCP" : "AdFlow MCP"} report data berjaya dimuatkan.`, metadata: { clientCode } });
+    await reportOperationalSuccess({ fingerprint: `${serviceName}:report:${clientCode}`, serviceName, detail: `${config.platform === "tiktok" ? "TikTok MCP" : "Meta MCP"} report data berjaya dimuatkan.`, metadata: { clientCode } });
     res.statusCode = 200;
     res.end(JSON.stringify({
       ok: true,

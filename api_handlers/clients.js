@@ -7,7 +7,7 @@ const {
 } = require("../lib/invoices");
 const { recordActivity } = require("../lib/supabase-db");
 const { readJsonBody } = require("../lib/postpilot");
-const { normalizeAdsReportConfig } = require("../lib/adflow-ads");
+const { normalizeAdsReportConfig } = require("../lib/meta-ads");
 
 function publicClient(client) {
   const telegram = client.metadata?.telegramReportConfig || {};

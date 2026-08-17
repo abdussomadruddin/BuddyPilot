@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { aggregateAdflowDailyRaw } = require("../lib/adflow-ads");
+const { aggregateMetaDailyRaw } = require("../lib/meta-ads");
 const { buildDailyTelegramMessage, telegramConfig, yesterdayDate } = require("../lib/telegram-reports");
 
 const config = {
@@ -37,7 +37,7 @@ function dailyRaw() {
 }
 
 test("daily Telegram message contains conversations, leads, and category breakdowns", () => {
-  const analytics = aggregateAdflowDailyRaw(dailyRaw(), config);
+  const analytics = aggregateMetaDailyRaw(dailyRaw(), config);
   const message = buildDailyTelegramMessage({ brandClient: "DD1" }, analytics, "2026-07-20");
   assert.match(message, /OVERALL/);
   assert.match(message, /PROSPECTING/);
@@ -49,7 +49,7 @@ test("daily Telegram message contains conversations, leads, and category breakdo
 
 test("TikTok daily report keeps TOP leads separate from MID and BOT delivery", () => {
   const tiktokConfig = { ...config, platform: "tiktok" };
-  const analytics = aggregateAdflowDailyRaw({
+  const analytics = aggregateMetaDailyRaw({
     account: { ...dailyRaw().account, spend: 100, leads: 5 },
     campaigns: [
       { id: "top", name: "TOP - Lead Gen", spend: 70, impressions: 7000, reach: 6000, clicks: 150, leads: 5 },
@@ -74,22 +74,22 @@ test("zero primary results show N\/A instead of zero cost", () => {
     row.leads = 0;
     row.messaging_conversations = 0;
   });
-  const message = buildDailyTelegramMessage({ brandClient: "DD1" }, aggregateAdflowDailyRaw(raw, config), "2026-07-20");
+  const message = buildDailyTelegramMessage({ brandClient: "DD1" }, aggregateMetaDailyRaw(raw, config), "2026-07-20");
   assert.match(message, /Conversations: 0 \| Cost: N\/A/);
   assert.match(message, /Leads: 0 \| CPL: N\/A/);
 });
 
 test("daily report sends missing insights as zero values", () => {
-  const analytics = aggregateAdflowDailyRaw({ account: null, campaigns: [] }, config);
+  const analytics = aggregateMetaDailyRaw({ account: null, campaigns: [] }, config);
   const message = buildDailyTelegramMessage({ brandClient: "DD1" }, analytics, "2026-07-20");
   assert.match(message, /Spend: RM\s?0\.00/);
   assert.match(message, /Leads: 0 \| CPL: N\/A/);
-  assert.doesNotMatch(message, /Data note:|AdFlow tidak memulangkan insights/);
+  assert.doesNotMatch(message, /Data note:|Meta tidak memulangkan insights/);
 });
 
 test("TikTok daily report can send an empty day as zero values", () => {
   const tiktokConfig = { ...config, platform: "tiktok" };
-  const analytics = aggregateAdflowDailyRaw({ account: null, campaigns: [] }, tiktokConfig);
+  const analytics = aggregateMetaDailyRaw({ account: null, campaigns: [] }, tiktokConfig);
   analytics.warnings = ["TikTok Ads tidak memulangkan insights untuk tarikh ini. Semua angka dilaporkan sebagai 0."];
   const client = { brandClient: "MUIZ", metadata: { adsReportConfig: tiktokConfig } };
   const message = buildDailyTelegramMessage(client, analytics, "2026-07-20");

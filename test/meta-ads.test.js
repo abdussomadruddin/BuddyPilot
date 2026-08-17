@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { aggregateAdflowData, buildReportDraft, normalizeGraphRow, presetDateRange, validateCustomWeek } = require("../lib/adflow-ads");
+const { aggregateMetaData, buildReportDraft, normalizeGraphRow, presetDateRange, validateCustomWeek } = require("../lib/meta-ads");
 
 const config = {
   accountId: "123",
@@ -9,7 +9,7 @@ const config = {
   retargetingKeywords: "retargeting,warm",
 };
 
-test("AdFlow presets calculate completed ranges across boundaries", () => {
+test("Meta presets calculate completed ranges across boundaries", () => {
   const now = new Date("2026-01-03T04:00:00Z");
   assert.deepEqual(presetDateRange("last_7d", now), { startDate: "2025-12-27", endDate: "2026-01-02" });
   assert.deepEqual(presetDateRange("last_month", now), { startDate: "2025-12-01", endDate: "2025-12-31" });
@@ -32,6 +32,22 @@ test("Meta Graph aliases preserve campaign purchases, leads, conversations and r
   assert.equal(row.leads, 4);
   assert.equal(row.messaging_conversations, 3);
   assert.equal(row.revenue, 194);
+});
+
+test("official Meta MCP flattened metrics preserve profit inputs", () => {
+  const row = normalizeGraphRow({
+    spend: 75,
+    purchases: 2,
+    leads: 3,
+    conversations: 4,
+    revenue: 250,
+    roas: 3.33,
+  }, "account");
+  assert.equal(row.conversions, 2);
+  assert.equal(row.leads, 3);
+  assert.equal(row.messaging_conversations, 4);
+  assert.equal(row.revenue, 250);
+  assert.equal(row.roas, 3.33);
 });
 
 test("Meta Graph aliases do not double count duplicate purchase representations", () => {
@@ -57,7 +73,7 @@ test("manual report week must be exactly seven completed days", () => {
 });
 
 test("aggregates conversions by campaign category", () => {
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 175, conversions: 12, impressions: 17500, clicks: 270 },
     campaigns: [
       { id: "c1", name: "Cold Prospecting", spend: 100, conversions: 10, impressions: 10000, clicks: 200 },
@@ -81,7 +97,7 @@ test("aggregates conversions by campaign category", () => {
 
 test("TikTok TOP is prospecting while MID and BOT are retargeting", () => {
   const tiktokConfig = { ...config, platform: "tiktok", resultMetric: "leads" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 300, leads: 12 },
     campaigns: [
       { id: "top", name: "TOP - Lead Gen", spend: 150, leads: 4 },
@@ -111,7 +127,7 @@ test("TikTok TOP is prospecting while MID and BOT are retargeting", () => {
 
 test("TikTok weekly PDF falls back to overall clicks and CPC when TOP has no leads", () => {
   const tiktokConfig = { ...config, platform: "tiktok", resultMetric: "leads" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 120, clicks: 60, leads: 0 },
     campaigns: [
       { id: "top", name: "TOP - Lead Gen", spend: 50, clicks: 20, leads: 0 },
@@ -131,7 +147,7 @@ test("TikTok weekly PDF falls back to overall clicks and CPC when TOP has no lea
 
 test("messaging conversations use campaign and ad conversation fields", () => {
   const messagingConfig = { ...config, resultMetric: "messaging_conversations" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 90 },
     campaigns: [{ id: "c1", name: "Cold", spend: 90, messaging_conversations: 9 }],
     ads: [{ id: "a1", name: "Message Ad", campaignName: "Cold", spend: 90, conversations: 9 }],
@@ -146,7 +162,7 @@ test("messaging conversations use campaign and ad conversation fields", () => {
 
 test("lead form results use the Meta lead event", () => {
   const leadConfig = { ...config, resultMetric: "leads" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 120, leads: 6 },
     campaigns: [{ id: "c1", name: "Cold Lead Form", spend: 120, leads: 6 }],
   }, leadConfig);
@@ -164,7 +180,7 @@ test("lead form results use the Meta lead event", () => {
 
 test("best performer uses the ad title instead of campaign title", () => {
   const leadConfig = { ...config, resultMetric: "leads" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 100, leads: 5 },
     campaigns: [{ id: "c1", name: "Cold Campaign", spend: 100, leads: 5 }],
     ads: [{ id: "a1", name: "UGC Hook A", campaignName: "Cold Campaign", spend: 40, leads: 4 }],
@@ -174,7 +190,7 @@ test("best performer uses the ad title instead of campaign title", () => {
 
 test("selects separate prospecting and retargeting ads with CPM fallback", () => {
   const leadConfig = { ...config, resultMetric: "leads" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 150, leads: 5 },
     campaigns: [
       { id: "c1", name: "Cold Campaign", spend: 100, leads: 5 },
@@ -193,7 +209,7 @@ test("selects separate prospecting and retargeting ads with CPM fallback", () =>
 });
 
 test("zero results produces N/A cost and a customer-angle recommendation", () => {
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 80, conversions: 0 },
     campaigns: [{ id: "c1", name: "Cold Prospecting", spend: 80, conversions: 0 }],
   }, config);
@@ -211,7 +227,7 @@ test("zero results produces N/A cost and a customer-angle recommendation", () =>
 
 test("results produce campaign and creative-led recommendations", () => {
   const leadConfig = { ...config, resultMetric: "leads" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 40, leads: 5 },
     campaigns: [{ id: "c1", name: "Cold Lead Form", spend: 40, leads: 5 }],
     ads: [{ id: "a1", name: "Lead Winner", campaignName: "Cold Lead Form", spend: 40, leads: 5 }],
@@ -227,7 +243,7 @@ test("results produce campaign and creative-led recommendations", () => {
 
 test("performance leaks explain the idea and the metric-based reason", () => {
   const leadConfig = { ...config, resultMetric: "leads" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 150, leads: 10 },
     campaigns: [
       { id: "c1", name: "Cold Winner", spend: 50, leads: 5 },
@@ -245,7 +261,7 @@ test("performance leaks explain the idea and the metric-based reason", () => {
 });
 
 test("performance leaks handle a week with no spend without claiming wasted cost", () => {
-  const analytics = aggregateAdflowData({ insights: { currency: "MYR", spend: 0, conversions: 0 } }, config);
+  const analytics = aggregateMetaData({ insights: { currency: "MYR", spend: 0, conversions: 0 } }, config);
   const draft = buildReportDraft(analytics, config);
   assert.match(draft.leadLeaks, /Idea: Sediakan tiga angle/);
   assert.match(draft.leadLeaks, /Sebab: belum ada spend atau result/);
@@ -254,7 +270,7 @@ test("performance leaks handle a week with no spend without claiming wasted cost
 
 test("does not mislabel an ad title as the customer audience", () => {
   const leadConfig = { ...config, resultMetric: "leads", prospectingKeywords: "prospecting,cold,bonus" };
-  const analytics = aggregateAdflowData({
+  const analytics = aggregateMetaData({
     insights: { currency: "MYR", spend: 30, leads: 3 },
     campaigns: [{ id: "c1", name: "Bonus Hook", spend: 30, leads: 3 }],
     ads: [{ id: "a1", name: "Bonus Hook", campaignName: "Bonus Hook", adSetName: "Bonus Hook", spend: 30, leads: 3 }],

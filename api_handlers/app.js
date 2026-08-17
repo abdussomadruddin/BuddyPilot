@@ -4338,6 +4338,8 @@ function pageHtml() {
           <button type="button" data-menu-refresh><svg class="icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg><span>Refresh</span></button>
           <button type="button" data-menu-subtab="settings-panel"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Tetapan</span></button>
           <button type="button" data-menu-subtab="bank-panel"><svg class="icon" aria-hidden="true"><use href="/icons.svg#landmark"></use></svg><span>Akaun Bank</span></button>
+          <button type="button" data-menu-section="menuMetaSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#link"></use></svg><span>Meta Ads</span></button>
+          <div id="menuMetaSettings" class="menu-settings-panel" hidden></div>
           <button type="button" data-menu-section="menuTikTokSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#link"></use></svg><span>TikTok Ads</span></button>
           <div id="menuTikTokSettings" class="menu-settings-panel" hidden></div>
           <form method="post" action="/api/logout">
@@ -4452,7 +4454,7 @@ function pageHtml() {
         <div class="section-heading">
           <div>
             <h1>Ads CMO</h1>
-            <p class="note">Daily profitability brief peribadi daripada AdFlow. Read-only — tiada perubahan dibuat pada Meta Ads.</p>
+            <p class="note">Daily profitability brief peribadi daripada Meta. Read-only — tiada perubahan dibuat pada Meta Ads.</p>
           </div>
           <span id="adsCmoStatus" class="ads-cmo-status">Belum dimuatkan</span>
         </div>
@@ -4951,7 +4953,7 @@ Review retargeting when the warm audience is ready</textarea>
             </div>
           </section>
           <div class="client-form-actions">
-            <button id="loadAdsReportButton" class="secondary" type="button">Load AdFlow Data</button>
+            <button id="loadAdsReportButton" class="secondary" type="button">Load Meta Data</button>
             <button id="previewReportButton" class="secondary" type="button">Preview PDF</button>
             <button id="uploadReportButton" class="approve" type="submit">Generate & Upload Report</button>
           </div>
@@ -5355,6 +5357,21 @@ Review retargeting when the warm audience is ready</textarea>
         </div>
 
         <div id="settings-panel" class="subtab-panel" data-subtab-panel="invoice-pilot">
+        <section id="metaAdsSettings" class="menu-tiktok-card" aria-labelledby="menuMetaTitle">
+          <div class="menu-tiktok-heading">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#link"></use></svg>
+            <div>
+              <strong id="menuMetaTitle">Meta Ads</strong>
+              <span id="metaConnectionText">Semak sambungan...</span>
+            </div>
+          </div>
+          <div id="metaAuthorizationWarning" class="menu-tiktok-warning" hidden></div>
+          <div class="menu-tiktok-actions">
+            <a id="connectMetaButton" href="/api/meta/oauth-start">Connect Meta Ads</a>
+            <button id="disconnectMetaButton" type="button" hidden>Disconnect</button>
+          </div>
+          <div class="push-notification-note">Sumber rasmi Meta MCP. Data Ads CMO, report dan Telegram menggunakan sambungan ini.</div>
+        </section>
         <section id="tiktokAdsSettings" class="menu-tiktok-card" aria-labelledby="menuTikTokTitle">
           <div class="menu-tiktok-heading">
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#link"></use></svg>
@@ -5688,6 +5705,10 @@ Review retargeting when the warm audience is ready</textarea>
     const tiktokConnectionText = document.getElementById("tiktokConnectionText");
     const tiktokAuthorizationWarning = document.getElementById("tiktokAuthorizationWarning");
     const connectTikTokButton = document.getElementById("connectTikTokButton");
+    const metaConnectionText = document.getElementById("metaConnectionText");
+    const metaAuthorizationWarning = document.getElementById("metaAuthorizationWarning");
+    const connectMetaButton = document.getElementById("connectMetaButton");
+    const disconnectMetaButton = document.getElementById("disconnectMetaButton");
     const enablePushNotificationsButton = document.getElementById("enablePushNotificationsButton");
     const pushNotificationNote = document.getElementById("pushNotificationNote");
     const adsCmoAccount = document.getElementById("adsCmoAccount");
@@ -5814,7 +5835,7 @@ Review retargeting when the warm audience is ready</textarea>
     let currentAgencyClientCode = "";
     let currentClientOnboarding = null;
     let currentClientOnboardingStep = "details";
-    let currentAdflowAccounts = [];
+    let currentMetaAccounts = [];
     let currentTikTokAccounts = [];
     let currentAdsCmoAccounts = [];
     let currentBankAccounts = [];
@@ -6673,8 +6694,11 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function setupMenuIntegrations() {
+      const metaCard = document.getElementById("metaAdsSettings");
+      const metaPanel = document.getElementById("menuMetaSettings");
       const tiktokCard = document.getElementById("tiktokAdsSettings");
       const tiktokPanel = document.getElementById("menuTikTokSettings");
+      if (metaCard && metaPanel) metaPanel.appendChild(metaCard);
       if (tiktokCard && tiktokPanel) tiktokPanel.appendChild(tiktokCard);
       const panels = [...document.querySelectorAll(".menu-settings-panel")];
       document.querySelectorAll("[data-menu-section]").forEach((button) => {
@@ -6689,6 +6713,9 @@ Review retargeting when the warm audience is ready</textarea>
       if (requested.get("tiktok") || window.location.hash === "#tiktokAdsSettings") {
         topbarMenu.open = true;
         panels.forEach((item) => { item.hidden = item !== tiktokPanel; });
+      } else if (requested.get("meta") || window.location.hash === "#metaAdsSettings") {
+        topbarMenu.open = true;
+        panels.forEach((item) => { item.hidden = item !== metaPanel; });
       }
     }
 
@@ -8774,7 +8801,7 @@ Review retargeting when the warm audience is ready</textarea>
       const client = selectedReportClient();
       if (!client) throw new Error("Pilih client dahulu.");
       const platform = client.adsReportConfig?.platform === "tiktok" ? "tiktok" : "meta";
-      const accounts = platform === "tiktok" ? currentTikTokAccounts : currentAdflowAccounts;
+      const accounts = platform === "tiktok" ? currentTikTokAccounts : currentMetaAccounts;
       const savedConfig = client.adsReportConfig || {};
       const selectedAccount = accounts.find((account) => account.id === reportAdAccount.value)
         || (reportAdAccount.value && savedConfig.accountId === reportAdAccount.value ? {
@@ -8830,7 +8857,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function accountOptions(platform) {
-      return platform === "tiktok" ? currentTikTokAccounts : currentAdflowAccounts;
+      return platform === "tiktok" ? currentTikTokAccounts : currentMetaAccounts;
     }
 
     function populateAdsAccountOptions(selectedId = "", platform = clientAdsPlatform.value || "meta") {
@@ -8865,22 +8892,57 @@ Review retargeting when the warm audience is ready</textarea>
       reportAdAccount.value = selectedId || accounts[0]?.id || "";
     }
 
-    async function loadAdflowAccounts() {
+    async function loadMetaAccounts() {
       try {
-        const response = await fetch("/api/reports/accounts");
+        const response = await fetch("/api/meta/accounts");
         const json = await readApiJson(response);
         if (response.status === 401) {
           window.location.href = "/login";
           return;
         }
-        if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load AdFlow accounts.");
-        currentAdflowAccounts = json.accounts || [];
+        if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load Meta Ads accounts.");
+        currentMetaAccounts = json.accounts || [];
         populateAdsAccountOptions();
         applySelectedClientReportDefaults();
       } catch (error) {
-        currentAdflowAccounts = [];
+        currentMetaAccounts = [];
         populateAdsAccountOptions();
-        setMessage(clientResult, "err", \`AdFlow: \${error?.message || error}\`);
+        setMessage(clientResult, "err", \`Meta MCP: \${error?.message || error}\`);
+      }
+    }
+
+    async function loadMetaConnection() {
+      try {
+        const statusResponse = await fetch("/api/meta/status");
+        const statusJson = await readApiJson(statusResponse);
+        if (!statusResponse.ok || !statusJson.ok) throw new Error(statusJson.error || "Gagal semak Meta Ads.");
+        const connection = statusJson.connection || {};
+        const label = connection.status === "connected" ? "Connected"
+          : connection.status === "expiring" ? "Expiring soon"
+          : connection.status === "expired" ? "Expired"
+          : connection.status === "error" ? "Error" : "Not connected";
+        metaConnectionText.textContent = connection.expiresAt
+          ? \`\${label}. Authorization tamat \${new Date(connection.expiresAt).toLocaleDateString("en-MY")}.\`
+          : label;
+        const remainingMs = connection.expiresAt ? new Date(connection.expiresAt).getTime() - Date.now() : Number.POSITIVE_INFINITY;
+        const remainingDays = Math.max(0, Math.ceil(remainingMs / 86400000));
+        const showExpiryWarning = Boolean(connection.connected && remainingDays <= 7);
+        metaAuthorizationWarning.hidden = !showExpiryWarning;
+        metaAuthorizationWarning.textContent = showExpiryWarning
+          ? \`Authorization Meta tamat dalam \${remainingDays} hari. Reauthorize supaya report tidak terhenti.\`
+          : "";
+        connectMetaButton.textContent = connection.connected ? "Reauthorize" : "Connect Meta Ads";
+        disconnectMetaButton.hidden = !connection.connected;
+        if (connection.connected) await loadMetaAccounts();
+        else {
+          currentMetaAccounts = [];
+          populateAdsAccountOptions();
+        }
+      } catch (error) {
+        currentMetaAccounts = [];
+        metaConnectionText.textContent = error?.message || String(error);
+        metaAuthorizationWarning.hidden = true;
+        populateAdsAccountOptions();
       }
     }
 
@@ -9059,7 +9121,7 @@ Review retargeting when the warm audience is ready</textarea>
       const primary = snapshot.primary || {};
       const secondary = snapshot.secondary || {};
       const captured = new Intl.DateTimeFormat("ms-MY", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(snapshot.capturedAt));
-      adsCmoLiveTimestamp.textContent = "Data hari ini ditarik daripada AdFlow pada " + captured + ". Tekan Live Data untuk refresh semula.";
+      adsCmoLiveTimestamp.textContent = "Data hari ini ditarik daripada Meta pada " + captured + ". Tekan Live Data untuk refresh semula.";
       adsCmoLiveSpend.innerHTML = '<small>Total ads spent hari ini</small><strong>' + escapeHtml(formatAdsCmoValue(snapshot.spend, "money", currency)) + '</strong>';
       adsCmoLivePrimary.innerHTML = [
         adsCmoLiveMetric("Purchases", formatAdsCmoValue(primary.purchases, "number", currency), "CPP " + formatAdsCmoValue(primary.costPerPurchase, "money", currency)),
@@ -11743,6 +11805,13 @@ Review retargeting when the warm audience is ready</textarea>
       if (!response.ok || !json.ok) throw new Error(json.error || "Disconnect TikTok gagal.");
       await loadTikTokConnection();
     });
+    disconnectMetaButton.addEventListener("click", async () => {
+      if (!window.confirm("Disconnect Meta Ads daripada BuddyPilot?")) return;
+      const response = await fetch("/api/meta/disconnect", { method: "POST" });
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Disconnect Meta gagal.");
+      await loadMetaConnection();
+    });
     enablePushNotificationsButton.addEventListener("click", () => {
       setupPushNotifications({ requestPermission: true }).catch((error) => {
         pushNotificationNote.textContent = error?.message || String(error);
@@ -11823,7 +11892,7 @@ Review retargeting when the warm audience is ready</textarea>
     loadRemoteAutomationStatus({ silent: true });
     loadClients();
     loadAgencyOperations({ silent: true });
-    loadAdflowAccounts();
+    loadMetaConnection();
     loadTikTokConnection();
     setupPushNotifications().catch(() => {});
     setupPushNotifications({ button: adsCmoPushButton, note: adsCmoPushNote, purpose: "Ads CMO morning report" }).catch(() => {});

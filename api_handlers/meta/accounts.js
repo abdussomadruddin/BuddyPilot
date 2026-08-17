@@ -10,9 +10,7 @@ module.exports = async function handler(req, res) {
   }
   try {
     requireAuth(req);
-    const accounts = await listMetaAdAccounts();
-    res.statusCode = 200;
-    res.end(JSON.stringify({ ok: true, accounts, count: accounts.length }));
+    res.end(JSON.stringify({ ok: true, accounts: await listMetaAdAccounts() }));
   } catch (error) {
     res.statusCode = error.statusCode || 400;
     res.end(JSON.stringify({ ok: false, error: error?.message || String(error) }));

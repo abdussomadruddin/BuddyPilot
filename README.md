@@ -65,7 +65,7 @@ INVOICE_DRIVE_MASTER_FOLDER_ID=1DqzU5ZZ_81bpEXZiWqqecBF8gqmRiv-o
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
-ADFLOW_MCP_TOKEN=your_adflow_mcp_token
+META_TOKEN_ENCRYPTION_KEY=minimum_32_character_random_secret
 TELEGRAM_BOT_TOKEN=bot_token_from_botfather
 TELEGRAM_WEBHOOK_SECRET=random_webhook_secret
 TIKTOK_TOKEN_ENCRYPTION_KEY=random_secret_at_least_32_characters
@@ -90,7 +90,7 @@ INVOICE_DEFAULT_MONTHLY_RETAINER=1500
 APP_TIMEZONE=Asia/Kuala_Lumpur
 ```
 
-`ADFLOW_MCP_TOKEN` powers the read-only Meta Ads data used by Report Pilot through AdFlow MCP. Report Pilot lets you choose any AdFlow-connected ad account and an exact completed seven-day reporting week; a client's default account, result metric, and campaign tags can be saved under Client Pilot > Ads Report Setup.
+`META_TOKEN_ENCRYPTION_KEY` encrypts the official Meta MCP OAuth state stored in Supabase. Open BuddyPilot Menu > Meta Ads and authorize through Meta; no third-party Ads data provider token is used. Ads CMO, Report Pilot and Telegram then read the authorized Meta ad accounts directly through `https://mcp.facebook.com/ads`.
 
 `TIKTOK_TOKEN_ENCRYPTION_KEY` encrypts the official TikTok for Business MCP OAuth state before it is stored in Supabase. Generate a long random value, keep it server-only, then use Client Pilot > TikTok Ads > Connect TikTok Ads. TikTok authorization must be renewed every 30 days.
 

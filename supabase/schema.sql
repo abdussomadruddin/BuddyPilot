@@ -1,5 +1,18 @@
 create extension if not exists pgcrypto;
 
+create table if not exists public.meta_mcp_connections (
+  id text primary key default 'default',
+  encrypted_state text not null default '',
+  status text not null default 'disconnected',
+  authorized_at timestamptz,
+  expires_at timestamptz,
+  error_message text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint meta_mcp_connections_singleton check (id = 'default'),
+  constraint meta_mcp_connections_status check (status in ('disconnected', 'authorizing', 'connected', 'expired', 'error'))
+);
+
 create table if not exists public.tiktok_mcp_connections (
   id text primary key default 'default',
   encrypted_state text not null default '',
@@ -714,6 +727,11 @@ create trigger tiktok_mcp_connections_touch_updated_at
 before update on public.tiktok_mcp_connections
 for each row execute function public.touch_updated_at();
 
+drop trigger if exists meta_mcp_connections_touch_updated_at on public.meta_mcp_connections;
+create trigger meta_mcp_connections_touch_updated_at
+before update on public.meta_mcp_connections
+for each row execute function public.touch_updated_at();
+
 drop trigger if exists push_subscriptions_touch_updated_at on public.push_subscriptions;
 create trigger push_subscriptions_touch_updated_at
 before update on public.push_subscriptions
@@ -751,6 +769,7 @@ alter table public.agency_task_templates enable row level security;
 alter table public.agency_client_health enable row level security;
 alter table public.agency_opportunities enable row level security;
 alter table public.tiktok_mcp_connections enable row level security;
+alter table public.meta_mcp_connections enable row level security;
 alter table public.push_subscriptions enable row level security;
 alter table public.personal_ads_accounts enable row level security;
 alter table public.personal_ads_daily_reports enable row level security;
@@ -792,6 +811,8 @@ revoke all on public.postpilot_voice_profiles from anon, authenticated;
 revoke all on public.postpilot_copy_history from anon, authenticated;
 grant select, insert, update, delete on public.tiktok_mcp_connections to service_role;
 revoke all on public.tiktok_mcp_connections from anon, authenticated;
+grant select, insert, update, delete on public.meta_mcp_connections to service_role;
+revoke all on public.meta_mcp_connections from anon, authenticated;
 grant select, insert, update, delete on public.push_subscriptions to service_role;
 revoke all on public.push_subscriptions from anon, authenticated;
 grant select, insert, update, delete on public.personal_ads_accounts to service_role;

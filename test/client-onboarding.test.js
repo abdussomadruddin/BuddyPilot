@@ -66,7 +66,7 @@ test("setup clients do not make Ads integrations required", () => {
   const context = serviceContext([
     readyClient({ onboardingStatus: "in_progress", metadata: { adsReportConfig: { platform: "meta", accountId: "act-1" } } }),
   ], {});
-  assert.equal(context.meta_adflow.required, false);
+  assert.equal(context.meta_mcp.required, false);
   assert.equal(context.google_drive.required, false);
 });
 

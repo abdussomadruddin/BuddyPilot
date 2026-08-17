@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { normalizeAdsReportConfig } = require("../lib/adflow-ads");
+const { normalizeAdsReportConfig } = require("../lib/meta-ads");
 const { _test, decryptState, encryptState } = require("../lib/tiktok-ads");
 
 test("TikTok OAuth state is encrypted and can be restored", () => {

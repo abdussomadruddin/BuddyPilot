@@ -45,7 +45,7 @@ test("service context only requires ad platforms used by active clients", () => 
     { code: "META", serviceStatus: "active", metadata: { adsReportConfig: { platform: "meta", accountId: "1" } } },
     { code: "TT", serviceStatus: "paused", metadata: { adsReportConfig: { platform: "tiktok", accountId: "2" } } },
   ], {});
-  assert.equal(context.meta_adflow.required, true);
+  assert.equal(context.meta_mcp.required, true);
   assert.equal(context.tiktok.required, false);
 });
 
