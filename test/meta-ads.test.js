@@ -56,6 +56,18 @@ test("official Meta MCP entity responses are parsed as report rows", () => {
   assert.deepEqual(_test.rowsFromPayload({ structuredContent: { entities: { data: entities } } }), entities);
 });
 
+test("official Meta account metadata preserves nested account names", () => {
+  assert.deepEqual(_test.normalizeMetaAccount({
+    account_id: "act_123",
+    account_details: { display_name: "Digital Dominate 1", currency: "myr" },
+  }), {
+    id: "123",
+    name: "Digital Dominate 1",
+    currency: "MYR",
+    platform: "meta",
+  });
+});
+
 test("official Meta MCP canonical fields preserve spend, purchases, leads, clicks and revenue", () => {
   const row = normalizeGraphRow({
     id: "campaign-1",
