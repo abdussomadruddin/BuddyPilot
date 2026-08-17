@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { aggregateMetaData, buildReportDraft, normalizeGraphRow, presetDateRange, validateCustomWeek } = require("../lib/meta-ads");
+const { _test, aggregateMetaData, buildReportDraft, normalizeGraphRow, presetDateRange, validateCustomWeek } = require("../lib/meta-ads");
 
 const config = {
   accountId: "123",
@@ -48,6 +48,33 @@ test("official Meta MCP flattened metrics preserve profit inputs", () => {
   assert.equal(row.messaging_conversations, 4);
   assert.equal(row.revenue, 250);
   assert.equal(row.roas, 3.33);
+});
+
+test("official Meta MCP entity responses are parsed as report rows", () => {
+  const entities = [{ id: "campaign-1", name: "DD1 Prospecting", amount_spent: "74.91" }];
+  assert.deepEqual(_test.rowsFromPayload({ result: { entities } }), entities);
+  assert.deepEqual(_test.rowsFromPayload({ structuredContent: { entities: { data: entities } } }), entities);
+});
+
+test("official Meta MCP canonical fields preserve spend, purchases, leads, clicks and revenue", () => {
+  const row = normalizeGraphRow({
+    id: "campaign-1",
+    name: "DD1 Prospecting",
+    amount_spent: "RM 74.91",
+    "actions:omni_purchase": "2",
+    lead: "3",
+    "actions:link_click": "19",
+    omni_purchase_values: "194.00",
+    purchase_roas: "2.59x",
+    ctr: "2.63%",
+  }, "campaign");
+  assert.equal(row.spend, 74.91);
+  assert.equal(row.conversions, 2);
+  assert.equal(row.leads, 3);
+  assert.equal(row.link_clicks, 19);
+  assert.equal(row.revenue, 194);
+  assert.equal(row.roas, 2.59);
+  assert.equal(row.ctr, 2.63);
 });
 
 test("Meta Graph aliases do not double count duplicate purchase representations", () => {
