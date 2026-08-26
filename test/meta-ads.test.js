@@ -16,6 +16,11 @@ test("Meta presets calculate completed ranges across boundaries", () => {
   assert.throws(() => presetDateRange("custom", now), /tidak sah/);
 });
 
+test("detects the official Meta MCP rollout error for Graph API fallback", () => {
+  assert.equal(_test.isMcpAccountUnavailable(new Error("This ad account is not enabled for the Ads MCP. Ads MCP is being gradually rolled out across ad accounts.")), true);
+  assert.equal(_test.isMcpAccountUnavailable(new Error("Authorization Meta tamat.")), false);
+});
+
 test("Meta Graph aliases preserve campaign purchases, leads, conversations and revenue", () => {
   const row = normalizeGraphRow({
     campaign_id: "c1",
