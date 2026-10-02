@@ -5,6 +5,7 @@ const { buildThreadsGeneralText } = require("../lib/threads-general-copy");
 function pageHtml() {
   const threadsViralTemplatesJson = JSON.stringify(threadsViralTemplates).replace(/</g, "\\u003c");
   const threadsGeneralCopySource = buildThreadsGeneralText.toString().replace(/</g, "\\u003c");
+  const uiIcon = (name, tone = "") => `<svg class="icon section-icon ${tone}" aria-hidden="true"><use href="/icons.svg#${name}"></use></svg>`;
   return `<!doctype html>
 <html lang="ms">
 <head>
@@ -4316,6 +4317,7 @@ function pageHtml() {
     }
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
+  <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261002-1">
 </head>
 <body>
   <main>
@@ -4354,11 +4356,11 @@ function pageHtml() {
         <header class="operations-header">
           <div>
             <span id="todayDate" class="today-eyebrow">Operations Center</span>
-            <h1>System overview</h1>
+            <h1>${uiIcon("layout-dashboard")}System overview</h1>
             <p id="todayImpact">Status operasi dan integration BuddyPilot.</p>
           </div>
           <div class="operations-header-actions">
-            <button id="refreshTodayButton" class="dashboard-refresh" type="button"><svg class="icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg><span>Refresh</span></button>
+            <button id="refreshTodayButton" class="dashboard-refresh" type="button" aria-label="Refresh" title="Refresh"><svg class="icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg><span>Refresh</span></button>
             <button id="checkAllHealthButton" class="button-secondary operations-check-all" type="button">Check all systems</button>
           </div>
         </header>
@@ -4374,21 +4376,21 @@ function pageHtml() {
             </div>
           </section>
           <div class="operations-summary" aria-label="Operations summary">
-            <div><strong id="todayRunning">0</strong><span>Running</span></div>
-            <div><strong id="operationsFailed">0</strong><span>Failed</span></div>
-            <div><strong id="todayAttention">0</strong><span>Attention</span></div>
-            <div><strong id="operationsHealthy">0</strong><span>Healthy</span></div>
+            <div data-ui-tone="blue">${uiIcon("refresh")}<strong id="todayRunning">0</strong><span>Running</span></div>
+            <div data-ui-tone="rose">${uiIcon("message")}<strong id="operationsFailed">0</strong><span>Failed</span></div>
+            <div data-ui-tone="amber">${uiIcon("sparkles")}<strong id="todayAttention">0</strong><span>Attention</span></div>
+            <div data-ui-tone="green">${uiIcon("settings")}<strong id="operationsHealthy">0</strong><span>Healthy</span></div>
           </div>
           <section id="operationsAttentionSection" class="operations-section" hidden>
-            <div class="dashboard-section-header"><h2>Needs attention</h2><span id="operationsAttentionCount" class="operations-count"></span></div>
+            <div class="dashboard-section-header"><h2>${uiIcon("message", "tone-amber")}Needs attention</h2><span id="operationsAttentionCount" class="operations-count"></span></div>
             <div id="operationsIncidents" class="operations-list"></div>
           </section>
           <section id="operationsActiveSection" class="operations-section" hidden>
-            <div class="dashboard-section-header"><h2>Active operations</h2><span class="dashboard-section-kicker">Current progress</span></div>
+            <div class="dashboard-section-header"><h2>${uiIcon("refresh")}Active operations</h2><span class="dashboard-section-kicker">Current progress</span></div>
             <div id="operationsActiveList" class="operations-list"></div>
           </section>
           <section class="operations-section">
-            <div class="dashboard-section-header"><h2>System health</h2><span class="dashboard-section-kicker">Passive monitor</span></div>
+            <div class="dashboard-section-header"><h2>${uiIcon("settings", "tone-green")}System health</h2><span class="dashboard-section-kicker">Passive monitor</span></div>
             <div id="operationsHealth" class="operations-health-grid"></div>
           </section>
           <button id="resumeWorkButton" class="resume-work" type="button" hidden>
@@ -4399,7 +4401,7 @@ function pageHtml() {
         <div class="dashboard-layout">
           <section class="dashboard-actions" aria-labelledby="quickActionsHeading">
             <div class="dashboard-section-header">
-              <h2 id="quickActionsHeading">Quick actions</h2>
+              <h2 id="quickActionsHeading">${uiIcon("sparkles", "tone-amber")}Quick actions</h2>
               <span class="dashboard-section-kicker">Mulakan kerja</span>
             </div>
             <div class="quick-grid">
@@ -4443,7 +4445,7 @@ function pageHtml() {
 
         </div>
         <section class="operations-section operations-recent-section">
-          <div class="dashboard-section-header"><h2>Recent operations</h2><span class="dashboard-section-kicker">Last 30 days</span></div>
+          <div class="dashboard-section-header"><h2>${uiIcon("file-text")}Recent operations</h2><span class="dashboard-section-kicker">Last 30 days</span></div>
           <div id="operationsRecent" class="operations-recent"></div>
         </section>
       </section>
@@ -4453,7 +4455,7 @@ function pageHtml() {
       <section class="card app-panel">
         <div class="section-heading">
           <div>
-            <h1>Ads CMO</h1>
+            <h1>${uiIcon("chart")}Ads CMO</h1>
             <p class="note">Daily profitability brief peribadi daripada Meta. Read-only — tiada perubahan dibuat pada Meta Ads.</p>
           </div>
           <span id="adsCmoStatus" class="ads-cmo-status">Belum dimuatkan</span>
@@ -4476,7 +4478,7 @@ function pageHtml() {
 
         <section id="adsCmoLive" class="ads-cmo-live" hidden>
           <div class="section-heading">
-            <div><h2>Live Data · Today</h2><p id="adsCmoLiveTimestamp" class="note"></p></div>
+            <div><h2>${uiIcon("chart")}Live Data · Today</h2><p id="adsCmoLiveTimestamp" class="note"></p></div>
             <span class="ads-cmo-live-badge">Manual snapshot</span>
           </div>
           <div id="adsCmoLiveSpend" class="ads-cmo-live-spend"></div>
@@ -4484,9 +4486,9 @@ function pageHtml() {
             <section><h3>Primary Data</h3><div id="adsCmoLivePrimary" class="ads-cmo-live-metrics"></div></section>
             <section><h3>Secondary Data</h3><div id="adsCmoLiveSecondary" class="ads-cmo-live-metrics"></div></section>
           </div>
-          <section class="ads-cmo-live-campaigns"><h3>Performance by Product</h3><div id="adsCmoLiveProducts" class="ads-cmo-product-grid"></div></section>
+          <section class="ads-cmo-live-campaigns"><h3>${uiIcon("landmark")}Performance by Product</h3><div id="adsCmoLiveProducts" class="ads-cmo-product-grid"></div></section>
           <section class="ads-cmo-live-campaigns">
-            <h3>Campaign Breakdown</h3>
+            <h3>${uiIcon("chart")}Campaign Breakdown</h3>
             <div class="ads-cmo-table-scroll"><table><thead><tr><th>Campaign</th><th>Spend</th><th>CPP</th><th>ROAS</th><th>Est. Profit</th><th>Purchase</th><th>Lead</th><th>Conversation</th><th>Impressions</th><th>Reach</th><th>Clicks</th><th>Link Clicks</th><th>CTR</th><th>CPC</th><th>CPM</th><th>Frequency</th></tr></thead><tbody id="adsCmoLiveCampaigns"></tbody></table></div>
             <div id="adsCmoLiveCampaignCards" class="ads-cmo-campaign-cards"></div>
           </section>
@@ -4494,21 +4496,21 @@ function pageHtml() {
         </section>
 
         <details id="adsCmoSettings" class="advanced-panel ads-cmo-settings-panel">
-          <summary>Account & Profit Settings</summary>
+          <summary>${uiIcon("settings")}Account & Profit Settings</summary>
           <div class="ads-cmo-settings-content">
             <div class="ads-cmo-settings-grid">
               <label class="check-row"><input id="adsCmoAutoEnabled" type="checkbox"> Auto report setiap pagi</label>
               <div><label for="adsCmoProspectingKeywords">Prospecting keywords</label><input id="adsCmoProspectingKeywords" type="text"></div>
               <div><label for="adsCmoRetargetingKeywords">Retargeting keywords</label><input id="adsCmoRetargetingKeywords" type="text"></div>
             </div>
-            <div class="section-heading ads-cmo-rules-heading"><div><h3>Product Rules</h3><p class="note">Padankan campaign dengan harga, margin atau allowable CPA.</p></div><button id="adsCmoAddProductButton" class="secondary" type="button">Add Product</button></div>
+            <div class="section-heading ads-cmo-rules-heading"><div><h3>${uiIcon("landmark")}Product Rules</h3><p class="note">Padankan campaign dengan harga, margin atau allowable CPA.</p></div><button id="adsCmoAddProductButton" class="secondary" type="button">Add Product</button></div>
             <div id="adsCmoProductRules"></div>
             <div class="actions ads-cmo-settings-actions"><button id="adsCmoSaveSettingsButton" type="button">Save Settings</button></div>
           </div>
         </details>
 
         <details class="advanced-panel ads-cmo-settings-panel">
-          <summary>Morning Push</summary>
+          <summary>${uiIcon("message", "tone-amber")}Morning Push</summary>
           <div class="ads-cmo-settings-content ads-cmo-push-content">
             <p id="adsCmoPushNote" class="note">Aktifkan pada setiap browser, Android atau iOS Home Screen yang anda mahu gunakan.</p>
             <button id="adsCmoPushButton" class="secondary" type="button">Aktifkan Notifikasi</button>
@@ -4517,21 +4519,21 @@ function pageHtml() {
 
         <div id="adsCmoResult" class="result"></div>
         <section id="adsCmoReport" hidden>
-          <h2 class="ads-cmo-overall-title">Overall Performance</h2>
+          <h2 class="ads-cmo-overall-title">${uiIcon("chart")}Overall Performance</h2>
           <div id="adsCmoKpis" class="ads-cmo-kpis"></div>
-          <section class="ads-cmo-section"><h2>Performance by Product</h2><div id="adsCmoProducts" class="ads-cmo-product-grid"></div></section>
-          <section class="ads-cmo-section"><h2>Executive Summary</h2><ul id="adsCmoExecutive"></ul></section>
-          <section class="ads-cmo-section" style="margin-top:14px"><h2>KPI Scorecard · 7 Days vs Previous 7 Days</h2><div style="overflow:auto"><table class="ads-cmo-scorecard"><thead><tr><th>KPI</th><th>Current</th><th>Previous</th><th>Difference</th></tr></thead><tbody id="adsCmoScorecard"></tbody></table></div></section>
+          <section class="ads-cmo-section"><h2>${uiIcon("landmark")}Performance by Product</h2><div id="adsCmoProducts" class="ads-cmo-product-grid"></div></section>
+          <section class="ads-cmo-section"><h2>${uiIcon("file-text")}Executive Summary</h2><ul id="adsCmoExecutive"></ul></section>
+          <section class="ads-cmo-section" style="margin-top:14px"><h2>${uiIcon("chart")}KPI Scorecard · 7 Days vs Previous 7 Days</h2><div style="overflow:auto"><table class="ads-cmo-scorecard"><thead><tr><th>KPI</th><th>Current</th><th>Previous</th><th>Difference</th></tr></thead><tbody id="adsCmoScorecard"></tbody></table></div></section>
           <div class="ads-cmo-two-column">
-            <section class="ads-cmo-section"><h2>What Is Working</h2><div id="adsCmoWorking"></div></section>
-            <section class="ads-cmo-section"><h2>What Is Leaking Money</h2><div id="adsCmoLeaks"></div></section>
+            <section class="ads-cmo-section"><h2>${uiIcon("sparkles", "tone-green")}What Is Working</h2><div id="adsCmoWorking"></div></section>
+            <section class="ads-cmo-section"><h2>${uiIcon("chart", "tone-rose")}What Is Leaking Money</h2><div id="adsCmoLeaks"></div></section>
           </div>
           <div class="ads-cmo-two-column">
-            <section class="ads-cmo-section"><h2>Confirmed Evidence</h2><ul id="adsCmoEvidence"></ul></section>
-            <section class="ads-cmo-section"><h2>Likely Causes</h2><ul id="adsCmoHypotheses"></ul></section>
+            <section class="ads-cmo-section"><h2>${uiIcon("file-text")}Confirmed Evidence</h2><ul id="adsCmoEvidence"></ul></section>
+            <section class="ads-cmo-section"><h2>${uiIcon("message", "tone-amber")}Likely Causes</h2><ul id="adsCmoHypotheses"></ul></section>
           </div>
-          <section class="ads-cmo-section" style="margin-top:14px"><h2>Recommended Actions</h2><div id="adsCmoActions" class="ads-cmo-two-column"></div></section>
-          <section class="ads-cmo-section" style="margin-top:14px"><h2>Tracking Warnings</h2><ul id="adsCmoWarnings"></ul></section>
+          <section class="ads-cmo-section" style="margin-top:14px"><h2>${uiIcon("arrow-right")}Recommended Actions</h2><div id="adsCmoActions" class="ads-cmo-two-column"></div></section>
+          <section class="ads-cmo-section" style="margin-top:14px"><h2>${uiIcon("message", "tone-amber")}Tracking Warnings</h2><ul id="adsCmoWarnings"></ul></section>
         </section>
         <div id="adsCmoEmpty" class="ads-cmo-empty">Pilih account dan load snapshot. Jika belum tersedia, gunakan Retry Report.</div>
       </section>
@@ -4541,7 +4543,7 @@ function pageHtml() {
       <section class="card app-panel" data-panel="personalpostpilot">
         <div class="hero">
           <div>
-            <h1>Post Pilot</h1>
+            <h1>${uiIcon("send")}Post Pilot</h1>
             <p>Jana post Facebook personal pendek dan gambar hook. Chrome extension terus post ke Facebook, kemudian Threads.</p>
           </div>
         </div>
@@ -4570,7 +4572,7 @@ function pageHtml() {
         <div id="pagepilot-panel" class="subtab-panel" data-subtab-panel="post-pilot">
           <div class="section-heading">
             <div>
-              <h2>Page Pilot</h2>
+              <h2>${uiIcon("send")}Page Pilot</h2>
               <p class="note">Upload creative, review ayat, kemudian post ke Facebook Page.</p>
             </div>
           </div>
@@ -4582,7 +4584,7 @@ function pageHtml() {
             <input id="salespage_link" name="salespage_link" type="url" value="https://digitaldominate.com/" required>
 
             <details class="mobile-options">
-              <summary>More options</summary>
+              <summary>${uiIcon("settings")}More options</summary>
               <div class="mobile-options-content">
                 <label for="caption_note">Konteks poster/video / angle creative (optional)</label>
                 <textarea id="caption_note" name="caption_note" placeholder="Contoh: Poster tunjuk founder penat packing order, angle: banyak kerja tapi salespage bantu automate workflow."></textarea>
@@ -4597,7 +4599,7 @@ function pageHtml() {
           </form>
 
           <section id="previewPanel" class="preview">
-            <h2>Preview Sebelum Posting</h2>
+            <h2>${uiIcon("file-text")}Preview Sebelum Posting</h2>
             <p class="note" id="previewMeta"></p>
 
             <label for="captionPreview">Caption yang akan dipost</label>
@@ -4656,7 +4658,7 @@ function pageHtml() {
                 </select>
               </div>
               <details class="full advanced-panel">
-                <summary>Voice Lock</summary>
+                <summary>${uiIcon("message")}Voice Lock</summary>
                 <p class="note">Kekalkan cara cakap yang sama untuk produk ini, walaupun pattern post berubah.</p>
                 <div class="client-grid">
                   <div>
@@ -4703,7 +4705,7 @@ function pageHtml() {
           </form>
 
           <section id="threadsPreviewPanel" class="preview" hidden>
-            <h2>Preview Post Pilot</h2>
+            <h2>${uiIcon("file-text")}Preview Post Pilot</h2>
             <p class="note" id="threadsPreviewMeta"></p>
 
             <label for="threadsPostPreview">Post utama</label>
@@ -4722,7 +4724,7 @@ function pageHtml() {
           <section class="client-form">
             <div class="section-heading">
               <div>
-                <h2>Threads General Post Generator</h2>
+                <h2>${uiIcon("sparkles")}Threads General Post Generator</h2>
                 <p class="note">Generate text-only Threads posts. Review dulu, kemudian post satu-satu ke Threads.</p>
               </div>
             </div>
@@ -4765,7 +4767,7 @@ function pageHtml() {
           <section class="saved-viral-panel">
             <div class="section-heading">
               <div>
-                <h2>Saved posts</h2>
+                <h2>${uiIcon("file-text")}Saved posts</h2>
                 <p class="note">Favorites disimpan dalam browser.</p>
               </div>
             </div>
@@ -4792,7 +4794,7 @@ function pageHtml() {
           <section class="saved-viral-panel">
             <div class="section-heading">
               <div>
-                <h2>Post history</h2>
+                <h2>${uiIcon("refresh")}Post history</h2>
                 <p class="note">History server digunakan untuk elak pattern dan ayat berulang pada semua device.</p>
               </div>
               <button id="refreshViralHistoryButton" class="secondary" type="button">Refresh</button>
@@ -4807,7 +4809,7 @@ function pageHtml() {
       <section class="card">
         <div class="section-heading">
           <div>
-            <h1>Report Pilot</h1>
+            <h1>${uiIcon("chart")}Report Pilot</h1>
             <p class="note">Isi details weekly report, preview PDF, kemudian upload terus ke folder Weekly Report client.</p>
           </div>
         </div>
@@ -4967,13 +4969,13 @@ Review retargeting when the warm audience is ready</textarea>
       <section class="card">
         <div class="section-heading">
           <div>
-            <h1>Client Pilot</h1>
+            <h1>${uiIcon("users")}Client Pilot</h1>
             <p class="note">Urus agency clients, onboarding, service, billing dan operasi client.</p>
           </div>
         </div>
 
         <details class="advanced-panel">
-          <summary>Weekly Report Reminder</summary>
+          <summary>${uiIcon("message", "tone-amber")}Weekly Report Reminder</summary>
           <div class="ads-cmo-settings-content ads-cmo-push-content">
             <div><strong>Isnin, 10:00 pagi</strong><p id="weeklyReportPushNote" class="note">Reminder admin untuk WhatsApp weekly report minggu sebelumnya.</p></div>
             <button id="weeklyReportPushButton" class="secondary" type="button">Aktifkan Notifikasi</button>
@@ -4990,7 +4992,7 @@ Review retargeting when the warm audience is ready</textarea>
           <section class="agency-overview" aria-live="polite">
             <div class="agency-overview-toolbar">
               <div>
-                <h2>Agency Overview</h2>
+                <h2>${uiIcon("layout-dashboard")}Agency Overview</h2>
                 <p class="note">Revenue, managed ad budget, services dan task client dalam satu tempat.</p>
               </div>
               <button id="refreshAgencyOperationsButton" class="secondary" type="button">Refresh</button>
@@ -5003,7 +5005,7 @@ Review retargeting when the warm audience is ready</textarea>
             </div>
             <section class="agency-performance-panel">
               <div class="agency-panel-heading">
-                <div><h3>Agency Performance</h3><p class="note">Profitability dan delivery health berdasarkan service serta task semasa.</p></div>
+                <div><h3>${uiIcon("chart", "tone-green")}Agency Performance</h3><p class="note">Profitability dan delivery health berdasarkan service serta task semasa.</p></div>
                 <span class="agency-performance-period">Last 30 days</span>
               </div>
               <div class="agency-performance-metrics">
@@ -5023,7 +5025,7 @@ Review retargeting when the warm audience is ready</textarea>
             </div>
             <section class="agency-health-panel">
               <div class="agency-panel-heading">
-                <div><h3>Client Health & Retention</h3><p class="note">Nampak relationship risk, check-in dan renewal sebelum client terlepas.</p></div>
+                <div><h3>${uiIcon("users")}Client Health & Retention</h3><p class="note">Nampak relationship risk, check-in dan renewal sebelum client terlepas.</p></div>
                 <span class="agency-performance-period">Live score</span>
               </div>
               <div class="agency-health-metrics">
@@ -5051,7 +5053,7 @@ Review retargeting when the warm audience is ready</textarea>
             </section>
             <section class="agency-growth-panel">
               <div class="agency-panel-heading">
-                <div><h3>Renewal & Growth Pipeline</h3><p class="note">Forecast 90 hari untuk lindungi recurring revenue dan susun peluang growth client.</p></div>
+                <div><h3>${uiIcon("chart", "tone-amber")}Renewal & Growth Pipeline</h3><p class="note">Forecast 90 hari untuk lindungi recurring revenue dan susun peluang growth client.</p></div>
                 <span class="agency-performance-period">90-day view</span>
               </div>
               <div class="agency-growth-metrics">
@@ -5087,14 +5089,14 @@ Review retargeting when the warm audience is ready</textarea>
             <div id="agencyAttentionList" class="agency-attention-list"></div>
             <section class="agency-delivery-calendar">
               <div class="agency-panel-heading">
-                <div><h3>Delivery Calendar</h3><p class="note">Task due dalam 14 hari akan muncul di sini.</p></div>
+                <div><h3>${uiIcon("file-text")}Delivery Calendar</h3><p class="note">Task due dalam 14 hari akan muncul di sini.</p></div>
                 <button id="generateAgencyRecurringButton" class="secondary" type="button">Sync Recurring Tasks</button>
               </div>
               <div id="agencyDeliveryCalendar" class="agency-calendar-list"></div>
             </section>
             <div class="agency-workspace-grid">
               <section class="agency-workspace-panel">
-                <div class="agency-panel-heading"><div><h3>Services</h3><p class="note">Track fee, owner dan renewal.</p></div></div>
+                <div class="agency-panel-heading"><div><h3>${uiIcon("landmark", "tone-green")}Services</h3><p class="note">Track fee, owner dan renewal.</p></div></div>
                 <form id="agencyServiceForm" class="agency-inline-form">
                   <input name="id" type="hidden">
                   <label>Service name<input name="name" type="text" placeholder="Contoh: Meta Ads Management" required></label>
@@ -5112,7 +5114,7 @@ Review retargeting when the warm audience is ready</textarea>
                 <div id="agencyServiceList" class="agency-operation-list"></div>
               </section>
               <section class="agency-workspace-panel">
-                <div class="agency-panel-heading"><div><h3>Task Tracker</h3><p class="note">Tugasan penting dan due date setiap client.</p></div></div>
+                <div class="agency-panel-heading"><div><h3>${uiIcon("file-text")}Task Tracker</h3><p class="note">Tugasan penting dan due date setiap client.</p></div></div>
                 <form id="agencyTaskForm" class="agency-inline-form">
                   <input name="id" type="hidden">
                   <label>Task<input name="title" type="text" placeholder="Contoh: Hantar weekly report" required></label>
@@ -5134,7 +5136,7 @@ Review retargeting when the warm audience is ready</textarea>
               </section>
             </div>
             <section class="agency-workspace-panel agency-recurring-panel">
-              <div class="agency-panel-heading"><div><h3>Recurring Deliveries</h3><p class="note">Jadualkan report, invoice, creative atau campaign review secara mingguan dan bulanan.</p></div></div>
+              <div class="agency-panel-heading"><div><h3>${uiIcon("refresh", "tone-amber")}Recurring Deliveries</h3><p class="note">Jadualkan report, invoice, creative atau campaign review secara mingguan dan bulanan.</p></div></div>
               <form id="agencyTemplateForm" class="agency-inline-form agency-template-form">
                 <input name="id" type="hidden">
                 <label>Delivery name<input name="title" type="text" placeholder="Contoh: Hantar weekly report" required></label>
@@ -5185,7 +5187,7 @@ Review retargeting when the warm audience is ready</textarea>
 
         <div id="client-add-panel" class="subtab-panel" data-subtab-panel="client">
           <form id="clientForm" class="client-form">
-            <h2>Add Agency Client</h2>
+            <h2>${uiIcon("users")}Add Agency Client</h2>
             <input id="clientCode" name="clientCode" type="hidden">
             <ol id="clientOnboardingProgress" class="onboarding-progress" aria-label="Progress onboarding">
               <li class="active" data-onboarding-progress="details"><span>1</span><small>Client</small></li>
@@ -5355,7 +5357,7 @@ Review retargeting when the warm audience is ready</textarea>
       <section class="card">
         <div class="section-heading">
           <div>
-            <h1>Invoice Pilot</h1>
+            <h1>${uiIcon("receipt", "tone-amber")}Invoice Pilot</h1>
             <p class="note">Generate invoice PDF dan receipt PDF di sini.</p>
           </div>
         </div>
@@ -5397,7 +5399,7 @@ Review retargeting when the warm audience is ready</textarea>
           <div id="pushNotificationNote" class="push-notification-note">Notifikasi menyokong browser, Android dan iOS Home Screen.</div>
         </section>
         <form id="settingsForm" class="client-form">
-          <h2>Settings Syarikat</h2>
+          <h2>${uiIcon("settings")}Settings Syarikat</h2>
           <div class="client-grid">
             <div>
               <label for="businessName">Nama Syarikat</label>
@@ -5436,14 +5438,14 @@ Review retargeting when the warm audience is ready</textarea>
         <div id="bank-panel" class="subtab-panel" data-subtab-panel="invoice-pilot">
           <div class="section-heading">
             <div>
-              <h2>Akaun Bank</h2>
+              <h2>${uiIcon("landmark", "tone-green")}Akaun Bank</h2>
               <p class="note">Akaun default akan masuk dalam PDF invoice.</p>
             </div>
             <button id="refreshBankButton" class="secondary" type="button">Refresh Bank</button>
           </div>
           <div id="bankList" class="bank-list"></div>
           <form id="bankForm" class="client-form">
-            <h2>Tambah Akaun Bank</h2>
+            <h2>${uiIcon("landmark")}Tambah Akaun Bank</h2>
             <input id="bankId" name="id" type="hidden">
             <div class="client-grid">
               <div>
