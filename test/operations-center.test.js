@@ -2,6 +2,22 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { buildOperationsOverview, serviceContext, STALE_MS } = require("../lib/operations-center");
 
+test("failed database reads cannot appear healthy", () => {
+  const overview = buildOperationsOverview({ databaseRead: { ok: false, error: "Project unavailable" } });
+  assert.equal(overview.health.find((item) => item.id === "supabase").status, "down");
+  assert.equal(overview.overall, "critical");
+});
+
+test("healthy Telegram bot does not hide failed client deliveries", () => {
+  const overview = buildOperationsOverview({
+    deliveries: [{ id: "failed-report", client_code: "TEST", status: "failed", report_date: "2026-10-01" }],
+    healthRows: [{ service_name: "telegram", status: "healthy", last_checked_at: "2026-10-02T00:00:00Z" }],
+    now: new Date("2026-10-02T00:01:00Z"),
+  });
+  assert.equal(overview.incidents.length, 1);
+  assert.equal(overview.overall, "critical");
+});
+
 test("unused integrations stay setup without affecting overall health", () => {
   const overview = buildOperationsOverview({
     clients: [],

@@ -23,10 +23,11 @@ test("Post Pilot extension exposes a safe reset without removing pairing", () =>
   assert.match(background, /Pairing Mac dikekalkan/);
 });
 
-test("Vercel keeps Telegram and personal Ads CMO on isolated daily crons", () => {
+test("Vercel keeps daily reporting isolated and reminders weekly only", () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, "vercel.json"), "utf8"));
   assert.deepEqual(config.crons, [
     { path: "/api/cron/daily-ads-report", schedule: "0 22 * * *" },
     { path: "/api/cron/personal-ads-report", schedule: "0 22 * * *" },
+    { path: "/api/cron/weekly-report-reminder", schedule: "0 2 * * 1" },
   ]);
 });

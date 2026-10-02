@@ -64,6 +64,7 @@ const routes = {
   "personal-ads/live": require("../api_handlers/personal-ads/live"),
   "personal-ads/generate": require("../api_handlers/personal-ads/generate"),
   "cron/personal-ads-report": require("../api_handlers/cron/personal-ads-report"),
+  "cron/weekly-report-reminder": require("../api_handlers/cron/weekly-report-reminder"),
   "personal-post-regenerate": require("../api_handlers/personal-post-regenerate"),
   "threads-general": require("../api_handlers/threads-general"),
   "postpilot-copy-history": require("../api_handlers/postpilot-copy-history"),

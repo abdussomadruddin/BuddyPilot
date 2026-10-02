@@ -4972,6 +4972,14 @@ Review retargeting when the warm audience is ready</textarea>
           </div>
         </div>
 
+        <details class="advanced-panel">
+          <summary>Weekly Report Reminder</summary>
+          <div class="ads-cmo-settings-content ads-cmo-push-content">
+            <div><strong>Isnin, 10:00 pagi</strong><p id="weeklyReportPushNote" class="note">Reminder admin untuk WhatsApp weekly report minggu sebelumnya.</p></div>
+            <button id="weeklyReportPushButton" class="secondary" type="button">Aktifkan Notifikasi</button>
+          </div>
+        </details>
+
         <div class="subtabs" aria-label="Client tabs">
           <button class="subtab-button active" type="button" data-subtab-group="client" data-subtab-target="agency-overview-panel">Agency Overview</button>
           <button class="subtab-button" type="button" data-subtab-group="client" data-subtab-target="client-list-panel">Agency Clients</button>
@@ -5727,6 +5735,8 @@ Review retargeting when the warm audience is ready</textarea>
     const adsCmoAddProductButton = document.getElementById("adsCmoAddProductButton");
     const adsCmoSaveSettingsButton = document.getElementById("adsCmoSaveSettingsButton");
     const adsCmoPushButton = document.getElementById("adsCmoPushButton");
+    const weeklyReportPushButton = document.getElementById("weeklyReportPushButton");
+    const weeklyReportPushNote = document.getElementById("weeklyReportPushNote");
     const adsCmoPushNote = document.getElementById("adsCmoPushNote");
     const adsCmoResult = document.getElementById("adsCmoResult");
     const adsCmoReport = document.getElementById("adsCmoReport");
@@ -5838,6 +5848,7 @@ Review retargeting when the warm audience is ready</textarea>
     let currentMetaAccounts = [];
     let currentTikTokAccounts = [];
     let currentAdsCmoAccounts = [];
+    let adsCmoAccountsLoading = false;
     let currentBankAccounts = [];
     let currentBankStatus = null;
     let reportFileNameTouched = false;
@@ -6232,6 +6243,10 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function cacheOperationsOverview(overview) {
+      if (overview.warnings?.length) {
+        sessionStorage.removeItem(TODAY_CACHE_KEY);
+        return;
+      }
       sessionStorage.setItem(TODAY_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), overview }));
     }
 
@@ -6297,7 +6312,7 @@ Review retargeting when the warm audience is ready</textarea>
       if (!force) {
         try {
           const cached = JSON.parse(sessionStorage.getItem(TODAY_CACHE_KEY) || "null");
-          if (cached?.overview && Date.now() - cached.savedAt < OPERATIONS_CACHE_MS) {
+          if (cached?.overview && !cached.overview.warnings?.length && Date.now() - cached.savedAt < OPERATIONS_CACHE_MS) {
             renderTodayDashboard(cached.overview);
             return cached.overview;
           }
@@ -6444,6 +6459,7 @@ Review retargeting when the warm audience is ready</textarea>
       mobileNavigation?.style.setProperty("--active-index", String(nextIndex));
       if (mobileContextTitle) mobileContextTitle.textContent = NAV_TITLES[name] || "BuddyPilot";
       localStorage.setItem("active-main-tab", name);
+      if (name === "adscmo" && !currentAdsCmoAccounts.length) loadAdsCmoAccounts();
     }
 
     function setupMainTabSwipe() {
@@ -6795,7 +6811,11 @@ Review retargeting when the warm audience is ready</textarea>
       };
       ["client-modules", "invoice-pilot", "client", "post-pilot"].forEach((group) => {
         const fallback = subtabDefaults[group] || document.querySelector(\`.subtab-button[data-subtab-group="\${group}"]\`)?.dataset.subtabTarget;
-        const saved = group === "invoice-pilot" && requestedPanel ? requestedPanel : localStorage.getItem(\`active-subtab-\${group}\`);
+        let saved = group === "invoice-pilot" && requestedPanel ? requestedPanel : localStorage.getItem(\`active-subtab-\${group}\`);
+        if (requestedTab === "clientpilot" && requestedPanel === "client-list-panel") {
+          if (group === "client-modules") saved = "client-overview-panel";
+          if (group === "client") saved = "client-list-panel";
+        }
         const savedPanel = saved ? document.getElementById(saved) : null;
         const target = savedPanel?.dataset.subtabPanel === group ? saved : fallback;
         if (target) activateSubtab(group, target);
@@ -9243,6 +9263,8 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     async function loadAdsCmoAccounts() {
+      if (adsCmoAccountsLoading) return;
+      adsCmoAccountsLoading = true;
       try {
         const response = await fetch("/api/personal-ads/accounts");
         const json = await readApiJson(response);
@@ -9260,6 +9282,7 @@ Review retargeting when the warm audience is ready</textarea>
           await loadAdsCmoReport();
         } else setAdsCmoView("live");
       } catch (error) { setMessage(adsCmoResult, "err", error.message || String(error)); }
+      finally { adsCmoAccountsLoading = false; }
     }
 
     async function saveAdsCmoSettings() {
@@ -9444,12 +9467,6 @@ Review retargeting when the warm audience is ready</textarea>
       previewReportButton.disabled = true;
       uploadReportButton.disabled = true;
       uploadReportButton.textContent = "Uploading...";
-      let whatsappWindow = null;
-      try {
-        whatsappWindow = window.open("about:blank", "_blank");
-        if (whatsappWindow) whatsappWindow.document.title = "Preparing WhatsApp...";
-      } catch {}
-
       try {
         const response = await fetch("/api/reports/upload", {
           method: "POST",
@@ -9458,7 +9475,6 @@ Review retargeting when the warm audience is ready</textarea>
         });
         const json = await readApiJson(response);
         if (response.status === 401) {
-          if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.close();
           window.location.href = "/login";
           return;
         }
@@ -9470,22 +9486,12 @@ Review retargeting when the warm audience is ready</textarea>
           "Weekly report selesai diupload.",
           \`\${upload.fileName || payload.fileName}: \${action}\`,
           upload.webViewLink || upload.fileId || "",
-          upload.whatsappUrl ? "WhatsApp dibuka dengan template report." : (upload.whatsappError ? \`WhatsApp tidak dibuka: \${upload.whatsappError}\` : "")
+          "WhatsApp tidak dihantar. Hantar secara manual dari Client Pilot."
         ].filter(Boolean).join("\\n");
         showToast("Weekly report selesai dan sudah diupload.");
         loadTodayDashboard({ silent: true, force: true });
-        if (upload.whatsappUrl) {
-          if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.location.href = upload.whatsappUrl;
-          else {
-            const opened = window.open(upload.whatsappUrl, "_blank");
-            if (!opened) window.location.href = upload.whatsappUrl;
-          }
-        } else if (whatsappWindow && !whatsappWindow.closed) {
-          whatsappWindow.close();
-        }
         await loadActivity();
       } catch (error) {
-        if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.close();
         showReportError(error);
       } finally {
         previewReportButton.disabled = false;
@@ -11844,6 +11850,9 @@ Review retargeting when the warm audience is ready</textarea>
     adsCmoPushButton.addEventListener("click", () => {
       setupPushNotifications({ requestPermission: true, button: adsCmoPushButton, note: adsCmoPushNote, purpose: "Ads CMO morning report" }).catch((error) => { adsCmoPushNote.textContent = error?.message || String(error); });
     });
+    weeklyReportPushButton.addEventListener("click", () => {
+      setupPushNotifications({ requestPermission: true, button: weeklyReportPushButton, note: weeklyReportPushNote, purpose: "Reminder weekly report setiap Isnin 10 pagi (Malaysia)" }).catch((error) => { weeklyReportPushNote.textContent = error?.message || String(error); });
+    });
     previewReportButton.addEventListener("click", () => {
       previewReportPdf().catch(showReportError);
     });
@@ -11896,6 +11905,7 @@ Review retargeting when the warm audience is ready</textarea>
     loadTikTokConnection();
     setupPushNotifications().catch(() => {});
     setupPushNotifications({ button: adsCmoPushButton, note: adsCmoPushNote, purpose: "Ads CMO morning report" }).catch(() => {});
+    setupPushNotifications({ button: weeklyReportPushButton, note: weeklyReportPushNote, purpose: "Reminder weekly report setiap Isnin 10 pagi (Malaysia)" }).catch(() => {});
     loadAdsCmoAccounts();
     loadSettings();
     loadBankAccounts();
