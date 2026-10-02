@@ -9,6 +9,7 @@ const routes = {
   "dashboard/today": require("../api_handlers/dashboard/today"),
   "operations/overview": require("../api_handlers/operations/overview"),
   "operations/health-check": require("../api_handlers/operations/health-check"),
+  "operations/dismiss": require("../api_handlers/operations/dismiss"),
   "clients/delete-permanent": require("../api_handlers/clients/delete-permanent"),
   "clients/share-link": require("../api_handlers/clients/share-link"),
   "clients/whatsapp": require("../api_handlers/clients/whatsapp"),

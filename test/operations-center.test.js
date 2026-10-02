@@ -2,6 +2,29 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { buildOperationsOverview, serviceContext, STALE_MS } = require("../lib/operations-center");
 
+test("archived failures stay in history but not attention; new failures reappear", () => {
+  const delivery = { id: "d1", status: "failed", client_code: "TEST", report_date: "2026-10-01", updated_at: "2026-10-02T01:00:00Z" };
+  const job = { id: "j1", status: "failed", error: "Missing image", updatedAt: "2026-10-02T01:00:00Z" };
+  const dismissedRows = ["telegram-delivery:TEST:2026-10-01", "postpilot-job:j1"].map((fingerprint) => ({ fingerprint, metadata: { dismissedAt: "2026-10-02T02:00:00Z" } }));
+  const overview = buildOperationsOverview({ deliveries: [delivery], remote: { jobs: [job] }, dismissedRows });
+  assert.equal(overview.incidents.length, 0);
+  assert.equal(overview.summary.failed, 0);
+  assert.equal(overview.recentOperations.filter((item) => item.status === "failed").length, 2);
+  assert.equal(delivery.status, "failed");
+  assert.equal(job.status, "failed");
+  const fresh = buildOperationsOverview({ deliveries: [{ ...delivery, updated_at: "2026-10-02T03:00:00Z" }], remote: { jobs: [job] }, dismissedRows });
+  assert.equal(fresh.incidents.length, 1);
+});
+
+test("archive does not conceal current required service problems", () => {
+  const overview = buildOperationsOverview({
+    databaseRead: { ok: false, error: "Unavailable" },
+    dismissedRows: [{ fingerprint: "service:supabase", metadata: { dismissedAt: "2026-10-03T00:00:00Z" } }],
+  });
+  assert.equal(overview.overall, "critical");
+  assert.equal(overview.summary.attention, 1);
+});
+
 test("failed database reads cannot appear healthy", () => {
   const overview = buildOperationsOverview({ databaseRead: { ok: false, error: "Project unavailable" } });
   assert.equal(overview.health.find((item) => item.id === "supabase").status, "down");

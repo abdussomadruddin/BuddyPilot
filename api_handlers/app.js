@@ -4382,7 +4382,7 @@ function pageHtml() {
             <div data-ui-tone="green">${uiIcon("settings")}<strong id="operationsHealthy">0</strong><span>Healthy</span></div>
           </div>
           <section id="operationsAttentionSection" class="operations-section" hidden>
-            <div class="dashboard-section-header"><h2>${uiIcon("message", "tone-amber")}Needs attention</h2><span id="operationsAttentionCount" class="operations-count"></span></div>
+            <div class="dashboard-section-header"><h2>${uiIcon("message", "tone-amber")}Needs attention</h2><span id="operationsAttentionCount" class="operations-count"></span><button type="button" id="dismissAllIncidentsButton">Archive All</button></div>
             <div id="operationsIncidents" class="operations-list"></div>
           </section>
           <section id="operationsActiveSection" class="operations-section" hidden>
@@ -6270,10 +6270,29 @@ Review retargeting when the warm audience is ready</textarea>
       operationsOverallDetail.textContent = "Snapshot " + formatOperationsTime(generatedAt);
 
       const incidents = overview.incidents || [];
+      document.getElementById("dismissAllIncidentsButton").onclick = async function () {
+        if (!confirm("Archive semua amaran ini? Sejarah kegagalan dikekalkan. Tiada resend atau retry.")) return;
+        this.disabled = true;
+        try {
+          const response = await fetch("/api/operations/dismiss", {
+            method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ fingerprints: incidents.map((item) => item.fingerprint) }),
+          });
+          const json = await readApiJson(response);
+          if (!response.ok || !json.ok) throw new Error(json.error || "Archive gagal.");
+          sessionStorage.removeItem(TODAY_CACHE_KEY);
+          renderTodayDashboard(json.overview);
+          cacheOperationsOverview(json.overview);
+          showToast(json.dismissed + " amaran diarkibkan.", "ok");
+        } catch (error) {
+          showToast(error.message || String(error), "error");
+          await loadTodayDashboard({ force: true });
+        } finally { this.disabled = false; }
+      };
       operationsAttentionSection.hidden = incidents.length === 0;
       operationsAttentionCount.textContent = String(incidents.length);
       operationsIncidents.innerHTML = incidents.length
-        ? incidents.map((item) => renderOperationItem(item, registerOperationsAction(item.action))).join("")
+        ? incidents.map((item) => renderOperationItem(item, registerOperationsAction(item.action) + registerOperationsAction({ kind: "dismiss", label: "Archive", fingerprint: item.fingerprint }))).join("")
         : '<div class="operations-empty">Tiada incident terbuka.</div>';
 
       const active = overview.activeOperations || [];
@@ -6388,7 +6407,9 @@ Review retargeting when the warm audience is ready</textarea>
       button.textContent = "Working...";
       try {
         let response;
-        if (action.kind === "automation") {
+        if (action.kind === "dismiss") {
+          response = await fetch("/api/operations/dismiss", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fingerprints: [action.fingerprint] }) });
+        } else if (action.kind === "automation") {
           response = await fetch("/api/postpilot-remote/jobs/action", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ job_id: action.jobId, action: action.operation }) });
         } else if (action.kind === "telegram") {
           response = await fetch("/api/telegram/action", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "send-yesterday", clientCode: action.clientCode, recipientSlot: action.recipientSlot || 1 }) });
