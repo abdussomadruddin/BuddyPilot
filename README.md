@@ -186,6 +186,18 @@ To get `GOOGLE_REFRESH_TOKEN`, login to the app and open:
 
 After approving Google access, copy the refresh token shown on the callback page into Vercel env.
 
+## Monthly Invoice Schedule
+
+Apply `supabase/migrations/20261002164313_monthly_invoice_jobs.sql` to the app's Supabase project before deploying the new cron routes. The additive job table is RLS-enabled and accessible only by the existing server service role. Keep `CRON_SECRET`, Google Drive OAuth and VAPID keys in server-side Vercel environment variables.
+
+- On the 1st at 06:00 Malaysia time, `/api/cron/monthly-invoices` generates the current month's invoices using existing billing settings and uploads to each active client's `Invoice & Receipt` folder. Setup, paused, completed, archived and deleted clients are excluded.
+- Existing invoices are preserved; retries skip successful uploads. A database lease prevents overlapping monthly cron executions. Failures appear in Operations Center; use the existing manual invoice flow to complete failed clients.
+- On the 1st at 10:00 Malaysia time, `/api/cron/monthly-invoice-reminder` reminds subscribed admins to WhatsApp clients manually, linking to Invoice Pilot with the correct month. Neither job sends WhatsApp.
+- The upload cron runs at 22:00 UTC on days 28-31, but exits before any database call unless it is the 1st at 06:00 in Malaysia. This handles UTC month ends, including leap years, without daily polling.
+- Enable notifications from Invoice Pilot on each admin device. On iPhone, use the installed Home Screen app. Push acceptance does not guarantee OS delivery. Vercel Hobby cron may run during the scheduled hour rather than at the exact minute; precise timing requires a plan with minute precision.
+
+Manual checks after deployment: verify the two cron entries, confirm the migration and server credentials, open `/?tab=invoicepilot&panel=invoice-panel&period=2026-11`, enable notifications, and inspect the job record plus each client's Drive folder after the first scheduled run. Do not generate an extra live invoice merely to test the cron.
+
 ## Local Facebook Workflow
 
 The original local automation and Telegram workflow is kept under `facebook-posts/`.

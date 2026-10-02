@@ -23,11 +23,13 @@ test("Post Pilot extension exposes a safe reset without removing pairing", () =>
   assert.match(background, /Pairing Mac dikekalkan/);
 });
 
-test("Vercel keeps daily reporting isolated and reminders weekly only", () => {
+test("Vercel isolates reporting and uses sparse weekly/monthly schedules without polling", () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, "vercel.json"), "utf8"));
   assert.deepEqual(config.crons, [
     { path: "/api/cron/daily-ads-report", schedule: "0 22 * * *" },
     { path: "/api/cron/personal-ads-report", schedule: "0 22 * * *" },
     { path: "/api/cron/weekly-report-reminder", schedule: "0 2 * * 1" },
+    { path: "/api/cron/monthly-invoices", schedule: "0 22 28-31 * *" },
+    { path: "/api/cron/monthly-invoice-reminder", schedule: "0 2 1 * *" },
   ]);
 });

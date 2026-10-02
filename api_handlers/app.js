@@ -5361,6 +5361,14 @@ Review retargeting when the warm audience is ready</textarea>
             <p class="note">Generate invoice PDF dan receipt PDF di sini.</p>
           </div>
         </div>
+        <details class="advanced-panel ads-cmo-settings-panel">
+          <summary>${uiIcon("receipt", "tone-amber")}Jadual invoice bulanan</summary>
+          <div class="ads-cmo-settings-content">
+            <p class="note"><strong>1 haribulan, 6:00 pagi (Malaysia)</strong> &middot; Invoice client aktif dijana dan diupload ke Google Drive. Invoice bulan tersebut yang sudah diupload dikekalkan.</p>
+            <p id="monthlyInvoicePushNote" class="note">Reminder admin pada 1 haribulan, 10:00 pagi untuk WhatsApp invoice secara manual. Tiada WhatsApp dihantar automatik.</p>
+            <button id="monthlyInvoicePushButton" class="secondary" type="button">Aktifkan Notifikasi</button>
+          </div>
+        </details>
         <div class="subtabs" aria-label="Invoice Pilot tabs">
           <button class="subtab-button active" type="button" data-subtab-group="invoice-pilot" data-subtab-target="invoice-panel">Invoice</button>
           <button class="subtab-button" type="button" data-subtab-group="invoice-pilot" data-subtab-target="receipt-panel">Receipt</button>
@@ -5739,6 +5747,8 @@ Review retargeting when the warm audience is ready</textarea>
     const adsCmoPushButton = document.getElementById("adsCmoPushButton");
     const weeklyReportPushButton = document.getElementById("weeklyReportPushButton");
     const weeklyReportPushNote = document.getElementById("weeklyReportPushNote");
+    const monthlyInvoicePushButton = document.getElementById("monthlyInvoicePushButton");
+    const monthlyInvoicePushNote = document.getElementById("monthlyInvoicePushNote");
     const adsCmoPushNote = document.getElementById("adsCmoPushNote");
     const adsCmoResult = document.getElementById("adsCmoResult");
     const adsCmoReport = document.getElementById("adsCmoReport");
@@ -11508,7 +11518,9 @@ Review retargeting when the warm audience is ready</textarea>
       }
     }
 
-    invoicePeriod.value = localStorage.getItem("buddypilot-invoice-period") || defaultInvoicePeriod();
+    const requestedInvoicePeriod = new URLSearchParams(window.location.search).get("period") || "";
+    invoicePeriod.value = /^(?:\\d{4})-(?:0[1-9]|1[0-2])$/.test(requestedInvoicePeriod)
+      ? requestedInvoicePeriod : localStorage.getItem("buddypilot-invoice-period") || defaultInvoicePeriod();
     receiptPeriod.value = localStorage.getItem("buddypilot-receipt-period") || invoicePeriod.value;
     const reportWeek = defaultReportWeek();
     reportStartDate.value = reportWeek.start;
@@ -11876,6 +11888,9 @@ Review retargeting when the warm audience is ready</textarea>
     weeklyReportPushButton.addEventListener("click", () => {
       setupPushNotifications({ requestPermission: true, button: weeklyReportPushButton, note: weeklyReportPushNote, purpose: "Reminder weekly report setiap Isnin 10 pagi (Malaysia)" }).catch((error) => { weeklyReportPushNote.textContent = error?.message || String(error); });
     });
+    monthlyInvoicePushButton.addEventListener("click", () => {
+      setupPushNotifications({ requestPermission: true, button: monthlyInvoicePushButton, note: monthlyInvoicePushNote, purpose: "Reminder invoice setiap 1 haribulan 10 pagi (Malaysia), WhatsApp manual" }).catch((error) => { monthlyInvoicePushNote.textContent = error?.message || String(error); });
+    });
     previewReportButton.addEventListener("click", () => {
       previewReportPdf().catch(showReportError);
     });
@@ -11929,6 +11944,7 @@ Review retargeting when the warm audience is ready</textarea>
     setupPushNotifications().catch(() => {});
     setupPushNotifications({ button: adsCmoPushButton, note: adsCmoPushNote, purpose: "Ads CMO morning report" }).catch(() => {});
     setupPushNotifications({ button: weeklyReportPushButton, note: weeklyReportPushNote, purpose: "Reminder weekly report setiap Isnin 10 pagi (Malaysia)" }).catch(() => {});
+    setupPushNotifications({ button: monthlyInvoicePushButton, note: monthlyInvoicePushNote, purpose: "Reminder invoice setiap 1 haribulan 10 pagi (Malaysia), WhatsApp manual" }).catch(() => {});
     loadAdsCmoAccounts();
     loadSettings();
     loadBankAccounts();
