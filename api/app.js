@@ -66,6 +66,7 @@ const routes = {
   "personal-ads/generate": require("../api_handlers/personal-ads/generate"),
   "cron/personal-ads-report": require("../api_handlers/cron/personal-ads-report"),
   "cron/weekly-report-reminder": require("../api_handlers/cron/weekly-report-reminder"),
+  "cron/weekly-reports": require("../api_handlers/cron/weekly-reports"),
   "cron/monthly-invoices": require("../api_handlers/cron/monthly-invoices"),
   "cron/monthly-invoice-reminder": require("../api_handlers/cron/monthly-invoice-reminder"),
   "personal-post-regenerate": require("../api_handlers/personal-post-regenerate"),

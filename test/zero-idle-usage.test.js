@@ -26,6 +26,7 @@ test("Post Pilot extension exposes a safe reset without removing pairing", () =>
 test("Vercel isolates reporting and uses sparse weekly/monthly schedules without polling", () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, "vercel.json"), "utf8"));
   assert.deepEqual(config.crons, [
+    { path: "/api/cron/weekly-reports", schedule: "0 22 * * 0" },
     { path: "/api/cron/daily-ads-report", schedule: "0 22 * * *" },
     { path: "/api/cron/personal-ads-report", schedule: "0 22 * * *" },
     { path: "/api/cron/weekly-report-reminder", schedule: "0 2 * * 1" },

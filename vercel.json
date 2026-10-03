@@ -27,6 +27,10 @@
   },
   "crons": [
     {
+      "path": "/api/cron/weekly-reports",
+      "schedule": "0 22 * * 0"
+    },
+    {
       "path": "/api/cron/daily-ads-report",
       "schedule": "0 22 * * *"
     },

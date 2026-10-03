@@ -210,3 +210,14 @@ The web, iOS, and Android PWA icons use the BuddyPilot `B + paper plane` artwork
 - `public/icons/apple-touch-icon.png`
 - `public/icons/app-icon-16x16.png` through `public/icons/app-icon-1024x1024.png`
 - `public/icons/android-chrome-192x192.png` and `public/icons/android-chrome-512x512.png`
+# Weekly Reports On Vercel
+
+`/api/cron/weekly-reports` runs Monday 06:00 Asia/Kuala_Lumpur
+(Sunday 22:00 UTC), generating the previous Monday-Sunday reports for active,
+completed-onboarding clients using their saved Ads configuration. The existing
+Monday 10:00 admin push reminder remains separate. No WhatsApp is sent.
+Apply `supabase/migrations/20261003000100_weekly_report_jobs.sql` before deployment.
+Server-only per-client leases prevent concurrent duplicate runs; existing Drive
+files are preserved. Failed clients are recorded in Operations Center and can
+be retried manually in Report Pilot. Vercel Hobby may invoke within the scheduled
+hour. The old Codex weekly report automation must be removed after activation.
