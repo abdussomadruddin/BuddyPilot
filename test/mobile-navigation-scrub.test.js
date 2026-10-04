@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const appSource = require("./helpers/ui-source")();
+const appSource = fs.readFileSync(path.join(__dirname, "..", "api_handlers", "app.js"), "utf8");
 const redesignCss = fs.readFileSync(path.join(__dirname, "..", "public", "buddypilot-redesign.css"), "utf8");
 
 test("mobile navigation supports hold, finger-follow scrub, and release activation", () => {

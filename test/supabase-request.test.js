@@ -14,7 +14,7 @@ function mockRequest(t, response) {
   });
   t.mock.method(global, "fetch", async (url, options) => {
     assert.ok(options.signal instanceof AbortSignal);
-    return response.clone();
+    return response;
   });
 }
 

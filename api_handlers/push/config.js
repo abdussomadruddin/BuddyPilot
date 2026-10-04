@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const publicKey = String(process.env.VAPID_PUBLIC_KEY || "").trim();
     if (!publicKey) throw new Error("Web Push belum dikonfigurasi.");
     res.end(JSON.stringify({ ok: true, publicKey }));

@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const url = new URL(req.url || "/", "http://localhost");
     const accountId = String(url.searchParams.get("accountId") || "").replace(/^act_/, "");
     if (!accountId) throw new Error("Pilih Ads account dahulu.");

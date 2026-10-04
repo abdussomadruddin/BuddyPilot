@@ -9,7 +9,7 @@ const {
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const parsed = new URL(req.url || "/", "http://localhost");
     const channel = parsed.searchParams.get("channel") === "threads_general" ? "threads_general" : "promote";
     const productId = parsed.searchParams.get("product_id") || "";

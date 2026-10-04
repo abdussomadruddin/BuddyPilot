@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
   let serviceName = "";
   let targetClientCode = "";
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const body = await readJsonBody(req);
     const clientCode = String(body.clientCode || "").trim().toUpperCase();
     targetClientCode = clientCode;

@@ -16,7 +16,7 @@ test("liquid UI is a local presentation layer with existing accessible icons", a
   });
   let html;
   const response = { setHeader() {}, end(value) { html = value; } };
-  await handler({ method: "GET", headers: { cookie: await authCookie() } }, response);
+  await handler({ method: "GET", headers: { cookie: authCookie() } }, response);
   assert.equal(response.statusCode, 200);
   assert.ok(html.indexOf("buddypilot-liquid.css") > html.indexOf("buddypilot-redesign.css"));
   const icons = [...html.matchAll(/<svg class="icon section-icon [^"]*" aria-hidden="true"><use href="\/icons.svg#([^"]+)"><\/use><\/svg>/g)];

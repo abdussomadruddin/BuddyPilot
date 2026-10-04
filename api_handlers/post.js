@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
 
   let publishing = false;
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const body = await readRequestBody(req);
     const { values, files } = parseMultipart(req, body);
     const creative = files.creative;

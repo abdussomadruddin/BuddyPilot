@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    await requireAuth(req);
+    requireAuth(req);
     res.end(JSON.stringify({ ok: true, accounts: await listTikTokAdvertisers() }));
   } catch (error) {
     res.statusCode = error.statusCode || 400;

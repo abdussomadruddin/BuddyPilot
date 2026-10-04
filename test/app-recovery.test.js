@@ -14,7 +14,7 @@ test("rendered BuddyPilot browser scripts compile after recovery changes", async
   });
   let html;
   const response = { setHeader() {}, end(value) { html = value; } };
-  await handler({ method: "GET", headers: { cookie: await authCookie() } }, response);
+  await handler({ method: "GET", headers: { cookie: authCookie() } }, response);
   assert.equal(response.statusCode, 200);
   const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
   assert.ok(scripts.length);
@@ -22,7 +22,7 @@ test("rendered BuddyPilot browser scripts compile after recovery changes", async
 });
 
 test("degraded dashboard snapshots are removed instead of cached", () => {
-  const source = require("./helpers/ui-source")();
+  const source = fs.readFileSync(require.resolve("../api_handlers/app"), "utf8");
   const body = source.match(/function cacheOperationsOverview\(overview\) \{([\s\S]*?)\n    \}/)[1];
   const cached = new Map([["cache", "old snapshot"]]);
   const context = vm.createContext({

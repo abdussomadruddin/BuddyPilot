@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const authorizationUrl = await startTikTokAuthorization();
     res.statusCode = 302;
     res.setHeader("location", authorizationUrl);

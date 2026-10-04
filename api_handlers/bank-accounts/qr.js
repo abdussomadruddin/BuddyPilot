@@ -14,7 +14,7 @@ function queryParam(req, key) {
 
 module.exports = async function handler(req, res) {
   try {
-    await requireAuth(req);
+    requireAuth(req);
 
     if (req.method === "GET") {
       const id = queryParam(req, "id");

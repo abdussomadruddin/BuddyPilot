@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
 
   try {
-    await requireAuth(req);
+    requireAuth(req);
 
     if (req.method === "GET") {
       const draft = await getPostPilotDraft();

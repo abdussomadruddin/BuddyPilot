@@ -21,7 +21,7 @@ test("weekly report WhatsApp template requires the uploaded Drive link", () => {
 });
 
 test("Generate and Upload only uploads; WhatsApp remains a manual client action", () => {
-  const app = require("./helpers/ui-source")();
+  const app = fs.readFileSync(require.resolve("../api_handlers/app"), "utf8");
   const upload = app.match(/async function uploadReport\(event\) \{([\s\S]*?)\n    function agencyClientLabel/)[1];
   assert.doesNotMatch(upload, /window\.open|whatsappWindow|upload\.whatsappUrl/);
   assert.match(upload, /WhatsApp tidak dihantar/);

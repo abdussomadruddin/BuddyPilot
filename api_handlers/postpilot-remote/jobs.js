@@ -23,7 +23,7 @@ function threadsPayload(body) {
 
 module.exports = async function handler(req, res) {
   try {
-    await requireAuth(req);
+    requireAuth(req);
     if (req.method === "GET") {
       json(res, 200, { ok: true, ...(await getRemoteOverview()) });
       return;

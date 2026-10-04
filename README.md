@@ -10,42 +10,6 @@ The posting flow is:
 2. Preview caption and first comment CTA.
 3. Approve to publish, or regenerate for a new copywriting variation.
 
-## Local development and validation
-
-Use Node.js 20 or newer:
-
-```bash
-npm ci
-npm run check
-npm test
-APP_PASSWORD=local-development-only npm run dev
-```
-
-The local server binds to loopback, applies the Vercel app/login/API routing, and serves `public/`. Set `PORT` to override port 3000. Use a local development password only; keep real credentials in environment settings. This adapter does not emulate Vercel deployment, cron scheduling, or the Chrome extension.
-
-Browser tests run actual login, Client Pilot navigation, invoice preview and PDF requests against the local handler using fallback client data. They also check logout cookie replay, invalid login, and an invoice service error. No live uploads or posting occur.
-
-```bash
-npx playwright install chromium
-npm run test:e2e
-```
-
-If Chromium is already installed, use `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium npm run test:e2e`. The browser suite starts its own server on port 3100 with isolated test credentials and integration settings.
-
-### Login migration required before deployment
-
-Apply `supabase/auth.sql` in the Supabase SQL Editor **before deploying these changes**. Fresh database setups also include these tables and function in `supabase/schema.sql`. Keep `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `APP_PASSWORD` configured server-side. The migration is rerunnable and restricts auth tables/RPC to the service role.
-
-Login allows five attempts per IP in a fifteen-minute window, including successful attempts, and returns HTTP 429 with `Retry-After` when exhausted. Vercel uses its trusted forwarded-IP header; generic client-supplied forwarding headers are ignored. Sessions are unique, expire after eight hours, and are revoked server-side on logout. Changing `APP_PASSWORD` invalidates previous sessions. Existing cookies from the old login implementation require a new login.
-
-Production/Vercel requires shared Supabase auth storage and fails closed if it is missing or unavailable. Local development without Supabase uses process memory; sessions and limits reset when that process restarts. Expired auth records are cleaned during login attempts.
-
-Supabase reads have a ten-second timeout per attempt and retry once on network failures or HTTP 502/503/504. Writes never retry automatically because they may already have committed. Rate limits, invalid JSON, and non-JSON service failures return useful errors instead of hanging or reading the response body twice.
-
-### UI source layout
-
-`api_handlers/app.js` handles authenticated page requests. `lib/ui/page.js` composes the page markup and styles. Browser fragments in `lib/ui/` separate state, navigation, Post Pilot, clients/reports, invoices/receipts, and startup. They assemble in a fixed order into the same browser scope to preserve existing event handlers and shared state. Keep initialization in the startup fragment and run the browser suite after UI changes.
-
 ## Required Vercel Environment Variables
 
 Set these in Vercel Project Settings:

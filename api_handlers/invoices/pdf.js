@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const body = req.method === "POST" ? await readPostBody(req) : {};
     const clientCode = body.clientCode || body.code || queryParam(req, "client");
     const period = body.period || queryParam(req, "period");

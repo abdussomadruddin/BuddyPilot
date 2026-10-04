@@ -85,7 +85,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
   let body = {};
   try {
-    await requireAuth(req);
+    requireAuth(req);
 
     if (req.method === "GET") {
       const url = new URL(req.url || "/", "http://localhost");

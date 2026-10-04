@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
 
   let uploadStarted = false;
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const body = await readJsonBody(req);
     uploadStarted = true;
     const upload = await uploadReportToDrive(body);

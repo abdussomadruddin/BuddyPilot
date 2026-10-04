@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    await requireAuth(req);
+    requireAuth(req);
     await disconnectTikTok();
     res.end(JSON.stringify({ ok: true }));
   } catch (error) {

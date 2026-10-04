@@ -30,7 +30,7 @@ function browserFallbackDraft(file) {
 
 module.exports = async function handler(req, res) {
   try {
-    await requireAuth(req);
+    requireAuth(req);
 
     if (req.method === "GET") {
       const { draft, buffer, contentType } = await downloadPostPilotHookImage();

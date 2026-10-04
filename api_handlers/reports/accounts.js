@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    await requireAuth(req);
+    requireAuth(req);
     const accounts = await listMetaAdAccounts();
     res.statusCode = 200;
     res.end(JSON.stringify({ ok: true, accounts, count: accounts.length }));
