@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    requireAuth(req);
+    await requireAuth(req);
     const body = await readJson(req);
     if (req.method === "DELETE") await deletePushSubscription(body.endpoint);
     else await savePushSubscription(body.subscription, req.headers["user-agent"] || "");

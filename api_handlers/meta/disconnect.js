@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    requireAuth(req);
+    await requireAuth(req);
     await disconnectMeta();
     res.end(JSON.stringify({ ok: true }));
   } catch (error) {

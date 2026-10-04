@@ -3,7 +3,7 @@ const path = require("node:path");
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const source = fs.readFileSync(path.join(__dirname, "..", "api_handlers", "app.js"), "utf8");
+const source = require("./helpers/ui-source")();
 
 test("Report Pilot and Invoice Pilot are Client Pilot modules", () => {
   assert.match(source, /data-subtab-target="client-report-panel">Report Pilot/);

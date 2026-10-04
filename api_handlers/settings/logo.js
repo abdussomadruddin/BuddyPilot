@@ -9,7 +9,7 @@ const { parseMultipart, readJsonBody, readRequestBody } = require("../../lib/pos
 
 module.exports = async function handler(req, res) {
   try {
-    requireAuth(req);
+    await requireAuth(req);
 
     if (req.method === "GET") {
       const { settings, buffer, contentType } = await downloadBusinessLogo();

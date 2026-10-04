@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
   if (req.method !== "GET") { res.statusCode = 405; res.end(JSON.stringify({ ok: false, error: "Method not allowed." })); return; }
   try {
-    requireAuth(req);
+    await requireAuth(req);
     const url = new URL(req.url || "/", "http://localhost");
     const accountId = String(url.searchParams.get("accountId") || "").replace(/^act_/, "");
     const reportDate = String(url.searchParams.get("reportDate") || "");

@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    requireAuth(req);
+    await requireAuth(req);
     const body = await readJsonBody(req);
     const requested = String(body.service || "").trim();
     if (requested && !SERVICE_DEFINITIONS.some((item) => item.id === requested)) throw new Error("Health service tidak sah.");

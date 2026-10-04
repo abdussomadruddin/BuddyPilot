@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
     return res.end(JSON.stringify({ ok: false, error: "Method not allowed." }));
   }
   try {
-    requireAuth(req);
+    await requireAuth(req);
     const body = await readJsonBody(req);
     const requested = body.fingerprints;
     if (!Array.isArray(requested) || !requested.length || requested.length > 100 || requested.some((value) => typeof value !== "string")) {

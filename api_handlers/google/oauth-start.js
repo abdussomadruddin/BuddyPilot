@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    requireAuth(req);
+    await requireAuth(req);
     res.statusCode = 302;
     res.setHeader("location", googleAuthUrl());
     res.end("Redirecting to Google.");

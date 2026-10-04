@@ -7,7 +7,7 @@ const { handleError, json } = require("./_shared");
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return json(res, 405, { ok: false, error: "Method not allowed." });
   try {
-    requireAuth(req);
+    await requireAuth(req);
     const body = await readJsonBody(req);
     const job = await jobAction({ jobId: body.job_id, action: body.action });
     if (["retry", "cancel"].includes(body.action)) {

@@ -10,7 +10,7 @@ const { parseMultipart, readRequestBody } = require("../lib/postpilot");
 
 module.exports = async function handler(req, res) {
   try {
-    requireAuth(req);
+    await requireAuth(req);
     if (req.method === "GET") {
       const params = new URL(req.url || "/", "http://localhost").searchParams;
       const id = params.get("id");

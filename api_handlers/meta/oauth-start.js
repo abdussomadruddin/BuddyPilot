@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    requireAuth(req);
+    await requireAuth(req);
     res.statusCode = 302;
     res.setHeader("location", await startMetaAuthorization());
     res.end();

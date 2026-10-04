@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    requireAuth(req);
+    await requireAuth(req);
     const body = await readJsonBody(req);
     const nextPreview = regeneratePreview({
       salespageLink: body.salespage_link,

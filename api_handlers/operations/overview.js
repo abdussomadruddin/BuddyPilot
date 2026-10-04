@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    requireAuth(req);
+    await requireAuth(req);
     res.setHeader("cache-control", "private, max-age=0, must-revalidate");
     res.end(JSON.stringify({ ok: true, overview: await getOperationsOverview() }));
   } catch (error) {

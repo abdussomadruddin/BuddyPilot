@@ -120,7 +120,7 @@ test("personal voice only activates after fifteen Published or Winner samples", 
 });
 
 test("webapp uses Pattern select and removes Niche topic input", () => {
-  const source = fs.readFileSync(path.join(__dirname, "..", "api_handlers", "app.js"), "utf8");
+  const source = require("./helpers/ui-source")();
   assert.match(source, /id="viralPattern"/);
   assert.match(source, /Auto rotate 300 patterns/);
   assert.doesNotMatch(source, /id="viralTopic"/);

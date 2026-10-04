@@ -238,7 +238,16 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (isAuthed(req)) {
+  res.setHeader("cache-control", "no-store");
+  let authenticated;
+  try {
+    authenticated = await isAuthed(req);
+  } catch {
+    res.statusCode = 503;
+    res.end("Sesi sementara tidak dapat disemak. Cuba semula kemudian.");
+    return;
+  }
+  if (authenticated) {
     res.statusCode = 302;
     res.setHeader("location", "/");
     res.end("Redirecting.");

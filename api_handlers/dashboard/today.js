@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    requireAuth(req);
+    await requireAuth(req);
     const warnings = [];
     const [clientResult, remote, tiktok, activities] = await Promise.all([
       settledValue(getMergedClientsWithStatus(), { clients: [] }, warnings, "Pelanggan"),

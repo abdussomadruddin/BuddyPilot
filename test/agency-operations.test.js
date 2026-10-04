@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const root = path.join(__dirname, "..");
-const appSource = fs.readFileSync(path.join(root, "api_handlers", "app.js"), "utf8");
+const appSource = require("./helpers/ui-source")();
 const apiSource = fs.readFileSync(path.join(root, "api_handlers", "clients", "agency-operations.js"), "utf8");
 const dataSource = fs.readFileSync(path.join(root, "lib", "agency-operations.js"), "utf8");
 const schemaSource = fs.readFileSync(path.join(root, "supabase", "schema.sql"), "utf8");

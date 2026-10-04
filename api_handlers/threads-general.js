@@ -27,7 +27,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    requireAuth(req);
+    await requireAuth(req);
     const body = await readJsonBody(req);
     const count = [1, 10, 50].includes(Number(body.count)) ? Number(body.count) : 1;
     const history = await listPostPilotCopyHistory({ channel: "threads_general", limit: 500 });

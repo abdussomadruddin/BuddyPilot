@@ -164,7 +164,7 @@ test("migration restricts access and fences claims; UI retains manual flow and m
   assert.match(sql, /job.status = 'failed'.*job.status = 'processing'/);
   assert.match(sql, /grant execute.*service_role/);
   assert.doesNotMatch(sql, /drop table|truncate|delete from/i);
-  const app = fs.readFileSync(require.resolve("../api_handlers/app"), "utf8");
+  const app = require("./helpers/ui-source")();
   assert.match(app, /monthlyInvoicePushButton.addEventListener\("click"/);
   assert.match(app, /requestedInvoicePeriod : localStorage/);
   assert.match(app, /Tiada WhatsApp dihantar automatik/);
@@ -213,7 +213,7 @@ test("rendered deep-link regex overrides stale month but rejects invalid input",
   process.env.APP_PASSWORD = "local-test-only";
   t.after(() => { if (previous === undefined) delete process.env.APP_PASSWORD; else process.env.APP_PASSWORD = previous; });
   let html;
-  await require("../api_handlers/app")({ method: "GET", headers: { cookie: require("../lib/auth").authCookie() } }, { setHeader() {}, end(value) { html = value; } });
+  await require("../api_handlers/app")({ method: "GET", headers: { cookie: await require("../lib/auth").authCookie() } }, { setHeader() {}, end(value) { html = value; } });
   const source = html.match(/const requestedInvoicePeriod = ([\s\S]*?)\n    receiptPeriod.value/)[0].replace(/\n    receiptPeriod.value$/, "");
   for (const [period, expected] of [["2026-11", "2026-11"], ["2026-99", "2026-07"], ["bad", "2026-07"]]) {
     const context = vm.createContext({ URLSearchParams, window: { location: { search: `?period=${period}` } }, invoicePeriod: {}, localStorage: { getItem: () => "2026-07" }, defaultInvoicePeriod: () => "2026-10" });

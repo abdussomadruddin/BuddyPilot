@@ -5,7 +5,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
 
   try {
-    requireAuth(req);
+    await requireAuth(req);
 
     if (req.method !== "GET") {
       res.statusCode = 405;

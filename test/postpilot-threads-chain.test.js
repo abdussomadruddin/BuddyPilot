@@ -7,7 +7,7 @@ const extensionSource = fs.readFileSync(
   path.join(__dirname, "..", "chrome-extension", "postpilot", "threads-content.js"),
   "utf8"
 );
-const appSource = fs.readFileSync(path.join(__dirname, "..", "api_handlers", "app.js"), "utf8");
+const appSource = require("./helpers/ui-source")();
 const popupSource = fs.readFileSync(
   path.join(__dirname, "..", "chrome-extension", "postpilot", "popup.html"),
   "utf8"

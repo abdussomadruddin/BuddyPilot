@@ -50,7 +50,7 @@ test("Vercel schedules only one weekly invocation at 02:00 UTC", () => {
 });
 
 test("client reminder overrides previously selected report and invoice panels", () => {
-  const app = fs.readFileSync(require.resolve("../api_handlers/app"), "utf8");
+  const app = require("./helpers/ui-source")();
   assert.match(app, /requestedTab === "clientpilot" && requestedPanel === "client-list-panel"/);
   assert.match(app, /if \(group === "client-modules"\) saved = "client-overview-panel"/);
   assert.match(app, /if \(group === "client"\) saved = "client-list-panel"/);

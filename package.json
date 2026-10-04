@@ -5,12 +5,14 @@
   "description": "Manage business workflows, creatives, reports, invoices, and receipts in one app.",
   "scripts": {
     "check": "find api api_handlers lib scripts -name '*.js' -print0 | xargs -0 -n1 node --check",
-    "test": "node --test",
+    "test": "node --test test/*.test.js",
     "ip": "node scripts/invoice-pilot-cli.js",
     "supabase:setup": "node scripts/setup-supabase.js",
     "supabase:migrate-drive": "node scripts/migrate-drive-to-supabase.js",
     "vercel:repair": "node scripts/invoice-pilot-cli.js repair",
-    "vercel:deploy": "node scripts/invoice-pilot-cli.js deploy"
+    "vercel:deploy": "node scripts/invoice-pilot-cli.js deploy",
+    "dev": "node scripts/dev-server.js",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@modelcontextprotocol/client": "2.0.0-beta.5",
@@ -20,5 +22,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
   }
 }
