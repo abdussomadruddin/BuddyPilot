@@ -51,6 +51,20 @@ const server = http.createServer((req, res) => {
       await page.getByRole("navigation", { name: "Main tabs" }).getByRole("button", { name: "Post Pilot", exact: true }).click();
       await page.getByRole("button", { name: "Threads Promote", exact: true }).click();
       assert.ok(await page.getByRole("heading", { name: "Threads Promote", exact: true }).isVisible());
+      await page.getByRole("button", { name: "Threads General", exact: true }).click();
+      assert.equal(await page.locator("#viralCategory").inputValue(), "");
+      assert.equal(await page.locator("#viralAudience").inputValue(), "");
+      assert.equal(await page.locator("#viralTone").inputValue(), "");
+      const action = page.locator("#generateViralOneButton");
+      assert.equal(await action.isEnabled(), false);
+      await page.locator("#viralCategory").selectOption("business");
+      assert.equal(await action.isEnabled(), false);
+      await page.locator("#viralAudience").selectOption({ index: 1 });
+      assert.equal(await action.isEnabled(), true);
+      assert.equal(await page.locator("#generateViralTenButton").isEnabled(), true);
+      assert.equal(await page.locator("#generateViralFiftyButton").isEnabled(), true);
+      await page.locator("#viralAudience").selectOption("");
+      assert.equal(await action.isEnabled(), false);
       const immediate = await page.evaluate(() => {
         const button = document.createElement("button");
         button.id = "feedback-test";

@@ -29,15 +29,21 @@ module.exports = async function handler(req, res) {
   try {
     requireAuth(req);
     const body = await readJsonBody(req);
+    const category = String(body.category || "").trim().toLowerCase();
+    const audience = String(body.audience || "").trim();
+    if (!templates.categories.includes(category) || !templates.audienceTypes.includes(audience)) {
+      throw new Error("Pilih post category dan audience yang sah dahulu.");
+    }
     const count = [1, 10, 50].includes(Number(body.count)) ? Number(body.count) : 1;
     const history = await listPostPilotCopyHistory({ channel: "threads_general", limit: 500 });
     const savedVoiceProfile = await getPostPilotVoiceProfile("", "threads_general");
     const generated = generateThreadsGeneralBatch({
       count,
       patternId: count === 1 ? String(body.patternId || "") : "",
-      category: String(body.category || "business").toLowerCase(),
-      tone: String(body.tone || "Casual"),
-      audience: String(body.audience || "orang Malaysia"),
+      category,
+      tone: String(body.tone || ""),
+      audience,
+      lockSelections: true,
       categories: templates.categories,
       tones: templates.toneOptions,
       audiences: templates.audienceTypes,

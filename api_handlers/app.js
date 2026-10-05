@@ -4779,18 +4779,18 @@ function pageHtml() {
                 <select id="viralPattern"></select>
               </div>
               <div>
-                <label for="viralCategory">Post category</label>
-                <select id="viralCategory"></select>
-              </div>
-              <div>
                 <label for="viralTone">Tone</label>
                 <select id="viralTone"></select>
+              </div>
+              <div>
+                <label for="viralCategory">Post category</label>
+                <select id="viralCategory"></select>
               </div>
               <div>
                 <label for="viralAudience">Audience</label>
                 <select id="viralAudience"></select>
               </div>
-              <div class="full">
+              <div class="full" hidden>
                 <label class="check-row" for="viralHashtags">
                   <input id="viralHashtags" type="checkbox">
                   Include hashtags
@@ -4798,12 +4798,9 @@ function pageHtml() {
               </div>
             </div>
             <div class="actions">
-              <button id="generateViralOneButton" type="button">Generate 1 Post</button>
-              <button id="generateViralTenButton" class="secondary" type="button">Generate 10 Posts</button>
-              <button id="generateViralFiftyButton" class="secondary" type="button">Generate 50 Posts</button>
-              <button id="autoPostViralTenButton" class="approve" type="button">Auto Post 10 to Threads</button>
-              <button id="autoPostViralFiftyButton" class="approve" type="button">Auto Post 50 to Threads</button>
-              <button id="exportViralCsvButton" class="secondary" type="button">Export CSV</button>
+              <button id="generateViralOneButton" type="button" disabled>Generate &amp; Post 1 to Threads</button>
+              <button id="generateViralTenButton" class="secondary" type="button" disabled>Generate &amp; Post 10 to Threads</button>
+              <button id="generateViralFiftyButton" class="secondary" type="button" disabled>Generate &amp; Post 50 to Threads</button>
             </div>
             <div id="viralResult" class="result"></div>
             <div id="viralOutput" class="viral-post-grid"></div>
@@ -7917,6 +7914,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     async function requestViralPosts(count, randomize = false) {
+      if (!viralCategory.value || !viralAudience.value) throw new Error("Pilih post category dan audience dahulu.");
       const response = await fetch("/api/threads-general", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -8107,9 +8105,21 @@ Review retargeting when the warm audience is ready</textarea>
       }
     }
 
-    async function postViralBatchToThreads(count) {
-      const posts = await ensureViralPostCount(count);
+    async function postViralBatchToThreads(count, triggerButton) {
+      if (!viralCategory.value || !viralAudience.value) {
+        setMessage(viralResult, "err", "Pilih post category dan audience dahulu.");
+        return;
+      }
+      const finish = setButtonBusy(triggerButton, "Generating...");
+      const buttons = [generateViralOneButton, generateViralTenButton, generateViralFiftyButton];
+      [viralCategory, viralAudience, viralTone, viralPattern].forEach((select) => { select.disabled = true; });
+      buttons.forEach((button) => { button.disabled = true; });
       try {
+        const posts = await requestViralPosts(count);
+        if (posts.length !== count) throw new Error("Jumlah post tidak lengkap. Tiada post dihantar.");
+        viralGeneratedPosts = posts;
+        renderViralPosts();
+        triggerButton.textContent = "Queueing...";
         await createRemoteAutomationJob({
           type: "threads_text",
           posts: posts.map((post) => ({
@@ -8129,7 +8139,18 @@ Review retargeting when the warm audience is ready</textarea>
         setMessage(viralResult, "ok", posts.length + " Threads posts masuk queue Chrome Mac.");
       } catch (error) {
         setMessage(viralResult, "err", error.message || String(error));
+      } finally {
+        finish();
+        [viralCategory, viralAudience, viralTone, viralPattern].forEach((select) => { select.disabled = false; });
+        updateViralSelectionButtons();
       }
+    }
+
+    function updateViralSelectionButtons() {
+      const incomplete = !viralCategory.value || !viralAudience.value;
+      [generateViralOneButton, generateViralTenButton, generateViralFiftyButton].forEach((button) => {
+        button.disabled = incomplete;
+      });
     }
 
     function viralCard(post, options = {}) {
@@ -8243,9 +8264,14 @@ Review retargeting when the warm audience is ready</textarea>
         option.textContent = String(index + 1).padStart(3, "0") + " · " + pattern.label;
         viralPattern.appendChild(option);
       });
-      fillSelectOptions(viralCategory, viralTemplates.categories || [], "");
-      fillSelectOptions(viralTone, viralTemplates.toneOptions || [], "");
-      fillSelectOptions(viralAudience, viralTemplates.audienceTypes || [], "");
+      fillSelectOptions(viralCategory, viralTemplates.categories || [], "Pilih post category");
+      fillSelectOptions(viralTone, viralTemplates.toneOptions || [], "Auto rotate tones");
+      fillSelectOptions(viralAudience, viralTemplates.audienceTypes || [], "Pilih audience");
+      viralCategory.required = true;
+      viralAudience.required = true;
+      viralCategory.addEventListener("change", updateViralSelectionButtons);
+      viralAudience.addEventListener("change", updateViralSelectionButtons);
+      updateViralSelectionButtons();
       fillSelectOptions(viralSavedCategoryFilter, viralTemplates.categories || [], "All categories");
       fillSelectOptions(viralSavedToneFilter, viralTemplates.toneOptions || [], "All tones");
       loadViralPosts();
@@ -8553,12 +8579,9 @@ Review retargeting when the warm audience is ready</textarea>
       }
     });
 
-    generateViralOneButton.addEventListener("click", () => generateViralPosts(1).catch(showThreadsError));
-    generateViralTenButton.addEventListener("click", () => generateRandomViralPosts(10).catch(showThreadsError));
-    generateViralFiftyButton.addEventListener("click", () => generateRandomViralPosts(50).catch(showThreadsError));
-    autoPostViralTenButton.addEventListener("click", () => postViralBatchToThreads(10));
-    autoPostViralFiftyButton.addEventListener("click", () => postViralBatchToThreads(50));
-    exportViralCsvButton.addEventListener("click", () => exportViralCsv(viralGeneratedPosts, "threads-viral-posts.csv"));
+    generateViralOneButton.addEventListener("click", () => postViralBatchToThreads(1, generateViralOneButton));
+    generateViralTenButton.addEventListener("click", () => postViralBatchToThreads(10, generateViralTenButton));
+    generateViralFiftyButton.addEventListener("click", () => postViralBatchToThreads(50, generateViralFiftyButton));
     exportSavedViralButton.addEventListener("click", () => exportViralCsv(filteredSavedViralPosts(), "threads-viral-saved-posts.csv"));
     clearSavedViralButton.addEventListener("click", () => {
       viralSavedPosts = [];
