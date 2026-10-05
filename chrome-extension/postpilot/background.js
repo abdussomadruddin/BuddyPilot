@@ -326,6 +326,7 @@ async function resumeRemoteRecovery() {
     batch.phase = recovery.progress.resumePhase === "threads" ? "threads" : "facebook";
     await chrome.storage.local.set({ [POSTPILOT_BATCH_KEY]: batch });
     if (batch.phase === "threads") await startBatchThreads();
+    else if (batch.channel === "threads_promote") await startBatchThreads();
     else await startBatchFacebook();
     return;
   }
@@ -348,6 +349,10 @@ async function startRemoteFacebookThreads(job) {
     const post = job.payload.posts[index];
     posts.push({ ...post, image: await hydrateRemoteImage(job.id, post, index) });
   }
+  if (job.payload.channel === "threads_promote") {
+    const images = posts.map((post) => post.image);
+    posts.splice(0, posts.length, { ...posts[0], images, threadsPromote: true });
+  }
   const saved = await getPostPilotBatch();
   const batch = saved?.remoteJobId === job.id ? saved : {
     automationId: `remote-${job.id}`,
@@ -357,6 +362,7 @@ async function startRemoteFacebookThreads(job) {
     phase: ["facebook", "threads", "waiting"].includes(job.progress?.phase) ? job.progress.phase : "facebook",
     batchDelayMs: Math.max(30_000, Number(job.payload.batchDelayMs) || 30_000),
   };
+  batch.channel = job.payload.channel || "facebook_threads";
   batch.posts = posts;
   batch.index = Math.max(0, Math.min(posts.length - 1, Number(job.progress?.itemIndex ?? batch.index) || 0));
   if (batch.phase === "paused" || batch.phase === "completed") {
@@ -367,7 +373,8 @@ async function startRemoteFacebookThreads(job) {
   else if (batch.phase === "waiting") {
     await chrome.alarms.clear(POSTPILOT_BATCH_ALARM);
     chrome.alarms.create(POSTPILOT_BATCH_ALARM, { when: Date.now() + batch.batchDelayMs });
-  } else await startBatchFacebook();
+  } else if (batch.channel === "threads_promote") await startBatchThreads();
+  else await startBatchFacebook();
 }
 
 async function startRemoteThreadsText(job) {
@@ -404,7 +411,7 @@ async function processRemoteQueue() {
   if (await remoteRunnerIsActive()) return;
   remoteClaimInFlight = true;
   try {
-    const response = await remoteFetch("/api/postpilot-extension/claim", { body: {} });
+    const response = await remoteFetch("/api/postpilot-extension/claim", { body: { capabilities: ["separate-promote-v1"] } });
     const job = response.job;
     if (!job) {
       await chrome.storage.local.remove(REMOTE_ACTIVE_JOB_KEY);
@@ -829,8 +836,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const expectedId = batch ? `${batch.automationId}-${batch.index + 1}` : "";
       if (batch && batch.phase === "facebook" && message.automationId === expectedId) {
         await clearRemoteRecovery();
-        await startBatchThreads();
-        sendResponse({ ok: true, message: "Facebook siap. Teruskan Threads untuk item semasa." });
+        if (batch.channel === "facebook") await scheduleNextBatchPost(batch);
+        else await startBatchThreads();
+        sendResponse({ ok: true, message: batch.channel === "facebook" ? "Facebook siap." : "Facebook siap. Teruskan Threads untuk item semasa." });
         return;
       }
       const response = await openThreadsAndRunAutomation(message.automationId || "");
@@ -1010,7 +1018,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     batch.index += 1;
     batch.phase = "facebook";
     await savePostPilotBatch(batch, `Post Pilot ${batch.index + 1}/${batch.posts.length}: mula Facebook...`);
-    await startBatchFacebook();
+    if (batch.channel === "threads_promote") await startBatchThreads();
+    else await startBatchFacebook();
   })().catch(async (error) => {
     const batch = await getPostPilotBatch();
     if (batch) {

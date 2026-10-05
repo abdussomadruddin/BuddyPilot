@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
     requireAuth(req);
     const body = await readJsonBody(req);
     const job = await jobAction({ jobId: body.job_id, action: body.action });
-    if (["retry", "cancel"].includes(body.action)) {
+    if (["retry", "cancel", "clear"].includes(body.action)) {
       await reportOperationalSuccess({ fingerprint: `postpilot-job:${job.id}` });
     }
     json(res, 200, { ok: true, job });

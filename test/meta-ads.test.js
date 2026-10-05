@@ -323,3 +323,11 @@ test("does not mislabel an ad title as the customer audience", () => {
   assert.match(draft.next7Days, /cold audience semasa/);
   assert.doesNotMatch(draft.next7Days, /profil pelanggan dalam “Bonus Hook”/);
 });
+
+test("saved client phase is preserved and invalid legacy values default safely", () => {
+  const { normalizeAdsReportConfig } = require('../lib/meta-ads');
+  for (const phase of ['SETUP PHASE', 'TESTING PHASE', 'OPTIMIZE PHASE', 'SCALING PHASE']) {
+    assert.equal(normalizeAdsReportConfig({ phase }).phase, phase);
+  }
+  assert.equal(normalizeAdsReportConfig({ phase: 'invalid' }).phase, 'SETUP PHASE');
+});

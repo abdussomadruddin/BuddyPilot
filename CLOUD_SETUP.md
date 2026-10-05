@@ -2,9 +2,15 @@
 
 ## Stable baseline
 
-The application was restored to commit a2ea5b9 (3 October 2026,
-approximately 20:23 Asia/Kuala_Lumpur). Use branch
-`agent/salespage-pilot-integration`, not the outdated `main` branch.
+Use `main` as the canonical branch for local and Codex Cloud work.
+Before starting a cloud task, fetch and sync with the latest `origin/main`.
+Older cloud tasks must sync first rather than redeploy their previous snapshot.
+
+The repository source was aligned with production deployment
+`dpl_J3pFXugp6Vp3nmwo9epr9MTzQuJd` (6 October 2026), including
+separate Post Pilot channels, extension v0.4.0, product audience fields,
+report phase settings and immediate action feedback. Local source changes
+only become available to Cloud after they are committed and pushed to `main`.
 
 ## Setup
 

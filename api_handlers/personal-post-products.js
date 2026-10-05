@@ -1,6 +1,7 @@
 const { requireAuth } = require("../lib/auth");
 const {
   createPostPilotProduct,
+  updatePostPilotProductAudience,
   deletePostPilotProduct,
   listPostPilotProducts,
   upsertPostPilotDraft,
@@ -18,9 +19,16 @@ module.exports = async function handler(req, res) {
     }
     if (req.method === "POST") {
       const body = await readJsonBody(req);
-      const product = await createPostPilotProduct({ name: body.name, affiliateLink: body.affiliate_link });
+      const product = await createPostPilotProduct({ name: body.name, affiliateLink: body.affiliate_link, targetMarket: body.target_market, highlight: body.highlight });
       await upsertPostPilotDraft({ activeProductId: product.id, productName: product.name, affiliateLink: product.affiliateLink });
       res.statusCode = 201;
+      res.end(JSON.stringify({ ok: true, product }));
+      return;
+    }
+    if (req.method === "PATCH") {
+      const body = await readJsonBody(req);
+      const product = await updatePostPilotProductAudience({ id: body.product_id, targetMarket: body.target_market, highlight: body.highlight });
+      res.statusCode = 200;
       res.end(JSON.stringify({ ok: true, product }));
       return;
     }

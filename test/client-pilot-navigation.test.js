@@ -5,9 +5,11 @@ const assert = require("node:assert/strict");
 
 const source = fs.readFileSync(path.join(__dirname, "..", "api_handlers", "app.js"), "utf8");
 
-test("Report Pilot and Invoice Pilot are Client Pilot modules", () => {
-  assert.match(source, /data-subtab-target="client-report-panel">Report Pilot/);
-  assert.match(source, /data-subtab-target="client-invoice-panel">Invoice Pilot/);
+test("Client, Report, Invoice and Receipt are direct Client Pilot modules", () => {
+  assert.match(source, /data-subtab-target="client-report-panel">Report/);
+  assert.match(source, /data-subtab-target="client-invoice-panel">Invoice/);
+  assert.match(source, /data-subtab-target="client-receipt-panel">Receipt/);
+  assert.doesNotMatch(source, /aria-label="Invoice Pilot tabs"/);
   assert.doesNotMatch(source, /data-tab-target="reportpilot"/);
   assert.doesNotMatch(source, /data-tab-target="invoicepilot"/);
   assert.match(source, /const NAV_ITEMS = \["dashboard", "adscmo", "personalpostpilot", "clientpilot"\]/);

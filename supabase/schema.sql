@@ -417,6 +417,9 @@ create table if not exists public.postpilot_products (
   updated_at timestamptz not null default now()
 );
 
+alter table public.postpilot_products add column if not exists target_market text not null default '';
+alter table public.postpilot_products add column if not exists highlight text not null default '';
+
 insert into public.postpilot_products (name, affiliate_link)
 select product_name, affiliate_link from public.postpilot_drafts where id = 'default'
 and not exists (select 1 from public.postpilot_products);

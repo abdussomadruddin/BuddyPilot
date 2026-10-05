@@ -398,3 +398,79 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--bp-accent); }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .tab-panel.active { will-change: auto; }
 }
+
+/* Full-screen settings, with a compact and symmetrical action grid. */
+.topbar-menu { margin-left: auto; }
+.topbar-menu summary { display: grid; place-items: center; width: 44px; height: 44px; min-width: 44px; padding: 0; color: var(--bp-blue); }
+.topbar-menu summary span, .topbar-menu summary::after { display: none; }
+.topbar-menu summary .icon { width: 22px; height: 22px; }
+.topbar:has(.topbar-menu[open]) { z-index: 170; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.topbar-menu[open] summary { position: fixed; z-index: 172; top: max(10px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); background: rgba(255,255,255,.9); box-shadow: var(--bp-glass-shadow); }
+.topbar-menu[open] summary .icon { transform: rotate(90deg); }
+.topbar .topbar-menu-list {
+  position: fixed; z-index: 171; inset: 0; width: 100%; min-width: 0; max-width: none;
+  height: 100dvh; margin: 0; padding: calc(76px + env(safe-area-inset-top)) max(16px, calc((100vw - 560px) / 2)) calc(24px + env(safe-area-inset-bottom));
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-content: start;
+  overflow-y: auto; overscroll-behavior: contain; border: 0; border-radius: 0;
+  background: linear-gradient(145deg, rgba(235,244,255,.97), rgba(253,246,255,.97) 55%, rgba(232,249,243,.97));
+  box-shadow: none; -webkit-backdrop-filter: blur(28px) saturate(160%); backdrop-filter: blur(28px) saturate(160%);
+}
+.topbar-menu:not([open]) .topbar-menu-list { display: none; }
+.settings-menu-heading { grid-column: 1 / -1; margin-bottom: 10px; }
+.settings-menu-heading h2 { margin: 0; font-size: 24px; letter-spacing: -.6px; }
+.settings-menu-heading p { margin: 4px 0 0; color: var(--bp-muted); font-size: 13px; }
+.topbar .topbar-menu-list > button, .topbar .topbar-menu-list form button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 92px; margin: 0; padding: 12px 8px; border: 1px solid rgba(255,255,255,.95); border-radius: 20px;
+  font-size: 13px; line-height: 1.3; text-align: center; color: var(--bp-ink);
+  background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(255,255,255,.5)); box-shadow: var(--bp-glass-shadow);
+}
+.topbar-menu-list > button { --settings-color: #1464da; --settings-soft: #e5efff; }
+.topbar-menu-list [data-menu-subtab="settings-panel"] { --settings-color: #8152ce; --settings-soft: #f0e8ff; }
+.topbar-menu-list [data-menu-subtab="bank-panel"] { --settings-color: #087b5e; --settings-soft: #e4f5ec; }
+.topbar-menu-list [data-menu-section="menuMetaSettings"] { --settings-color: #1464da; --settings-soft: #e5efff; }
+.topbar-menu-list [data-menu-section="menuTikTokSettings"] { --settings-color: #087f91; --settings-soft: #e1f6f8; }
+.topbar-menu-list .logout-option { --settings-color: #bd3455; --settings-soft: #fff0f4; }
+.topbar .topbar-menu-list .icon { box-sizing: content-box; display: block; width: 22px; height: 22px; padding: 8px; border-radius: 13px; color: var(--settings-color); background: var(--settings-soft); }
+.topbar .topbar-menu-list button:hover { background: #fff; }
+.topbar-menu summary:focus-visible, .topbar-menu-list button:focus-visible { outline: 3px solid var(--bp-blue); outline-offset: 3px; }
+.topbar-menu-list form { grid-column: 2; grid-row: 4; }
+.topbar-menu-list .menu-settings-panel { grid-column: 1 / -1; grid-row: 5; min-width: 0; }
+.topbar-menu-list .menu-settings-panel[hidden] { display: none; }
+body.menu-drawer-open { overflow: hidden; }
+body.menu-drawer-open .tab-panel.active { transform: none; filter: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .topbar-menu[open] .topbar-menu-list { animation: bp-settings-in 320ms var(--bp-ease) both; }
+  .topbar-menu summary .icon { transition: transform 320ms var(--bp-ease); }
+  @keyframes bp-settings-in { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topbar .topbar-menu-list { background: #f3f6fb; }
+}
+
+/* Four direct Client Pilot modules, with no nested Invoice/Receipt switch. */
+#client-module-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 5px; }
+#client-module-tabs .subtab-button { min-width: 0; min-height: 44px; margin: 0; padding: 8px 4px; font-size: 13px; text-align: center; white-space: nowrap; }
+#client-receipt-panel { --bp-accent: #8152ce; --bp-accent-soft: #f0e8ff; }
+
+.automation-schedules { grid-column: 1 / -1; grid-row: 6; margin-top: 14px; min-width: 0; }
+.automation-schedules h2 { margin: 0; font-size: 20px; }
+.automation-schedules header > p { margin: 4px 0 12px; font-size: 12px; color: var(--bp-muted); }
+.automation-schedule-list { display: grid; gap: 8px; }
+.automation-schedule-list article { padding: 14px; border: 1px solid rgba(255,255,255,.94); border-radius: 16px; background: rgba(255,255,255,.75); box-shadow: inset 0 1px 0 #fff; }
+.automation-schedule-list h3 { margin: 0 0 4px; font-size: 14px; }
+.automation-schedule-list strong { color: var(--bp-blue); font-size: 13px; }
+.automation-schedule-list p, .automation-footnote { margin: 6px 0 0; color: var(--bp-muted); font-size: 12px; line-height: 1.5; }
+.topbar .automation-schedule-list button { min-height: 44px; width: auto; margin-top: 10px; padding: 8px 12px; border-radius: 12px; font-size: 12px; background: var(--bp-blue-soft); color: var(--bp-blue); }
+
+.postpilot-subtabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.postpilot-subtabs .subtab-button { min-width: 0; min-height: 44px; margin: 0; padding: 8px; text-align: center; }
+@media (max-width: 600px) { .postpilot-subtabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Company and bank forms belong to Settings, independently of Invoice. */
+.topbar .menu-settings-panel { padding: 14px; border-radius: 18px; background: rgba(255,255,255,.88); }
+.topbar .menu-settings-panel form { grid-column: auto; grid-row: auto; }
+.topbar .menu-settings-panel button, .topbar .menu-settings-panel form button { display: inline-flex; flex-direction: row; align-items: center; justify-content: center; width: auto; min-height: 44px; padding: 8px 12px; border-radius: 12px; font-size: 13px; }
+.topbar .menu-settings-panel .client-grid { min-width: 0; }
+.topbar .menu-settings-panel input, .topbar .menu-settings-panel textarea { min-width: 0; max-width: 100%; }
+@media (max-width: 600px) { .topbar .menu-settings-panel .client-grid { grid-template-columns: minmax(0, 1fr); } }

@@ -321,15 +321,15 @@ function visibleMediaCount(scope) {
   return images + backgrounds;
 }
 
-function attachmentReadyStatus(scope, initialMediaCount, input, uploadedAt) {
-  if (visibleMediaCount(scope) > initialMediaCount) return "preview";
-  if (input?.files?.length && now() - uploadedAt >= 6_000) return "file-input";
+function attachmentReadyStatus(scope, initialMediaCount, input, uploadedAt, expectedCount = 1) {
+  if (visibleMediaCount(scope) >= initialMediaCount + expectedCount) return "preview";
+  if (expectedCount === 1 && input?.files?.length && now() - uploadedAt >= 6_000) return "file-input";
   return "";
 }
 
 function dispatchFileToThreads(input, file) {
   const transfer = new DataTransfer();
-  transfer.items.add(file);
+  for (const item of Array.isArray(file) ? file : [file]) transfer.items.add(item);
   input.files = transfer.files;
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
@@ -486,7 +486,9 @@ async function openNewThread(draft) {
 
 async function attachHookImage(draft) {
   if (!draft.image?.dataUrl) throw new Error("Gambar hook tiada dalam draft. Threads auto-post dibatalkan.");
-  const file = dataUrlToFile(draft.image.dataUrl, draft.image.name, draft.image.type);
+  const images = draft.images || [draft.image];
+  if (draft.threadsPromote && images.length !== 5) throw new Error("Threads Promote mesti ada 5 gambar.");
+  const file = images.map((image) => dataUrlToFile(image.dataUrl, image.name, image.type));
   const baselineMediaCount = visibleMediaCount(activeComposerScope());
   let lastInput = null;
   let uploadedAt = 0;
@@ -494,7 +496,7 @@ async function attachHookImage(draft) {
 
   await waitStep(() => {
     const scope = activeComposerScope();
-    const readyStatus = attachmentReadyStatus(scope, baselineMediaCount, lastInput, uploadedAt);
+    const readyStatus = attachmentReadyStatus(scope, baselineMediaCount, lastInput, uploadedAt, images.length);
     if (readyStatus) return true;
 
     let input = findFileInput(scope) || findFileInput(document);
@@ -506,7 +508,8 @@ async function attachHookImage(draft) {
     }
 
     if (lastInput === input && input.files?.length) return null;
-    if (uploadCount >= 2) return input.files?.length ? true : null;
+    if (uploadCount >= 2) return images.length === 1 && input.files?.length ? true : null;
+    if (images.length > 1 && !input.multiple) throw new Error("Threads tidak menyediakan upload banyak gambar. Auto-post dihentikan.");
     dispatchFileToThreads(input, file);
     uploadCount += 1;
     lastInput = input;

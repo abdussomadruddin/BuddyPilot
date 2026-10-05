@@ -1,7 +1,7 @@
 const { requireAuth } = require("../../lib/auth");
 const { readJsonBody } = require("../../lib/postpilot");
 const { buildPersonalPostBatch } = require("../../lib/personal-post-batch");
-const { reservePostPilotHookImages } = require("../../lib/supabase-db");
+const { reservePostPilotHookImages, getPostPilotProduct } = require("../../lib/supabase-db");
 const { assertJobAvailable, createJob, getRemoteOverview } = require("../../lib/postpilot-remote");
 const { handleError, json } = require("./_shared");
 
@@ -34,6 +34,16 @@ module.exports = async function handler(req, res) {
     const device = await assertJobAvailable();
     let payload;
     if (type === "facebook_threads") {
+      const channel = String(body.channel || "facebook_threads");
+      if (!["facebook_threads", "facebook", "threads_promote"].includes(channel)) throw new Error("Channel tidak sah.");
+      if (channel === "threads_promote") {
+        const product = await getPostPilotProduct(body.product_id);
+        if (!product?.targetMarket) throw new Error("Isi dan simpan target market produk dahulu.");
+        const caption = String(body.caption || "").trim();
+        if (!caption || caption.length > 280) throw new Error("Caption Threads Promote mesti 1 hingga 280 aksara.");
+        const images = await reservePostPilotHookImages(5, body.product_id);
+        payload = { channel, posts: images.map((image, index) => ({ id: `threads-promote-${Date.now()}-${index}`, postText: caption, threadsPostText: caption, image: { id: image.id, name: image.name, type: image.type || "image/jpeg", url: image.url } })), batchDelayMs: 30000 };
+      } else {
       const suppliedPosts = (Array.isArray(body.posts) ? body.posts : []).slice(0, 5);
       if (suppliedPosts.length) {
         const images = await reservePostPilotHookImages(suppliedPosts.length, body.product_id || body.personal?.product_id);
@@ -59,6 +69,8 @@ module.exports = async function handler(req, res) {
           productId: body.personal?.product_id,
         });
         payload = { posts: generated.posts, batchDelayMs: 30_000 };
+      }
+      payload.channel = channel;
       }
     } else if (type === "threads_text") {
       payload = threadsPayload(body);

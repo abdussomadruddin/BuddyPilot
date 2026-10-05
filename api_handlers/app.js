@@ -1,8 +1,10 @@
+const { buildThreadsPromoteCaption } = require("../lib/threads-promote-caption");
 const { requireAuth } = require("../lib/auth");
 const threadsViralTemplates = require("../lib/threads-viral-templates");
 const { buildThreadsGeneralText } = require("../lib/threads-general-copy");
 
 function pageHtml() {
+  const threadsPromoteCaptionSource = buildThreadsPromoteCaption.toString().replace(/</g, "\\u003c");
   const threadsViralTemplatesJson = JSON.stringify(threadsViralTemplates).replace(/</g, "\\u003c");
   const threadsGeneralCopySource = buildThreadsGeneralText.toString().replace(/</g, "\\u003c");
   const uiIcon = (name, tone = "") => `<svg class="icon section-icon ${tone}" aria-hidden="true"><use href="/icons.svg#${name}"></use></svg>`;
@@ -12,6 +14,8 @@ function pageHtml() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BuddyPilot</title>
+  <link rel="stylesheet" href="/action-feedback.css?v=1">
+  <script src="/action-feedback.js?v=1" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -4317,7 +4321,7 @@ function pageHtml() {
     }
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
-  <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261002-1">
+  <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
 </head>
 <body>
   <main>
@@ -4335,18 +4339,33 @@ function pageHtml() {
         <button class="tab-button" type="button" data-tab-target="clientpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Client Pilot</span></button>
       </nav>
       <details class="topbar-menu">
-        <summary><svg class="icon" aria-hidden="true"><use href="/icons.svg#menu"></use></svg><span>Menu</span></summary>
-        <div class="topbar-menu-list">
+        <summary aria-label="Buka tetapan" title="Tetapan" aria-controls="appSettingsMenu"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Tetapan</span></summary>
+        <div class="topbar-menu-list" id="appSettingsMenu" role="dialog" aria-modal="true" aria-labelledby="appSettingsTitle">
+          <header class="settings-menu-heading"><h2 id="appSettingsTitle">Tetapan</h2><p>Urus akaun dan sambungan anda.</p></header>
           <button type="button" data-menu-refresh><svg class="icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg><span>Refresh</span></button>
-          <button type="button" data-menu-subtab="settings-panel"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Tetapan</span></button>
-          <button type="button" data-menu-subtab="bank-panel"><svg class="icon" aria-hidden="true"><use href="/icons.svg#landmark"></use></svg><span>Akaun Bank</span></button>
-          <button type="button" data-menu-section="menuMetaSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#link"></use></svg><span>Meta Ads</span></button>
+          <button type="button" data-menu-section="menuCompanySettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Syarikat</span></button>
+          <div id="menuCompanySettings" class="menu-settings-panel" hidden></div>
+          <button type="button" data-menu-section="menuBankSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#landmark"></use></svg><span>Akaun Bank</span></button>
+          <div id="menuBankSettings" class="menu-settings-panel" hidden></div>
+          <button type="button" data-menu-section="menuMetaSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart"></use></svg><span>Meta Ads</span></button>
           <div id="menuMetaSettings" class="menu-settings-panel" hidden></div>
-          <button type="button" data-menu-section="menuTikTokSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#link"></use></svg><span>TikTok Ads</span></button>
+          <button type="button" data-menu-section="menuTikTokSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#send"></use></svg><span>TikTok Ads</span></button>
           <div id="menuTikTokSettings" class="menu-settings-panel" hidden></div>
           <form method="post" action="/api/logout">
             <button class="logout-option" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#log-out"></use></svg><span>Logout</span></button>
           </form>
+          <section id="automationSchedules" class="automation-schedules" aria-labelledby="automationTitle">
+            <header><h2 id="automationTitle">Jadual Automasi</h2><p>6 cron jobs · Waktu Malaysia (UTC+8)</p></header>
+            <div class="automation-schedule-list">
+              <article data-cron-path="/api/cron/weekly-reports"><h3>Weekly Report</h3><strong>Isnin · 6:00 pagi</strong><p>Jana report minggu sebelumnya untuk client aktif dan upload ke Google Drive. Report sedia ada dikekalkan.</p></article>
+              <article data-cron-path="/api/cron/daily-ads-report"><h3>Daily Ads Report</h3><strong>Setiap hari · 6:00 pagi</strong><p>Hantar ringkasan iklan semalam ke Telegram client yang dikonfigurasi. Semak juga amaran authorization TikTok.</p></article>
+              <article data-cron-path="/api/cron/personal-ads-report"><h3>Ads CMO Report</h3><strong>Setiap hari · 6:00 pagi</strong><p>Jana dan simpan analisis akaun Ads CMO yang dipilih, kemudian hantar notifikasi ringkasan.</p></article>
+              <article data-cron-path="/api/cron/weekly-report-reminder"><h3>Weekly Report Reminder</h3><strong>Isnin · 10:00 pagi</strong><p id="weeklyReportPushNote" class="note">Reminder admin untuk WhatsApp weekly report minggu sebelumnya. WhatsApp dihantar secara manual.</p><button id="weeklyReportPushButton" class="secondary" type="button">Aktifkan Notifikasi</button></article>
+              <article data-cron-path="/api/cron/monthly-invoices"><h3>Invoice Bulanan</h3><strong>1 haribulan · 6:00 pagi</strong><p>Jana invoice client aktif dan upload ke Google Drive. Invoice bulan tersebut yang sudah diupload dikekalkan.</p></article>
+              <article data-cron-path="/api/cron/monthly-invoice-reminder"><h3>Invoice Reminder</h3><strong>1 haribulan · 10:00 pagi</strong><p id="monthlyInvoicePushNote" class="note">Reminder admin untuk WhatsApp invoice secara manual. Tiada WhatsApp dihantar automatik.</p><button id="monthlyInvoicePushButton" class="secondary" type="button">Aktifkan Notifikasi</button></article>
+            </div>
+            <p class="automation-footnote">Jadual menunjukkan waktu sasaran; pada pelan Hobby, cron boleh berjalan dalam jam tersebut. Senarai ini menunjukkan jadual, bukan pengesahan kejayaan setiap run.</p>
+          </section>
         </div>
       </details>
     </div>
@@ -4412,7 +4431,7 @@ function pageHtml() {
               </button>
               <button class="quick-card" type="button" data-action-key="personal-post" data-go-tab="personalpostpilot" data-go-subtab="postpilot-auto-panel">
                 <span class="quick-card-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#sparkles"></use></svg></span>
-                <span class="quick-card-copy"><strong>Buat Post Personal</strong><small>Facebook + Threads</small></span>
+                <span class="quick-card-copy"><strong>Buat Post Personal</strong><small>Facebook personal</small></span>
                 <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
               </button>
               <button class="quick-card" type="button" data-action-key="threads-post" data-go-tab="personalpostpilot" data-go-subtab="threads-viral-panel">
@@ -4430,7 +4449,7 @@ function pageHtml() {
                 <span class="quick-card-copy"><strong>Buat Invois</strong><small>Invoice Pilot</small></span>
                 <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
               </button>
-              <button class="quick-card" type="button" data-action-key="receipt" data-go-tab="clientpilot" data-go-subtab="client-invoice-panel" data-go-inner-subtab="receipt-panel">
+              <button class="quick-card" type="button" data-action-key="receipt" data-go-tab="clientpilot" data-go-subtab="client-receipt-panel">
                 <span class="quick-card-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#receipt"></use></svg></span>
                 <span class="quick-card-copy"><strong>Buat Resit</strong><small>Payment receipt</small></span>
                 <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
@@ -4544,7 +4563,7 @@ function pageHtml() {
         <div class="hero">
           <div>
             <h1>${uiIcon("send")}Post Pilot</h1>
-            <p>Jana post Facebook personal pendek dan gambar hook. Chrome extension terus post ke Facebook, kemudian Threads.</p>
+            <p>Facebook dan Threads Promote kini aliran berasingan. Pilih tab untuk sediakan post.</p>
           </div>
         </div>
 
@@ -4559,15 +4578,37 @@ function pageHtml() {
             <button id="remoteRefreshButton" class="secondary" type="button" title="Refresh Mac status"><svg class="icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg><span>Refresh</span></button>
             <button id="remotePairButton" class="secondary" type="button">Pair Mac</button>
             <button id="remoteCancelButton" class="secondary" type="button" hidden>Cancel</button>
+            <button id="remoteClearButton" class="secondary" type="button" hidden>Clear</button>
             <button id="remoteRetryButton" class="secondary" type="button" hidden>Retry</button>
           </div>
         </section>
 
         <div class="subtabs postpilot-subtabs">
-          <button class="subtab-button active" type="button" data-subtab-group="post-pilot" data-subtab-target="postpilot-auto-panel">Facebook + Threads Promote</button>
+          <button class="subtab-button active" type="button" data-subtab-group="post-pilot" data-subtab-target="postpilot-auto-panel">Facebook</button>
+          <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="threads-promote-panel">Threads Promote</button>
           <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="pagepilot-panel">Facebook Page Promote</button>
           <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="threads-viral-panel">Threads General</button>
         </div>
+
+        <section id="threads-promote-panel" class="subtab-panel card" data-subtab-panel="post-pilot">
+          <h2>${uiIcon("send", "tone-green")}Threads Promote</h2>
+          <p class="note">Panggil target market → perkara menarik → CTA komen / DM. Satu post dengan 5 gambar. Semak caption sebelum tekan Post.</p>
+          <label for="promoteProductSelect">Produk</label>
+          <select id="promoteProductSelect"></select>
+          <label for="promoteTargetMarket">Target market (wajib)</label>
+          <input id="promoteTargetMarket" type="text" maxlength="80" required placeholder="Siapa yang produk ini ditujukan?">
+          <label for="promoteHighlight">Apa yang menarik tentang produk</label>
+          <input id="promoteHighlight" type="text" maxlength="100" placeholder="Ciri atau manfaat sebenar produk">
+          <button id="savePromoteAudienceButton" type="button" class="secondary">Simpan Maklumat Produk</button>
+          <label for="promoteHookImages">Tambah gambar produk</label>
+          <input id="promoteHookImages" type="file" multiple accept="image/jpeg,image/png,image/webp">
+          <p id="promoteGalleryStatus" class="note">Perlu sekurang-kurangnya 5 gambar.</p>
+          <label for="promoteCaption">Caption pendek</label>
+          <textarea id="promoteCaption" maxlength="280" rows="3" placeholder="Tekan Random Ayat untuk jana caption."></textarea>
+          <div class="inline-actions"><button id="promoteRandomButton" type="button" class="secondary">Random Ayat</button><button id="promotePostButton" type="button">Post · 5 Gambar</button></div>
+          <p class="note">Mac memerlukan <a href="/postpilot-assist-0.4.0.zip" download>Post Pilot Assist v0.4.0</a>. Ekstrak ZIP dan Load unpacked / Reload di chrome://extensions. Extension lama tidak akan mengambil kerja ini.</p>
+          <div id="promoteResult" class="result" role="status"></div>
+        </section>
 
         <div id="pagepilot-panel" class="subtab-panel" data-subtab-panel="post-pilot">
           <div class="section-heading">
@@ -4631,7 +4672,11 @@ function pageHtml() {
               </div>
               <div id="addProductPanel" hidden>
                 <label for="newProductName">Produk baru</label>
-                <input id="newProductName" type="text" placeholder="Nama produk">
+                <input id="newProductName" type="text" placeholder="Nama produk" required>
+                <label for="newProductTargetMarket">Target market (wajib)</label>
+                <input id="newProductTargetMarket" type="text" maxlength="80" required placeholder="Contoh: owner bisnes yang urus order sendiri">
+                <label for="newProductHighlight">Apa yang menarik tentang produk</label>
+                <input id="newProductHighlight" type="text" maxlength="100" placeholder="Nyatakan ciri atau manfaat sebenar produk">
                 <input id="newProductLink" type="url" placeholder="https://link-produk.com">
                 <div class="inline-actions">
                   <button id="saveNewProductButton" type="button">Simpan produk</button>
@@ -4833,6 +4878,8 @@ function pageHtml() {
                 <option value="OPTIMIZE PHASE">OPTIMIZE PHASE</option>
                 <option value="SCALING PHASE">SCALING PHASE</option>
               </select>
+              <button id="saveReportPhaseButton" class="secondary" type="button">Save Phase Client</button>
+              <p id="reportPhaseStatus" class="note" role="status"></p>
             </div>
             <div>
               <label id="reportAdAccountLabel" for="reportAdAccount">Ads account</label>
@@ -4974,199 +5021,14 @@ Review retargeting when the warm audience is ready</textarea>
           </div>
         </div>
 
-        <details class="advanced-panel">
-          <summary>${uiIcon("message", "tone-amber")}Weekly Report Reminder</summary>
-          <div class="ads-cmo-settings-content ads-cmo-push-content">
-            <div><strong>Isnin, 10:00 pagi</strong><p id="weeklyReportPushNote" class="note">Reminder admin untuk WhatsApp weekly report minggu sebelumnya.</p></div>
-            <button id="weeklyReportPushButton" class="secondary" type="button">Aktifkan Notifikasi</button>
-          </div>
-        </details>
+
 
         <div class="subtabs" aria-label="Client tabs">
-          <button class="subtab-button active" type="button" data-subtab-group="client" data-subtab-target="agency-overview-panel">Agency Overview</button>
-          <button class="subtab-button" type="button" data-subtab-group="client" data-subtab-target="client-list-panel">Agency Clients</button>
-          <button class="subtab-button" type="button" data-subtab-group="client" data-subtab-target="client-add-panel">Add Agency Client</button>
+          <button class="subtab-button" type="button" data-subtab-group="client" data-subtab-target="client-list-panel">Clients</button>
+          <button class="subtab-button" type="button" data-subtab-group="client" data-subtab-target="client-add-panel">Add Client</button>
         </div>
 
-        <div id="agency-overview-panel" class="subtab-panel active" data-subtab-panel="client">
-          <section class="agency-overview" aria-live="polite">
-            <div class="agency-overview-toolbar">
-              <div>
-                <h2>${uiIcon("layout-dashboard")}Agency Overview</h2>
-                <p class="note">Revenue, managed ad budget, services dan task client dalam satu tempat.</p>
-              </div>
-              <button id="refreshAgencyOperationsButton" class="secondary" type="button">Refresh</button>
-            </div>
-            <div class="agency-metrics">
-              <article><span>Active clients</span><strong id="agencyActiveClients">0</strong></article>
-              <article><span>Monthly revenue</span><strong id="agencyMonthlyRevenue">RM 0.00</strong></article>
-              <article><span>Managed ad budget</span><strong id="agencyManagedBudget">RM 0.00</strong></article>
-              <article><span>Open tasks</span><strong id="agencyOpenTasks">0</strong></article>
-            </div>
-            <section class="agency-performance-panel">
-              <div class="agency-panel-heading">
-                <div><h3>${uiIcon("chart", "tone-green")}Agency Performance</h3><p class="note">Profitability dan delivery health berdasarkan service serta task semasa.</p></div>
-                <span class="agency-performance-period">Last 30 days</span>
-              </div>
-              <div class="agency-performance-metrics">
-                <article><span>Gross profit</span><strong id="agencyGrossProfit">RM 0.00</strong><small id="agencyInternalCost">Cost RM 0.00</small></article>
-                <article><span>Gross margin</span><strong id="agencyGrossMargin">0%</strong><small>Active services</small></article>
-                <article><span>Completion rate</span><strong id="agencyCompletionRate">0%</strong><small id="agencyCompletionSample">No recent tasks</small></article>
-                <article><span>Overdue</span><strong id="agencyOverdueTasks">0</strong><small>Open tasks</small></article>
-              </div>
-              <div class="agency-performance-grid">
-                <div><h4>Client profitability</h4><div id="agencyClientProfitability" class="agency-performance-list"></div></div>
-                <div><h4>Team capacity</h4><div id="agencyTeamCapacity" class="agency-performance-list"></div></div>
-              </div>
-            </section>
-            <div class="agency-workspace-toolbar">
-              <label for="agencyWorkspaceClient">Working on client</label>
-              <select id="agencyWorkspaceClient"><option value="">Semua agency clients</option></select>
-            </div>
-            <section class="agency-health-panel">
-              <div class="agency-panel-heading">
-                <div><h3>${uiIcon("users")}Client Health & Retention</h3><p class="note">Nampak relationship risk, check-in dan renewal sebelum client terlepas.</p></div>
-                <span class="agency-performance-period">Live score</span>
-              </div>
-              <div class="agency-health-metrics">
-                <article><span>Healthy</span><strong id="agencyHealthyClients">0</strong></article>
-                <article><span>Watch</span><strong id="agencyWatchClients">0</strong></article>
-                <article><span>At risk</span><strong id="agencyRiskClients">0</strong></article>
-                <article><span>Check-ins due</span><strong id="agencyCheckInsDue">0</strong></article>
-              </div>
-              <div class="agency-health-grid">
-                <div><h4>Retention board</h4><div id="agencyHealthBoard" class="agency-health-board"></div></div>
-                <form id="agencyHealthForm" class="agency-inline-form agency-health-form">
-                  <h4>Update client health</h4>
-                  <div class="agency-form-row">
-                    <label>Relationship<select name="relationshipStatus"><option value="strong">Strong</option><option value="stable" selected>Stable</option><option value="watch">Watch</option><option value="risk">Risk</option></select></label>
-                    <label>Renewal stage<select name="renewalStage"><option value="none">Not started</option><option value="upcoming">Upcoming</option><option value="proposed">Proposal sent</option><option value="renewed">Renewed</option><option value="churn_risk">Churn risk</option></select></label>
-                  </div>
-                  <div class="agency-form-row">
-                    <label>Last check-in<input name="lastCheckIn" type="date"></label>
-                    <label>Next check-in<input name="nextCheckIn" type="date"></label>
-                  </div>
-                  <label>Retention notes<textarea name="notes" rows="3" placeholder="Feedback, concern atau next action"></textarea></label>
-                  <button type="submit">Save Health Check-in</button>
-                </form>
-              </div>
-            </section>
-            <section class="agency-growth-panel">
-              <div class="agency-panel-heading">
-                <div><h3>${uiIcon("chart", "tone-amber")}Renewal & Growth Pipeline</h3><p class="note">Forecast 90 hari untuk lindungi recurring revenue dan susun peluang growth client.</p></div>
-                <span class="agency-performance-period">90-day view</span>
-              </div>
-              <div class="agency-growth-metrics">
-                <article><span>Renewal value</span><strong id="agencyRenewalValue">RM 0.00</strong><small id="agencyRenewalCount">0 renewals</small></article>
-                <article><span>Open pipeline</span><strong id="agencyPipelineValue">RM 0.00</strong><small id="agencyPipelineCount">0 opportunities</small></article>
-                <article><span>Weighted forecast</span><strong id="agencyWeightedForecast">RM 0.00</strong><small>Stage adjusted</small></article>
-                <article><span>Revenue at risk</span><strong id="agencyAtRiskRevenue">RM 0.00</strong><small>Risk or churn clients</small></article>
-              </div>
-              <div class="agency-growth-grid">
-                <div>
-                  <h4>90-day forecast</h4>
-                  <div id="agencyGrowthForecast" class="agency-growth-forecast"></div>
-                </div>
-                <form id="agencyOpportunityForm" class="agency-inline-form agency-opportunity-form">
-                  <input name="id" type="hidden">
-                  <h4>Add growth opportunity</h4>
-                  <label>Opportunity<input name="title" type="text" placeholder="Contoh: Tambah creative package" required></label>
-                  <div class="agency-form-row">
-                    <label>Type<select name="opportunityType"><option value="upsell">Upsell</option><option value="cross_sell">Cross-sell</option><option value="renewal">Renewal</option><option value="expansion">Expansion</option></select></label>
-                    <label>Stage<select name="stage"><option value="idea">Idea</option><option value="discovery">Discovery</option><option value="proposal">Proposal</option><option value="won">Won</option><option value="lost">Lost</option></select></label>
-                  </div>
-                  <div class="agency-form-row">
-                    <label>Estimated monthly value<input name="estimatedMonthlyValue" type="number" min="0" step="0.01" inputmode="decimal" value="0" required></label>
-                    <label>Target date<input name="targetDate" type="date"></label>
-                  </div>
-                  <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
-                  <label>Notes<textarea name="notes" rows="2" placeholder="Next action atau context"></textarea></label>
-                  <div class="inline-actions"><button type="submit">Save Opportunity</button><button id="cancelAgencyOpportunityEdit" class="secondary" type="button" hidden>Cancel</button></div>
-                </form>
-              </div>
-              <div id="agencyOpportunityList" class="agency-opportunity-list"></div>
-            </section>
-            <div id="agencyAttentionList" class="agency-attention-list"></div>
-            <section class="agency-delivery-calendar">
-              <div class="agency-panel-heading">
-                <div><h3>${uiIcon("file-text")}Delivery Calendar</h3><p class="note">Task due dalam 14 hari akan muncul di sini.</p></div>
-                <button id="generateAgencyRecurringButton" class="secondary" type="button">Sync Recurring Tasks</button>
-              </div>
-              <div id="agencyDeliveryCalendar" class="agency-calendar-list"></div>
-            </section>
-            <div class="agency-workspace-grid">
-              <section class="agency-workspace-panel">
-                <div class="agency-panel-heading"><div><h3>${uiIcon("landmark", "tone-green")}Services</h3><p class="note">Track fee, owner dan renewal.</p></div></div>
-                <form id="agencyServiceForm" class="agency-inline-form">
-                  <input name="id" type="hidden">
-                  <label>Service name<input name="name" type="text" placeholder="Contoh: Meta Ads Management" required></label>
-                  <div class="agency-form-row">
-                    <label>Monthly fee<input name="monthlyFee" type="number" min="0" step="0.01" inputmode="decimal" value="0" required></label>
-                    <label>Internal monthly cost<input name="internalMonthlyCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Isi untuk kira margin"></label>
-                  </div>
-                  <div class="agency-form-row">
-                    <label>Status<select name="status"><option value="active">Active</option><option value="paused">Paused</option><option value="completed">Completed</option></select></label>
-                    <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
-                  </div>
-                  <label>Renewal date<input name="renewalDate" type="date"></label>
-                  <div class="inline-actions"><button type="submit">Save Service</button><button id="cancelAgencyServiceEdit" class="secondary" type="button" hidden>Cancel</button></div>
-                </form>
-                <div id="agencyServiceList" class="agency-operation-list"></div>
-              </section>
-              <section class="agency-workspace-panel">
-                <div class="agency-panel-heading"><div><h3>${uiIcon("file-text")}Task Tracker</h3><p class="note">Tugasan penting dan due date setiap client.</p></div></div>
-                <form id="agencyTaskForm" class="agency-inline-form">
-                  <input name="id" type="hidden">
-                  <label>Task<input name="title" type="text" placeholder="Contoh: Hantar weekly report" required></label>
-                  <div class="agency-form-row">
-                    <label>Due date<input name="dueDate" type="date"></label>
-                    <label>Priority<select name="priority"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option><option value="low">Low</option></select></label>
-                  </div>
-                  <div class="agency-form-row">
-                    <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
-                    <label>Status<select name="status"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></label>
-                  </div>
-                  <div class="agency-form-row">
-                    <label>Work type<select name="workType"><option value="general">General</option><option value="report">Weekly report</option><option value="invoice">Invoice</option><option value="creative">Creative</option><option value="campaign_review">Campaign review</option></select></label>
-                    <label>Estimated minutes<input name="estimatedMinutes" type="number" min="0" max="10080" step="15" inputmode="numeric" value="0"></label>
-                  </div>
-                  <div class="inline-actions"><button type="submit">Save Task</button><button id="cancelAgencyTaskEdit" class="secondary" type="button" hidden>Cancel</button></div>
-                </form>
-                <div id="agencyTaskList" class="agency-operation-list"></div>
-              </section>
-            </div>
-            <section class="agency-workspace-panel agency-recurring-panel">
-              <div class="agency-panel-heading"><div><h3>${uiIcon("refresh", "tone-amber")}Recurring Deliveries</h3><p class="note">Jadualkan report, invoice, creative atau campaign review secara mingguan dan bulanan.</p></div></div>
-              <form id="agencyTemplateForm" class="agency-inline-form agency-template-form">
-                <input name="id" type="hidden">
-                <label>Delivery name<input name="title" type="text" placeholder="Contoh: Hantar weekly report" required></label>
-                <div class="agency-form-row">
-                  <label>Work type<select name="workType"><option value="report">Weekly report</option><option value="invoice">Invoice</option><option value="creative">Creative</option><option value="campaign_review">Campaign review</option><option value="general">General</option></select></label>
-                  <label>Service<select name="serviceId"><option value="">No linked service</option></select></label>
-                </div>
-                <div class="agency-form-row">
-                  <label>Cadence<select name="cadence"><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
-                  <label>Next due date<input name="nextDueDate" type="date" required></label>
-                </div>
-                <div class="agency-form-row">
-                  <label>Weekly day<select name="weekday"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select></label>
-                  <label>Monthly day<input name="monthDay" type="number" min="1" max="28" value="1" required></label>
-                </div>
-                <div class="agency-form-row">
-                  <label>Priority<select name="priority"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option><option value="low">Low</option></select></label>
-                  <label>Owner<input name="owner" type="text" placeholder="PIC"></label>
-                </div>
-                <label>Estimated minutes per delivery<input name="estimatedMinutes" type="number" min="0" max="10080" step="15" inputmode="numeric" value="0"></label>
-                <label class="agency-checkbox"><input name="isActive" type="checkbox" checked> Active schedule</label>
-                <div class="inline-actions"><button type="submit">Save Recurring Delivery</button><button id="cancelAgencyTemplateEdit" class="secondary" type="button" hidden>Cancel</button></div>
-              </form>
-              <div id="agencyTemplateList" class="agency-operation-list"></div>
-            </section>
-            <div id="agencyOperationsResult" class="result"></div>
-          </section>
-        </div>
-
-        <div id="client-list-panel" class="subtab-panel" data-subtab-panel="client">
+        <div id="client-list-panel" class="subtab-panel active" data-subtab-panel="client">
           <div class="client-mobile-tools">
             <label class="client-search"><input id="clientSearchInput" type="search" placeholder="Cari pelanggan" aria-label="Cari pelanggan"></label>
             <div class="client-filter-chips" aria-label="Filter pelanggan">
@@ -5358,20 +5220,8 @@ Review retargeting when the warm audience is ready</textarea>
         <div class="section-heading">
           <div>
             <h1>${uiIcon("receipt", "tone-amber")}Invoice Pilot</h1>
-            <p class="note">Generate invoice PDF dan receipt PDF di sini.</p>
+            <p class="note">Review dan urus invoice PDF di sini.</p>
           </div>
-        </div>
-        <details class="advanced-panel ads-cmo-settings-panel">
-          <summary>${uiIcon("receipt", "tone-amber")}Jadual invoice bulanan</summary>
-          <div class="ads-cmo-settings-content">
-            <p class="note"><strong>1 haribulan, 6:00 pagi (Malaysia)</strong> &middot; Invoice client aktif dijana dan diupload ke Google Drive. Invoice bulan tersebut yang sudah diupload dikekalkan.</p>
-            <p id="monthlyInvoicePushNote" class="note">Reminder admin pada 1 haribulan, 10:00 pagi untuk WhatsApp invoice secara manual. Tiada WhatsApp dihantar automatik.</p>
-            <button id="monthlyInvoicePushButton" class="secondary" type="button">Aktifkan Notifikasi</button>
-          </div>
-        </details>
-        <div class="subtabs" aria-label="Invoice Pilot tabs">
-          <button class="subtab-button active" type="button" data-subtab-group="invoice-pilot" data-subtab-target="invoice-panel">Invoice</button>
-          <button class="subtab-button" type="button" data-subtab-group="invoice-pilot" data-subtab-target="receipt-panel">Receipt</button>
         </div>
 
         <div id="settings-panel" class="subtab-panel" data-subtab-panel="invoice-pilot">
@@ -5407,7 +5257,7 @@ Review retargeting when the warm audience is ready</textarea>
           <div id="pushNotificationNote" class="push-notification-note">Notifikasi menyokong browser, Android dan iOS Home Screen.</div>
         </section>
         <form id="settingsForm" class="client-form">
-          <h2>${uiIcon("settings")}Settings Syarikat</h2>
+          <h2>${uiIcon("settings")}Syarikat</h2>
           <div class="client-grid">
             <div>
               <label for="businessName">Nama Syarikat</label>
@@ -5436,7 +5286,7 @@ Review retargeting when the warm audience is ready</textarea>
             </div>
           </div>
           <div class="client-form-actions">
-            <button id="saveSettingsButton" type="submit">Save Settings</button>
+            <button id="saveSettingsButton" type="submit">Simpan Syarikat</button>
             <button id="removeBusinessLogoButton" class="secondary" type="button" hidden>Remove Logo</button>
           </div>
         </form>
@@ -5530,6 +5380,7 @@ Review retargeting when the warm audience is ready</textarea>
   <div id="appToast" class="app-toast" role="status" aria-live="polite" hidden></div>
 
   <script>
+    const buildThreadsPromoteCaption = ${threadsPromoteCaptionSource};
     const form = document.getElementById("postForm");
     const result = document.getElementById("result");
     const button = form.querySelector("button");
@@ -5573,6 +5424,7 @@ Review retargeting when the warm audience is ready</textarea>
     const remotePairButton = document.getElementById("remotePairButton");
     const remoteRefreshButton = document.getElementById("remoteRefreshButton");
     const remoteCancelButton = document.getElementById("remoteCancelButton");
+    const remoteClearButton = document.getElementById("remoteClearButton");
     const remoteRetryButton = document.getElementById("remoteRetryButton");
     const viralTemplates = ${threadsViralTemplatesJson};
     const buildThreadsGeneralText = ${threadsGeneralCopySource};
@@ -5632,49 +5484,6 @@ Review retargeting when the warm audience is ready</textarea>
     const editAgencyClientButton = document.getElementById("editAgencyClientButton");
     const archiveAgencyClientButton = document.getElementById("archiveAgencyClientButton");
     const backToAgencyClientsButton = document.getElementById("backToAgencyClientsButton");
-    const refreshAgencyOperationsButton = document.getElementById("refreshAgencyOperationsButton");
-    const agencyWorkspaceClient = document.getElementById("agencyWorkspaceClient");
-    const agencyActiveClients = document.getElementById("agencyActiveClients");
-    const agencyMonthlyRevenue = document.getElementById("agencyMonthlyRevenue");
-    const agencyManagedBudget = document.getElementById("agencyManagedBudget");
-    const agencyOpenTasks = document.getElementById("agencyOpenTasks");
-    const agencyGrossProfit = document.getElementById("agencyGrossProfit");
-    const agencyInternalCost = document.getElementById("agencyInternalCost");
-    const agencyGrossMargin = document.getElementById("agencyGrossMargin");
-    const agencyCompletionRate = document.getElementById("agencyCompletionRate");
-    const agencyCompletionSample = document.getElementById("agencyCompletionSample");
-    const agencyOverdueTasks = document.getElementById("agencyOverdueTasks");
-    const agencyClientProfitability = document.getElementById("agencyClientProfitability");
-    const agencyTeamCapacity = document.getElementById("agencyTeamCapacity");
-    const agencyHealthyClients = document.getElementById("agencyHealthyClients");
-    const agencyWatchClients = document.getElementById("agencyWatchClients");
-    const agencyRiskClients = document.getElementById("agencyRiskClients");
-    const agencyCheckInsDue = document.getElementById("agencyCheckInsDue");
-    const agencyHealthBoard = document.getElementById("agencyHealthBoard");
-    const agencyHealthForm = document.getElementById("agencyHealthForm");
-    const agencyRenewalValue = document.getElementById("agencyRenewalValue");
-    const agencyRenewalCount = document.getElementById("agencyRenewalCount");
-    const agencyPipelineValue = document.getElementById("agencyPipelineValue");
-    const agencyPipelineCount = document.getElementById("agencyPipelineCount");
-    const agencyWeightedForecast = document.getElementById("agencyWeightedForecast");
-    const agencyAtRiskRevenue = document.getElementById("agencyAtRiskRevenue");
-    const agencyGrowthForecast = document.getElementById("agencyGrowthForecast");
-    const agencyOpportunityForm = document.getElementById("agencyOpportunityForm");
-    const agencyOpportunityList = document.getElementById("agencyOpportunityList");
-    const cancelAgencyOpportunityEdit = document.getElementById("cancelAgencyOpportunityEdit");
-    const agencyAttentionList = document.getElementById("agencyAttentionList");
-    const agencyDeliveryCalendar = document.getElementById("agencyDeliveryCalendar");
-    const generateAgencyRecurringButton = document.getElementById("generateAgencyRecurringButton");
-    const agencyServiceForm = document.getElementById("agencyServiceForm");
-    const agencyTaskForm = document.getElementById("agencyTaskForm");
-    const agencyTemplateForm = document.getElementById("agencyTemplateForm");
-    const agencyServiceList = document.getElementById("agencyServiceList");
-    const agencyTaskList = document.getElementById("agencyTaskList");
-    const agencyTemplateList = document.getElementById("agencyTemplateList");
-    const agencyOperationsResult = document.getElementById("agencyOperationsResult");
-    const cancelAgencyServiceEdit = document.getElementById("cancelAgencyServiceEdit");
-    const cancelAgencyTaskEdit = document.getElementById("cancelAgencyTaskEdit");
-    const cancelAgencyTemplateEdit = document.getElementById("cancelAgencyTemplateEdit");
     const dashboardClientCount = document.getElementById("dashboardClientCount");
     const dashboardInvoiceCount = document.getElementById("dashboardInvoiceCount");
     const dashboardRegistryStatus = document.getElementById("dashboardRegistryStatus");
@@ -5848,12 +5657,6 @@ Review retargeting when the warm audience is ready</textarea>
     let currentInvoices = [];
     let currentReceipts = [];
     let currentClients = [];
-    let currentAgencyServices = [];
-    let currentAgencyTasks = [];
-    let currentAgencyTemplates = [];
-    let currentAgencyInsights = {};
-    let currentAgencyHealth = { records: [], clients: [], summary: {} };
-    let currentAgencyGrowth = { summary: {}, renewals: [], opportunities: [] };
     let currentAgencyClientCode = "";
     let currentClientOnboarding = null;
     let currentClientOnboardingStep = "details";
@@ -5913,6 +5716,8 @@ Review retargeting when the warm audience is ready</textarea>
       addProductPanel.hidden = true;
       newProductName.value = "";
       newProductLink.value = "";
+      document.getElementById("newProductTargetMarket").value = "";
+      document.getElementById("newProductHighlight").value = "";
     });
 
     saveNewProductButton.addEventListener("click", () => {
@@ -5958,6 +5763,8 @@ Review retargeting when the warm audience is ready</textarea>
         : "Not Paired · generate code dan masukkan dalam popup extension Mac.";
       remoteJobStatus.textContent = remoteJobDescription(latestJob);
       remotePairButton.textContent = device ? "Pair semula" : "Pair Mac";
+      remoteClearButton.hidden = !latestJob;
+      remoteJobStatus.hidden = !latestJob;
       remoteCancelButton.hidden = !activeJob;
       remoteRetryButton.hidden = !latestJob || !["failed", "cancelled", "expired"].includes(latestJob.status);
     }
@@ -6031,6 +5838,20 @@ Review retargeting when the warm audience is ready</textarea>
       }
     });
 
+    remoteClearButton.addEventListener("click", async () => {
+      remoteClearButton.disabled = true;
+      remoteJobStatus.hidden = true;
+      remoteRetryButton.hidden = true;
+      remoteCancelButton.hidden = true;
+      try {
+        await runRemoteJobAction("clear");
+        showToast("Kerja di-clear dan dibatalkan. Step yang sedang dihantar mungkin sudah selesai.");
+      } catch (error) {
+        remoteJobStatus.hidden = false;
+        await loadRemoteAutomationStatus({ silent: true });
+        showThreadsError(error);
+      } finally { remoteClearButton.disabled = false; }
+    });
     remoteCancelButton.addEventListener("click", () => runRemoteJobAction("cancel").catch(showThreadsError));
     remoteRetryButton.addEventListener("click", () => runRemoteJobAction("retry").catch(showThreadsError));
     remoteRefreshButton.addEventListener("click", () => loadRemoteAutomationStatus({ silent: false }));
@@ -6042,7 +5863,7 @@ Review retargeting when the warm audience is ready</textarea>
       const statusTarget = document.getElementById("threads-viral-panel")?.classList.contains("active") ? viralResult : threadsResult;
       statusTarget.className = data.ok ? "result ok" : "result err";
       statusTarget.textContent = data.ok
-        ? (data.message || "Post Pilot extension sudah start. Facebook dibuka dahulu, kemudian Threads.")
+        ? (data.message || "Post Pilot extension sudah start.")
         : (data.error || "Post Pilot extension tidak respond. Reload extension dan refresh webapp.");
     });
 
@@ -6314,7 +6135,7 @@ Review retargeting when the warm audience is ready</textarea>
           : "";
         return renderOperationItem({
           status: job.status,
-          title: job.type === "threads_text" ? "Threads automation" : "Facebook + Threads automation",
+          title: job.type === "threads_text" ? "Threads automation" : job.channel === "threads_promote" ? "Threads Promote" : job.channel === "facebook" ? "Facebook automation" : "Facebook + Threads automation",
           detail: recoveryDetail || job.progress?.message || "Job sedang berjalan.",
         }, registerOperationsAction({ kind: "automation", operation: "cancel", label: "Cancel", jobId: job.id }));
       }).join("");
@@ -6727,6 +6548,11 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function activateSubtab(group, targetId) {
+      if (group === "invoice-pilot" && targetId === "receipt-panel") {
+        activateSubtab("client-modules", "client-receipt-panel");
+        return;
+      }
+      if (group === "client-modules" && targetId === "client-invoice-panel") activateSubtab("invoice-pilot", "invoice-panel");
       document.querySelectorAll(\`.subtab-button[data-subtab-group="\${group}"]\`).forEach((button) => {
         button.classList.toggle("active", button.dataset.subtabTarget === targetId);
       });
@@ -6737,6 +6563,12 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function openInvoicePilotPanel(targetId) {
+      if (["settings-panel", "bank-panel"].includes(targetId)) {
+        const panelId = targetId === "settings-panel" ? "menuCompanySettings" : "menuBankSettings";
+        document.querySelectorAll(".menu-settings-panel").forEach((panel) => { panel.hidden = panel.id !== panelId; });
+        topbarMenu.open = true;
+        return;
+      }
       activateTab("clientpilot");
       activateSubtab("client-modules", "client-invoice-panel");
       activateSubtab("invoice-pilot", targetId);
@@ -6749,6 +6581,12 @@ Review retargeting when the warm audience is ready</textarea>
       const tiktokPanel = document.getElementById("menuTikTokSettings");
       if (metaCard && metaPanel) metaPanel.appendChild(metaCard);
       if (tiktokCard && tiktokPanel) tiktokPanel.appendChild(tiktokCard);
+      [["settings-panel", "menuCompanySettings"], ["bank-panel", "menuBankSettings"]].forEach(([id, destination]) => {
+        const content = document.getElementById(id);
+        content.classList.remove("subtab-panel", "active");
+        content.removeAttribute("data-subtab-panel");
+        document.getElementById(destination).appendChild(content);
+      });
       const panels = [...document.querySelectorAll(".menu-settings-panel")];
       document.querySelectorAll("[data-menu-section]").forEach((button) => {
         button.addEventListener("click", async () => {
@@ -6759,7 +6597,8 @@ Review retargeting when the warm audience is ready</textarea>
         });
       });
       const requested = new URLSearchParams(window.location.search);
-      if (requested.get("tiktok") || window.location.hash === "#tiktokAdsSettings") {
+      if (["settings-panel", "bank-panel"].includes(requested.get("panel"))) openInvoicePilotPanel(requested.get("panel"));
+      else if (requested.get("tiktok") || window.location.hash === "#tiktokAdsSettings") {
         topbarMenu.open = true;
         panels.forEach((item) => { item.hidden = item !== tiktokPanel; });
       } else if (requested.get("meta") || window.location.hash === "#metaAdsSettings") {
@@ -6780,11 +6619,23 @@ Review retargeting when the warm audience is ready</textarea>
       moduleTabs.className = "subtabs client-module-tabs";
       moduleTabs.setAttribute("aria-label", "Client Pilot modules");
       moduleTabs.innerHTML = \`
-        <button class="subtab-button active" type="button" data-subtab-group="client-modules" data-subtab-target="client-overview-panel">Client Pilot</button>
-        <button class="subtab-button" type="button" data-subtab-group="client-modules" data-subtab-target="client-report-panel">Report Pilot</button>
-        <button class="subtab-button" type="button" data-subtab-group="client-modules" data-subtab-target="client-invoice-panel">Invoice Pilot</button>
+        <button class="subtab-button active" type="button" data-subtab-group="client-modules" data-subtab-target="client-overview-panel">Client</button>
+        <button class="subtab-button" type="button" data-subtab-group="client-modules" data-subtab-target="client-report-panel">Report</button>
+        <button class="subtab-button" type="button" data-subtab-group="client-modules" data-subtab-target="client-invoice-panel">Invoice</button>
+        <button class="subtab-button" type="button" data-subtab-group="client-modules" data-subtab-target="client-receipt-panel">Receipt</button>
       \`;
       clientPanel.insertBefore(moduleTabs, clientCard);
+      const receiptPanel = document.getElementById("receipt-panel");
+      const receiptModule = document.createElement("section");
+      receiptModule.id = "client-receipt-panel";
+      receiptModule.className = "subtab-panel card";
+      receiptModule.dataset.subtabPanel = "client-modules";
+      receiptModule.innerHTML = '<div class="section-heading"><div><h1>Receipt</h1><p class="note">Review dan urus resit PDF di sini.</p></div></div>';
+      receiptPanel.classList.remove("subtab-panel", "active");
+      receiptPanel.removeAttribute("data-subtab-panel");
+      receiptModule.appendChild(receiptPanel);
+      clientPanel.appendChild(receiptModule);
+
 
       clientCard.id = "client-overview-panel";
       clientCard.classList.add("subtab-panel", "active");
@@ -6850,6 +6701,10 @@ Review retargeting when the warm audience is ready</textarea>
           if (group === "client") saved = "client-list-panel";
         }
         const savedPanel = saved ? document.getElementById(saved) : null;
+        if (group === "invoice-pilot" && saved === "receipt-panel") {
+          activateSubtab("client-modules", "client-receipt-panel");
+          saved = "invoice-panel";
+        }
         const target = savedPanel?.dataset.subtabPanel === group ? saved : fallback;
         if (target) activateSubtab(group, target);
       });
@@ -7317,6 +7172,64 @@ Review retargeting when the warm audience is ready</textarea>
       }, 650);
     }
 
+    function syncThreadsPromote() {
+      const select = document.getElementById("promoteProductSelect");
+      select.replaceChildren(...[...threadsProductSelect.options].map((option) => option.cloneNode(true)));
+      select.value = activePostPilotProductId;
+      const product = postPilotProducts.find((item) => item.id === activePostPilotProductId);
+      document.getElementById("promoteTargetMarket").value = product?.targetMarket || "";
+      document.getElementById("promoteHighlight").value = product?.highlight || "";
+      document.getElementById("promoteGalleryStatus").textContent = postPilotGalleryImages.length + "/20 gambar produk · 5 gambar dipilih untuk satu post.";
+    }
+    document.getElementById("promoteProductSelect").addEventListener("change", async (event) => {
+      try { await activatePostPilotProduct(event.target.value); document.getElementById("promoteCaption").value = ""; syncThreadsPromote(); }
+      catch (error) { document.getElementById("promoteResult").textContent = error.message; }
+    });
+    document.getElementById("promoteHookImages").addEventListener("change", async (event) => {
+      const input = event.target;
+      input.disabled = true;
+      try { await uploadPostPilotGalleryFiles([...input.files]); syncThreadsPromote(); }
+      catch (error) { document.getElementById("promoteResult").textContent = error.message; }
+      finally { input.disabled = false; input.value = ""; }
+    });
+    async function savePromoteProductInfo() {
+      if (!document.getElementById("promoteTargetMarket").reportValidity()) throw new Error("Target market wajib diisi.");
+      const response = await fetch("/api/personal-post-products", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: activePostPilotProductId, target_market: document.getElementById("promoteTargetMarket").value, highlight: document.getElementById("promoteHighlight").value }) });
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal simpan maklumat produk.");
+      postPilotProducts = postPilotProducts.map((item) => item.id === json.product.id ? json.product : item);
+      return json.product;
+    }
+    document.getElementById("savePromoteAudienceButton").addEventListener("click", async (event) => {
+      event.currentTarget.disabled = true;
+      try { await savePromoteProductInfo(); document.getElementById("promoteResult").textContent = "Maklumat produk disimpan."; }
+      catch (error) { document.getElementById("promoteResult").textContent = error.message; }
+      finally { event.target.disabled = false; }
+    });
+    let previousPromoteAngle = -1;
+    document.getElementById("promoteRandomButton").addEventListener("click", () => {
+      const product = postPilotProducts.find((item) => item.id === activePostPilotProductId);
+      if (!product) return;
+      try {
+        if (!document.getElementById("promoteTargetMarket").reportValidity()) return;
+        let index = Math.floor(Math.random() * 4);
+        if (index === previousPromoteAngle) index = (index + 1) % 4;
+        previousPromoteAngle = index;
+        document.getElementById("promoteCaption").value = buildThreadsPromoteCaption({ ...product, targetMarket: document.getElementById("promoteTargetMarket").value, highlight: document.getElementById("promoteHighlight").value }, index);
+      } catch (error) { document.getElementById("promoteResult").textContent = error.message; }
+    });
+    document.getElementById("promotePostButton").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      const result = document.getElementById("promoteResult");
+      button.disabled = true;
+      try {
+        await savePromoteProductInfo();
+        await createRemoteAutomationJob({ type: "facebook_threads", channel: "threads_promote", product_id: activePostPilotProductId, caption: document.getElementById("promoteCaption").value }, result);
+        result.textContent = "Satu post Threads dengan 5 gambar masuk queue Mac.";
+      } catch (error) { result.textContent = error.message; }
+      finally { button.disabled = false; }
+    });
+
     function renderPostPilotProducts() {
       threadsProductSelect.innerHTML = "";
       postPilotProducts.forEach((product) => {
@@ -7325,6 +7238,7 @@ Review retargeting when the warm audience is ready</textarea>
         option.textContent = product.name;
         threadsProductSelect.appendChild(option);
       });
+      syncThreadsPromote();
       deleteProductButton.disabled = postPilotProducts.length <= 1;
       deleteProductButton.title = postPilotProducts.length <= 1
         ? "Tambah produk lain sebelum delete produk ini"
@@ -7389,10 +7303,11 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     async function createPostPilotProductFromForm() {
+      if (!newProductName.reportValidity() || !document.getElementById("newProductTargetMarket").reportValidity()) return;
       const response = await fetch("/api/personal-post-products", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: newProductName.value, affiliate_link: newProductLink.value }),
+        body: JSON.stringify({ name: newProductName.value, affiliate_link: newProductLink.value, target_market: document.getElementById("newProductTargetMarket").value, highlight: document.getElementById("newProductHighlight").value }),
       });
       const json = await readApiJson(response);
       if (!response.ok || !json.ok) throw new Error(json.error || "Gagal tambah produk.");
@@ -7401,6 +7316,8 @@ Review retargeting when the warm audience is ready</textarea>
       addProductPanel.hidden = true;
       newProductName.value = "";
       newProductLink.value = "";
+      document.getElementById("newProductTargetMarket").value = "";
+      document.getElementById("newProductHighlight").value = "";
       await activatePostPilotProduct(json.product.id, { persist: false });
       setMessage(threadsResult, "ok", \`Produk \${json.product.name} ditambah dan diaktifkan.\`);
     }
@@ -7565,6 +7482,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function renderPostPilotGallery() {
+      syncThreadsPromote();
       if (!threadsHookGallery || !threadsHookImageStatus) return;
       threadsHookGallery.innerHTML = "";
       postPilotGalleryImages.forEach((image) => {
@@ -7685,13 +7603,14 @@ Review retargeting when the warm audience is ready</textarea>
         await savePostPilotInputsToSupabase();
         await createRemoteAutomationJob({
           type: "facebook_threads",
+          channel: "facebook",
           count,
           personal: threadsPayloadFromForm()
         }, threadsResult);
         threadsResult.className = "result ok";
         threadsResult.textContent = count === 5
-          ? "5 post unik masuk queue Mac. Facebook dan Threads akan bergerak satu demi satu, dengan jarak 30 saat."
-          : "Post unik masuk queue Mac. Facebook akan post dahulu, kemudian Threads.";
+          ? "5 post Facebook masuk queue Mac, dengan jarak 30 saat."
+          : "Post Facebook masuk queue Mac.";
       } catch (error) {
         showThreadsError(error);
       } finally {
@@ -7790,6 +7709,7 @@ Review retargeting when the warm audience is ready</textarea>
       if (!postText) throw new Error("Post utama kosong.");
       await createRemoteAutomationJob({
         type: "facebook_threads",
+        channel: "facebook",
         product_id: activePostPilotProductId,
         posts: [{
           id: "postpilot-preview-" + Date.now(),
@@ -7801,7 +7721,7 @@ Review retargeting when the warm audience is ready</textarea>
         }]
       }, threadsResult);
       threadsResult.className = "result ok";
-      threadsResult.textContent = "Draft masuk queue. Menunggu Chrome Mac buka Facebook, kemudian Threads.";
+      threadsResult.textContent = "Draft Facebook masuk queue. Menunggu Chrome Mac.";
       setPostWorkflowStep(4);
       showToast("Post masuk queue Mac.");
       loadTodayDashboard({ silent: true, force: true });
@@ -9435,6 +9355,8 @@ Review retargeting when the warm audience is ready</textarea>
 
     function applySelectedClientReportDefaults() {
       const config = selectedReportClient()?.adsReportConfig;
+      document.getElementById("reportPhase").value = config?.phase || "SETUP PHASE";
+      document.getElementById("reportPhaseStatus").textContent = "Phase client: " + (config?.phase || "SETUP PHASE");
       const platform = config?.platform === "tiktok" ? "tiktok" : "meta";
       reportResultMetric.value = config?.resultMetric || "conversions";
       reportResultLabel.value = reportResultLabelFor(reportResultMetric.value);
@@ -9536,353 +9458,6 @@ Review retargeting when the warm audience is ready</textarea>
     function agencyClientLabel(code) {
       const client = currentClients.find((item) => item.code === code);
       return client?.brandClient || client?.name || code || "Agency client";
-    }
-
-    function agencyOperationStatusLabel(status) {
-      return ({ active: "Active", paused: "Paused", completed: "Completed", todo: "To do", in_progress: "In progress", done: "Done", cancelled: "Cancelled" })[status] || status;
-    }
-
-    function agencyWorkTypeLabel(type) {
-      return ({ general: "General", report: "Weekly report", invoice: "Invoice", creative: "Creative", campaign_review: "Campaign review" })[type] || "General";
-    }
-
-    function populateAgencyWorkspaceClients() {
-      const selected = agencyWorkspaceClient.value;
-      const clients = currentClients.filter((client) => !["archived", "completed"].includes(agencyClientStatus(client)));
-      agencyWorkspaceClient.innerHTML = '<option value="">Semua agency clients</option>' + clients.map((client) => (
-        '<option value="' + escapeHtml(client.code) + '">' + escapeHtml(client.brandClient || client.name || client.code) + '</option>'
-      )).join("");
-      agencyWorkspaceClient.value = clients.some((client) => client.code === selected) ? selected : "";
-    }
-
-    function resetAgencyOperationForm(form, cancelButton) {
-      form.reset();
-      form.elements.id.value = "";
-      cancelButton.hidden = true;
-      const submit = form.querySelector('button[type="submit"]');
-      submit.textContent = form === agencyServiceForm ? "Save Service" : form === agencyTemplateForm ? "Save Recurring Delivery" : form === agencyOpportunityForm ? "Save Opportunity" : "Save Task";
-    }
-
-    function populateAgencyServiceOptions(selectedCode) {
-      const select = agencyTemplateForm.elements.serviceId;
-      const selected = select.value;
-      const services = currentAgencyServices.filter((service) => !selectedCode || service.clientCode === selectedCode);
-      select.innerHTML = '<option value="">No linked service</option>' + services.map((service) => '<option value="' + escapeHtml(service.id) + '">' + escapeHtml(service.name) + '</option>').join("");
-      select.value = services.some((service) => service.id === selected) ? selected : "";
-    }
-
-    function agencyModuleAction(task) {
-      if (!task || !["report", "invoice"].includes(task.workType)) return "";
-      const label = task.workType === "report" ? "Open Report" : "Open Invoice";
-      return '<button class="secondary open-agency-module" type="button" data-work-type="' + task.workType + '" data-client-code="' + escapeHtml(task.clientCode) + '">' + label + '</button>';
-    }
-
-    function renderAgencyDeliveryCalendar(tasks, today) {
-      const limit = new Date(today + "T12:00:00");
-      limit.setDate(limit.getDate() + 13);
-      const endDate = localIsoDate(limit);
-      const upcoming = tasks.filter((task) => task.dueDate && task.dueDate >= today && task.dueDate <= endDate && ["todo", "in_progress"].includes(task.status));
-      const groups = upcoming.reduce((map, task) => {
-        if (!map.has(task.dueDate)) map.set(task.dueDate, []);
-        map.get(task.dueDate).push(task);
-        return map;
-      }, new Map());
-      agencyDeliveryCalendar.innerHTML = groups.size ? [...groups.entries()].map(([dueDate, items]) => {
-        const label = new Date(dueDate + "T12:00:00").toLocaleDateString("en-MY", { weekday: "short", day: "numeric", month: "short" });
-        return '<section class="agency-calendar-day"><div class="agency-calendar-date"><strong>' + escapeHtml(label) + '</strong><span>' + items.length + ' task</span></div><div class="agency-calendar-tasks">' + items.map((task) => '<article><div><strong>' + escapeHtml(task.title) + '</strong><span>' + escapeHtml(agencyClientLabel(task.clientCode)) + ' · ' + escapeHtml(agencyWorkTypeLabel(task.workType)) + '</span></div>' + agencyModuleAction(task) + '</article>').join("") + '</div></section>';
-      }).join("") : '<div class="empty-state compact"><strong>Tiada delivery dalam 14 hari.</strong><span>Tambah recurring delivery atau task dengan due date.</span></div>';
-    }
-
-    function renderAgencyPerformance(selectedCode) {
-      const insights = currentAgencyInsights || {};
-      const grossProfitReady = insights.costReady && Number.isFinite(insights.grossProfit);
-      agencyGrossProfit.textContent = grossProfitReady ? formatMoneyValue(insights.grossProfit) : "Setup costs";
-      agencyInternalCost.textContent = grossProfitReady ? "Cost " + formatMoneyValue(insights.internalCost || 0) : "Isi internal cost pada semua service";
-      agencyGrossMargin.textContent = Number.isFinite(insights.marginPercent) ? insights.marginPercent.toFixed(1).replace(".0", "") + "%" : "-";
-      agencyCompletionRate.textContent = Number(insights.recentTaskCount || 0) ? Number(insights.completionRate || 0).toFixed(1).replace(".0", "") + "%" : "-";
-      agencyCompletionSample.textContent = Number(insights.recentTaskCount || 0) ? insights.recentTaskCount + " task created" : "No recent tasks";
-      agencyOverdueTasks.textContent = String(insights.overdueTaskCount || 0);
-
-      const clientRows = (insights.clients || []).filter((client) => !selectedCode || client.clientCode === selectedCode);
-      agencyClientProfitability.innerHTML = clientRows.length ? clientRows.map((client) => {
-        const margin = Number.isFinite(client.marginPercent) ? client.marginPercent.toFixed(1).replace(".0", "") + "% margin" : "Cost not set";
-        const profit = Number.isFinite(client.grossProfit) ? formatMoneyValue(client.grossProfit) : formatMoneyValue(client.revenue || 0) + " revenue";
-        return '<article><div><strong>' + escapeHtml(agencyClientLabel(client.clientCode)) + '</strong><span>' + escapeHtml(profit) + ' · ' + escapeHtml(margin) + '</span></div><div class="agency-performance-badges"><span>' + client.openTasks + ' open</span><span data-alert="' + (client.overdueTasks ? "true" : "false") + '">' + client.overdueTasks + ' overdue</span></div></article>';
-      }).join("") : '<div class="empty-state compact"><strong>Belum ada service aktif.</strong><span>Tambah service untuk mula mengira profitability.</span></div>';
-
-      const owners = insights.owners || [];
-      const maxMinutes = Math.max(1, ...owners.map((owner) => Number(owner.estimatedMinutes || 0)));
-      agencyTeamCapacity.innerHTML = owners.length ? owners.map((owner) => {
-        const minutes = Number(owner.estimatedMinutes || 0);
-        const width = minutes ? Math.max(8, Math.round((minutes / maxMinutes) * 100)) : 0;
-        const time = minutes ? (minutes / 60).toFixed(minutes % 60 ? 1 : 0) + "h estimated" : "Time not estimated";
-        return '<article class="agency-capacity-row"><div><strong>' + escapeHtml(owner.owner) + '</strong><span>' + owner.taskCount + ' open · ' + escapeHtml(time) + (owner.overdueCount ? ' · ' + owner.overdueCount + ' overdue' : '') + '</span></div><div class="agency-capacity-track" aria-hidden="true"><span style="width:' + width + '%"></span></div></article>';
-      }).join("") : '<div class="empty-state compact"><strong>Tiada workload terbuka.</strong><span>Task yang mempunyai owner akan muncul di sini.</span></div>';
-    }
-
-    function populateAgencyHealthForm(selectedCode) {
-      const record = (currentAgencyHealth.records || []).find((item) => item.clientCode === selectedCode);
-      agencyHealthForm.elements.relationshipStatus.value = record?.relationshipStatus || "stable";
-      agencyHealthForm.elements.renewalStage.value = record?.renewalStage || "none";
-      agencyHealthForm.elements.lastCheckIn.value = record?.lastCheckIn || "";
-      agencyHealthForm.elements.nextCheckIn.value = record?.nextCheckIn || "";
-      agencyHealthForm.elements.notes.value = record?.notes || "";
-      [...agencyHealthForm.elements].forEach((element) => { element.disabled = !selectedCode; });
-    }
-
-    function renderAgencyHealth(selectedCode) {
-      const summary = currentAgencyHealth.summary || {};
-      agencyHealthyClients.textContent = String(summary.healthy || 0);
-      agencyWatchClients.textContent = String(summary.watch || 0);
-      agencyRiskClients.textContent = String(summary.risk || 0);
-      agencyCheckInsDue.textContent = String(summary.checkInsDue || 0);
-      const clients = (currentAgencyHealth.clients || []).filter((client) => !selectedCode || client.clientCode === selectedCode);
-      agencyHealthBoard.innerHTML = clients.length ? clients.map((client) => {
-        const label = client.status === "healthy" ? "Healthy" : client.status === "risk" ? "At risk" : "Watch";
-        const detail = client.reasons.slice(0, 2).join(" · ");
-        return '<article class="agency-health-item" data-health-status="' + client.status + '"><div class="agency-health-score"><strong>' + client.score + '</strong><span>/100</span></div><div class="agency-health-copy"><strong>' + escapeHtml(agencyClientLabel(client.clientCode)) + '</strong><span>' + escapeHtml(detail) + '</span><small>' + escapeHtml(client.nextCheckIn ? "Next check-in " + client.nextCheckIn : "Check-in belum dijadualkan") + (client.renewalDate ? " · Renewal " + escapeHtml(client.renewalDate) : "") + '</small></div><span class="agency-health-status">' + label + '</span><button class="secondary review-agency-health" type="button" data-client-code="' + escapeHtml(client.clientCode) + '">Review</button></article>';
-      }).join("") : '<div class="empty-state compact"><strong>Tiada client untuk dinilai.</strong><span>Active dan paused clients akan muncul di sini.</span></div>';
-      populateAgencyHealthForm(selectedCode);
-    }
-
-    function agencyOpportunityTypeLabel(type) {
-      return ({ upsell: "Upsell", cross_sell: "Cross-sell", renewal: "Renewal", expansion: "Expansion" })[type] || type;
-    }
-
-    function agencyOpportunityStageLabel(stage) {
-      return ({ idea: "Idea", discovery: "Discovery", proposal: "Proposal", won: "Won", lost: "Lost" })[stage] || stage;
-    }
-
-    function populateAgencyOpportunityForm(selectedCode) {
-      const editing = Boolean(agencyOpportunityForm.elements.id.value);
-      [...agencyOpportunityForm.elements].forEach((element) => { element.disabled = !selectedCode; });
-      if (!selectedCode && editing) resetAgencyOperationForm(agencyOpportunityForm, cancelAgencyOpportunityEdit);
-    }
-
-    function renderAgencyGrowth(selectedCode) {
-      const growth = currentAgencyGrowth || { summary: {}, renewals: [], opportunities: [] };
-      const opportunities = (growth.opportunities || []).filter((item) => !selectedCode || item.clientCode === selectedCode);
-      const renewals = (growth.renewals || []).filter((item) => !selectedCode || item.clientCode === selectedCode);
-      const open = opportunities.filter((item) => ["idea", "discovery", "proposal"].includes(item.stage));
-      const weights = { idea: 0.1, discovery: 0.3, proposal: 0.6 };
-      const atRiskCodes = new Set((currentAgencyHealth.clients || []).filter((item) => item.status === "risk" && (!selectedCode || item.clientCode === selectedCode)).map((item) => item.clientCode));
-      const atRiskValue = currentAgencyServices.filter((item) => item.status === "active" && atRiskCodes.has(item.clientCode)).reduce((sum, item) => sum + Number(item.monthlyFee || 0), 0);
-      const renewalValue = renewals.reduce((sum, item) => sum + Number(item.monthlyFee || 0), 0);
-      const pipelineValue = open.reduce((sum, item) => sum + Number(item.estimatedMonthlyValue || 0), 0);
-      const weightedValue = open.reduce((sum, item) => sum + Number(item.estimatedMonthlyValue || 0) * weights[item.stage], 0);
-
-      agencyRenewalValue.textContent = formatMoneyValue(renewalValue);
-      agencyRenewalCount.textContent = renewals.length + (renewals.length === 1 ? " renewal" : " renewals");
-      agencyPipelineValue.textContent = formatMoneyValue(pipelineValue);
-      agencyPipelineCount.textContent = open.length + (open.length === 1 ? " opportunity" : " opportunities");
-      agencyWeightedForecast.textContent = formatMoneyValue(weightedValue);
-      agencyAtRiskRevenue.textContent = formatMoneyValue(atRiskValue);
-
-      const forecastRows = [
-        ...renewals.map((item) => ({ kind: "Renewal", clientCode: item.clientCode, title: item.name, value: item.monthlyFee, date: item.renewalDate, stage: "renewal" })),
-        ...open.map((item) => ({ kind: agencyOpportunityTypeLabel(item.opportunityType), clientCode: item.clientCode, title: item.title, value: item.estimatedMonthlyValue, date: item.targetDate, stage: item.stage })),
-      ].sort((left, right) => (left.date || "9999-12-31").localeCompare(right.date || "9999-12-31"));
-      agencyGrowthForecast.innerHTML = forecastRows.length ? forecastRows.slice(0, 10).map((item) => '<article><div><span>' + escapeHtml(item.kind) + '</span><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(agencyClientLabel(item.clientCode)) + ' · ' + escapeHtml(item.date || "No target date") + '</small></div><div><strong>' + escapeHtml(formatMoneyValue(item.value || 0)) + '</strong><span class="agency-status-pill" data-status="' + escapeHtml(item.stage) + '">' + escapeHtml(agencyOpportunityStageLabel(item.stage)) + '</span></div></article>').join("") : '<div class="empty-state compact"><strong>Tiada forecast 90 hari.</strong><span>Tambah renewal date atau growth opportunity.</span></div>';
-
-      agencyOpportunityList.innerHTML = opportunities.length ? opportunities.map((item) => '<article class="agency-opportunity-item" data-stage="' + escapeHtml(item.stage) + '"><div><strong>' + escapeHtml(item.title) + '</strong><span>' + escapeHtml(agencyClientLabel(item.clientCode)) + ' · ' + escapeHtml(agencyOpportunityTypeLabel(item.opportunityType)) + ' · ' + escapeHtml(item.owner || "No owner") + '</span></div><div><strong>' + escapeHtml(formatMoneyValue(item.estimatedMonthlyValue || 0)) + '</strong><span>' + escapeHtml(item.targetDate || "No target date") + '</span></div><span class="agency-status-pill" data-status="' + escapeHtml(item.stage) + '">' + escapeHtml(agencyOpportunityStageLabel(item.stage)) + '</span><button class="secondary edit-agency-opportunity" type="button" data-opportunity-id="' + escapeHtml(item.id) + '">Edit</button></article>').join("") : '<div class="empty-state compact"><strong>Belum ada growth opportunity.</strong><span>Pilih client dan simpan peluang pertama.</span></div>';
-      populateAgencyOpportunityForm(selectedCode);
-    }
-
-    function renderAgencyOperations() {
-      populateAgencyWorkspaceClients();
-      const activeClients = currentClients.filter((client) => agencyClientStatus(client) === "active");
-      const selectedCode = agencyWorkspaceClient.value;
-      const services = currentAgencyServices.filter((item) => !selectedCode || item.clientCode === selectedCode);
-      const tasks = currentAgencyTasks.filter((item) => !selectedCode || item.clientCode === selectedCode);
-      const templates = currentAgencyTemplates.filter((item) => !selectedCode || item.clientCode === selectedCode);
-      const openTasks = currentAgencyTasks.filter((item) => ["todo", "in_progress"].includes(item.status));
-      populateAgencyServiceOptions(selectedCode);
-      agencyActiveClients.textContent = String(activeClients.length);
-      agencyMonthlyRevenue.textContent = formatMoneyValue(activeClients.reduce((total, client) => total + Number(client.monthlyRetainer || 0), 0));
-      agencyManagedBudget.textContent = formatMoneyValue(activeClients.reduce((total, client) => total + Number(client.monthlyAdBudget || 0), 0));
-      agencyOpenTasks.textContent = String(openTasks.length);
-      renderAgencyPerformance(selectedCode);
-      renderAgencyHealth(selectedCode);
-      renderAgencyGrowth(selectedCode);
-
-      const today = localIsoDate(new Date());
-      const soon = new Date();
-      soon.setDate(soon.getDate() + 30);
-      const soonDate = localIsoDate(soon);
-      const overdue = openTasks.filter((task) => task.dueDate && task.dueDate < today);
-      const renewals = currentAgencyServices.filter((service) => service.status === "active" && service.renewalDate && service.renewalDate >= today && service.renewalDate <= soonDate);
-      const attention = [
-        ...overdue.map((task) => ({ tone: "danger", title: "Overdue · " + task.title, detail: agencyClientLabel(task.clientCode) + " · " + task.dueDate })),
-        ...renewals.map((service) => ({ tone: "warning", title: "Renewal · " + service.name, detail: agencyClientLabel(service.clientCode) + " · " + service.renewalDate })),
-      ].slice(0, 6);
-      agencyAttentionList.innerHTML = attention.length
-        ? '<div class="agency-attention-heading"><strong>Needs attention</strong><span>' + attention.length + '</span></div>' + attention.map((item) => '<div class="agency-attention-item" data-tone="' + item.tone + '"><strong>' + escapeHtml(item.title) + '</strong><span>' + escapeHtml(item.detail) + '</span></div>').join("")
-        : '<div class="agency-clear-state"><strong>Everything on track</strong><span>Tiada task overdue atau renewal dalam 30 hari.</span></div>';
-      renderAgencyDeliveryCalendar(tasks, today);
-
-      agencyServiceList.innerHTML = services.length ? services.map((service) => \`
-        <article class="agency-operation-item">
-          <div><strong>\${escapeHtml(service.name)}</strong><span>\${escapeHtml(agencyClientLabel(service.clientCode))} · \${escapeHtml(formatMoneyValue(service.monthlyFee || 0))}\${Number.isFinite(service.internalMonthlyCost) ? " · Cost " + escapeHtml(formatMoneyValue(service.internalMonthlyCost)) : " · Cost not set"}</span></div>
-          <div class="agency-operation-meta"><span class="agency-status-pill" data-status="\${escapeHtml(service.status)}">\${escapeHtml(agencyOperationStatusLabel(service.status))}</span><span>\${escapeHtml(service.renewalDate ? "Renew " + service.renewalDate : "No renewal date")}</span></div>
-          <button class="secondary edit-agency-service" type="button" data-service-id="\${escapeHtml(service.id)}">Edit</button>
-        </article>
-      \`).join("") : '<div class="empty-state compact"><strong>Belum ada service.</strong><span>Pilih client dan tambah service pertama.</span></div>';
-
-      agencyTaskList.innerHTML = tasks.length ? tasks.map((task) => \`
-        <article class="agency-operation-item" data-priority="\${escapeHtml(task.priority)}">
-          <div><strong>\${escapeHtml(task.title)}</strong><span>\${escapeHtml(agencyClientLabel(task.clientCode))} · \${escapeHtml(agencyWorkTypeLabel(task.workType))} · \${escapeHtml(task.owner || "No owner")}\${task.estimatedMinutes ? " · " + escapeHtml(String(task.estimatedMinutes)) + " min" : ""}</span></div>
-          <div class="agency-operation-meta"><span class="agency-status-pill" data-status="\${escapeHtml(task.status)}">\${escapeHtml(agencyOperationStatusLabel(task.status))}</span><span>\${escapeHtml(task.dueDate || "No due date")}</span></div>
-          <div class="inline-actions">\${agencyModuleAction(task)}<button class="secondary toggle-agency-task" type="button" data-task-id="\${escapeHtml(task.id)}" data-next-status="\${task.status === "done" ? "todo" : "done"}">\${task.status === "done" ? "Reopen" : "Done"}</button><button class="secondary edit-agency-task" type="button" data-task-id="\${escapeHtml(task.id)}">Edit</button></div>
-        </article>
-      \`).join("") : '<div class="empty-state compact"><strong>Belum ada task.</strong><span>Pilih client dan tambah task pertama.</span></div>';
-
-      agencyTemplateList.innerHTML = templates.length ? templates.map((template) => \`
-        <article class="agency-operation-item" data-priority="\${escapeHtml(template.priority)}">
-          <div><strong>\${escapeHtml(template.title)}</strong><span>\${escapeHtml(agencyClientLabel(template.clientCode))} · \${escapeHtml(agencyWorkTypeLabel(template.workType))}\${template.estimatedMinutes ? " · " + escapeHtml(String(template.estimatedMinutes)) + " min" : ""}</span></div>
-          <div class="agency-operation-meta"><span class="agency-status-pill" data-status="\${template.isActive ? "active" : "paused"}">\${template.isActive ? "Active" : "Paused"}</span><span>\${template.cadence === "weekly" ? "Weekly" : "Monthly"} · Next \${escapeHtml(template.nextDueDate)}</span></div>
-          <div class="inline-actions"><button class="secondary toggle-agency-template" type="button" data-template-id="\${escapeHtml(template.id)}" data-next-active="\${template.isActive ? "false" : "true"}">\${template.isActive ? "Pause" : "Resume"}</button><button class="secondary edit-agency-template" type="button" data-template-id="\${escapeHtml(template.id)}">Edit</button></div>
-        </article>
-      \`).join("") : '<div class="empty-state compact"><strong>Belum ada recurring delivery.</strong><span>Pilih client dan jadualkan kerja berulang pertama.</span></div>';
-    }
-
-    async function loadAgencyOperations(options = {}) {
-      if (!options.silent) {
-        refreshAgencyOperationsButton.disabled = true;
-        refreshAgencyOperationsButton.textContent = "Loading...";
-      }
-      try {
-        const response = await fetch("/api/clients/agency-operations");
-        const json = await readApiJson(response);
-        if (response.status === 401) return void (window.location.href = "/login");
-        if (!response.ok || !json.ok) throw new Error(json.error || "Agency operations gagal dimuatkan.");
-        currentAgencyServices = json.services || [];
-        currentAgencyTasks = json.tasks || [];
-        currentAgencyTemplates = json.templates || [];
-        currentAgencyInsights = json.insights || {};
-        currentAgencyHealth = json.health || { records: [], clients: [], summary: {} };
-        currentAgencyGrowth = json.growth || { summary: {}, renewals: [], opportunities: [] };
-        renderAgencyOperations();
-        setMessage(agencyOperationsResult, "", "");
-        if (json.generated) showToast(json.generated + " recurring task dijana.", "ok");
-      } catch (error) {
-        setMessage(agencyOperationsResult, "err", error.message || String(error));
-      } finally {
-        refreshAgencyOperationsButton.disabled = false;
-        refreshAgencyOperationsButton.textContent = "Refresh";
-      }
-    }
-
-    async function saveAgencyOperation(resource, form) {
-      const clientCode = agencyWorkspaceClient.value;
-      if (!clientCode) return setMessage(agencyOperationsResult, "err", "Pilih Working on client dahulu.");
-      const values = Object.fromEntries(new FormData(form).entries());
-      if (resource === "template") values.isActive = form.elements.isActive.checked;
-      const id = values.id || "";
-      const submit = form.querySelector('button[type="submit"]');
-      const finishButton = setButtonBusy(submit, "Saving...");
-      try {
-        const response = await fetch("/api/clients/agency-operations", {
-          method: id ? "PATCH" : "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ ...values, resource, clientCode }),
-        });
-        const json = await readApiJson(response);
-        if (response.status === 401) return void (window.location.href = "/login");
-        if (!response.ok || !json.ok) throw new Error(json.error || "Agency operation gagal disimpan.");
-        resetAgencyOperationForm(form, resource === "service" ? cancelAgencyServiceEdit : resource === "template" ? cancelAgencyTemplateEdit : resource === "opportunity" ? cancelAgencyOpportunityEdit : cancelAgencyTaskEdit);
-        await loadAgencyOperations({ silent: true });
-        finishButton("Saved");
-        showToast(resource === "service" ? "Service disimpan." : resource === "template" ? "Recurring delivery disimpan." : resource === "opportunity" ? "Growth opportunity disimpan." : "Task disimpan.", "ok");
-      } catch (error) {
-        finishButton();
-        setMessage(agencyOperationsResult, "err", error.message || String(error));
-      }
-    }
-
-    async function saveAgencyHealth(event) {
-      event.preventDefault();
-      const clientCode = agencyWorkspaceClient.value;
-      if (!clientCode) return setMessage(agencyOperationsResult, "err", "Pilih Working on client dahulu.");
-      const submit = agencyHealthForm.querySelector('button[type="submit"]');
-      const finishButton = setButtonBusy(submit, "Saving...");
-      try {
-        const values = Object.fromEntries(new FormData(agencyHealthForm).entries());
-        const response = await fetch("/api/clients/agency-operations", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ ...values, resource: "health", clientCode }),
-        });
-        const json = await readApiJson(response);
-        if (response.status === 401) return void (window.location.href = "/login");
-        if (!response.ok || !json.ok) throw new Error(json.error || "Client health gagal disimpan.");
-        await loadAgencyOperations({ silent: true });
-        finishButton("Saved");
-        showToast("Client health dikemaskini.", "ok");
-      } catch (error) {
-        finishButton();
-        setMessage(agencyOperationsResult, "err", error.message || String(error));
-      }
-    }
-
-    async function updateAgencyTaskStatus(taskId, status, button) {
-      const finishButton = setButtonBusy(button, "Saving...");
-      try {
-        const response = await fetch("/api/clients/agency-operations", {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ resource: "task", id: taskId, status }),
-        });
-        const json = await readApiJson(response);
-        if (!response.ok || !json.ok) throw new Error(json.error || "Status task gagal dikemaskini.");
-        await loadAgencyOperations({ silent: true });
-        finishButton(status === "done" ? "Done" : "Reopened");
-      } catch (error) {
-        finishButton();
-        setMessage(agencyOperationsResult, "err", error.message || String(error));
-      }
-    }
-
-    async function updateAgencyTemplateActive(templateId, isActive, button) {
-      const finishButton = setButtonBusy(button, "Saving...");
-      try {
-        const response = await fetch("/api/clients/agency-operations", {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ resource: "template", id: templateId, isActive }),
-        });
-        const json = await readApiJson(response);
-        if (!response.ok || !json.ok) throw new Error(json.error || "Recurring delivery gagal dikemaskini.");
-        await loadAgencyOperations({ silent: true });
-        finishButton(isActive ? "Resumed" : "Paused");
-      } catch (error) {
-        finishButton();
-        setMessage(agencyOperationsResult, "err", error.message || String(error));
-      }
-    }
-
-    async function syncAgencyRecurringTasks() {
-      const finishButton = setButtonBusy(generateAgencyRecurringButton, "Syncing...");
-      try {
-        const response = await fetch("/api/clients/agency-operations", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ action: "generate_recurring", clientCode: agencyWorkspaceClient.value || "" }),
-        });
-        const json = await readApiJson(response);
-        if (!response.ok || !json.ok) throw new Error(json.error || "Recurring task gagal dijana.");
-        currentAgencyServices = json.services || [];
-        currentAgencyTasks = json.tasks || [];
-        currentAgencyTemplates = json.templates || [];
-        currentAgencyInsights = json.insights || {};
-        currentAgencyHealth = json.health || { records: [], clients: [], summary: {} };
-        currentAgencyGrowth = json.growth || { summary: {}, renewals: [], opportunities: [] };
-        renderAgencyOperations();
-        finishButton("Synced");
-        showToast(json.generated ? json.generated + " recurring task dijana." : "Semua recurring task sudah terkini.", "ok");
-      } catch (error) {
-        finishButton();
-        setMessage(agencyOperationsResult, "err", error.message || String(error));
-      }
     }
 
     function openAgencyWorkModule(workType, clientCode) {
@@ -10331,7 +9906,6 @@ Review retargeting when the warm audience is ready</textarea>
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Update service status failed.");
         finishButton("Done");
-        await sleep(350);
         closeActionMenu(triggerButton);
         resetClientFormMode();
         await loadClients();
@@ -10391,7 +9965,6 @@ Review retargeting when the warm audience is ready</textarea>
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Delete client failed.");
         finishButton("Deleted");
-        await sleep(450);
         closeActionMenu(triggerButton);
         resetClientFormMode();
         await loadClients();
@@ -10442,7 +10015,6 @@ Review retargeting when the warm audience is ready</textarea>
           window.prompt("Copy template WhatsApp ini:", text);
         }
         finishButton(copied ? "Copied" : "Ready");
-        await sleep(250);
         closeActionMenu(triggerButton);
         setMessage(clientResult, "ok", copied
           ? \`Link WhatsApp copied untuk \${label}. Folder sudah set Anyone with link = Editor.\`
@@ -10497,7 +10069,6 @@ Review retargeting when the warm audience is ready</textarea>
         const opened = window.open(json.whatsappUrl, "_blank");
         if (!opened) window.location.href = json.whatsappUrl;
         finishButton("Opened");
-        await sleep(250);
         closeActionMenu(triggerButton);
         setMessage(clientResult, "ok", \`WhatsApp \${type} siap untuk \${label}.\`);
         await loadActivity();
@@ -10596,7 +10167,6 @@ Review retargeting when the warm audience is ready</textarea>
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Load client failed.");
         renderClientList(json.clients || [], json.registryStatus || {});
-        renderAgencyOperations();
       } catch (error) {
         setTextIfPresent(dashboardClientCount, "-");
         setTextIfPresent(dashboardRegistryStatus, "Error");
@@ -10784,7 +10354,7 @@ Review retargeting when the warm audience is ready</textarea>
         showSettingsError(error);
       } finally {
         saveSettingsButton.disabled = false;
-        saveSettingsButton.textContent = "Save Settings";
+        saveSettingsButton.textContent = "Simpan Syarikat";
       }
     }
 
@@ -11531,13 +11101,24 @@ Review retargeting when the warm audience is ready</textarea>
     setupMainTabScrub();
     setupPanels();
     topbarMenu.addEventListener("toggle", () => {
-      const drawerMode = window.matchMedia("(max-width: 600px)").matches;
-      document.body.classList.toggle("menu-drawer-open", drawerMode && topbarMenu.open);
-      menuBackdrop.hidden = !(drawerMode && topbarMenu.open);
+      document.body.classList.toggle("menu-drawer-open", topbarMenu.open);
+      menuBackdrop.hidden = true;
+      const summary = topbarMenu.querySelector("summary");
+      summary.setAttribute("aria-label", topbarMenu.open ? "Tutup tetapan" : "Buka tetapan");
+      summary.setAttribute("aria-expanded", String(topbarMenu.open));
+      document.querySelectorAll("main > .tab-panel, .topbar .brand, .topbar-tabs").forEach((element) => { element.inert = topbarMenu.open; });
+      if (!topbarMenu.open) summary.focus({ preventScroll: true });
     });
     menuBackdrop.addEventListener("click", () => { topbarMenu.open = false; });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && topbarMenu.open) topbarMenu.open = false;
+      if (event.key === "Tab" && topbarMenu.open) {
+        const controls = [...topbarMenu.querySelectorAll("summary, button, input, select, textarea, a[href]")].filter((element) => !element.disabled && element.getClientRects().length);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
     });
     setupPostPilotInputStorage();
     sortQuickActions();
@@ -11583,119 +11164,6 @@ Review retargeting when the warm audience is ready</textarea>
       saveLastWork(tab, activeSubtabFor(tab));
     });
     clientForm.addEventListener("submit", saveClient);
-    refreshAgencyOperationsButton.addEventListener("click", () => loadAgencyOperations());
-    generateAgencyRecurringButton.addEventListener("click", syncAgencyRecurringTasks);
-    agencyWorkspaceClient.addEventListener("change", () => {
-      resetAgencyOperationForm(agencyServiceForm, cancelAgencyServiceEdit);
-      resetAgencyOperationForm(agencyTaskForm, cancelAgencyTaskEdit);
-      resetAgencyOperationForm(agencyTemplateForm, cancelAgencyTemplateEdit);
-      resetAgencyOperationForm(agencyOpportunityForm, cancelAgencyOpportunityEdit);
-      renderAgencyOperations();
-    });
-    agencyServiceForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      saveAgencyOperation("service", agencyServiceForm);
-    });
-    agencyTaskForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      saveAgencyOperation("task", agencyTaskForm);
-    });
-    agencyTemplateForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      saveAgencyOperation("template", agencyTemplateForm);
-    });
-    agencyHealthForm.addEventListener("submit", saveAgencyHealth);
-    agencyOpportunityForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      saveAgencyOperation("opportunity", agencyOpportunityForm);
-    });
-    cancelAgencyServiceEdit.addEventListener("click", () => resetAgencyOperationForm(agencyServiceForm, cancelAgencyServiceEdit));
-    cancelAgencyTaskEdit.addEventListener("click", () => resetAgencyOperationForm(agencyTaskForm, cancelAgencyTaskEdit));
-    cancelAgencyTemplateEdit.addEventListener("click", () => resetAgencyOperationForm(agencyTemplateForm, cancelAgencyTemplateEdit));
-    cancelAgencyOpportunityEdit.addEventListener("click", () => resetAgencyOperationForm(agencyOpportunityForm, cancelAgencyOpportunityEdit));
-    agencyServiceList.addEventListener("click", (event) => {
-      const button = event.target.closest(".edit-agency-service");
-      if (!button) return;
-      const service = currentAgencyServices.find((item) => item.id === button.dataset.serviceId);
-      if (!service) return;
-      agencyWorkspaceClient.value = service.clientCode;
-      renderAgencyOperations();
-      for (const name of ["id", "name", "monthlyFee", "internalMonthlyCost", "status", "owner", "renewalDate"]) {
-        if (agencyServiceForm.elements[name]) agencyServiceForm.elements[name].value = service[name] || "";
-      }
-      agencyServiceForm.querySelector('button[type="submit"]').textContent = "Update Service";
-      cancelAgencyServiceEdit.hidden = false;
-      agencyServiceForm.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    agencyTaskList.addEventListener("click", (event) => {
-      const moduleButton = event.target.closest(".open-agency-module");
-      if (moduleButton) {
-        openAgencyWorkModule(moduleButton.dataset.workType, moduleButton.dataset.clientCode);
-        return;
-      }
-      const toggleButton = event.target.closest(".toggle-agency-task");
-      if (toggleButton) {
-        updateAgencyTaskStatus(toggleButton.dataset.taskId, toggleButton.dataset.nextStatus, toggleButton);
-        return;
-      }
-      const button = event.target.closest(".edit-agency-task");
-      if (!button) return;
-      const task = currentAgencyTasks.find((item) => item.id === button.dataset.taskId);
-      if (!task) return;
-      agencyWorkspaceClient.value = task.clientCode;
-      renderAgencyOperations();
-      for (const name of ["id", "title", "dueDate", "priority", "owner", "status", "workType", "estimatedMinutes"]) {
-        if (agencyTaskForm.elements[name]) agencyTaskForm.elements[name].value = task[name] || "";
-      }
-      agencyTaskForm.querySelector('button[type="submit"]').textContent = "Update Task";
-      cancelAgencyTaskEdit.hidden = false;
-      agencyTaskForm.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    agencyTemplateList.addEventListener("click", (event) => {
-      const toggleButton = event.target.closest(".toggle-agency-template");
-      if (toggleButton) {
-        updateAgencyTemplateActive(toggleButton.dataset.templateId, toggleButton.dataset.nextActive === "true", toggleButton);
-        return;
-      }
-      const button = event.target.closest(".edit-agency-template");
-      if (!button) return;
-      const template = currentAgencyTemplates.find((item) => item.id === button.dataset.templateId);
-      if (!template) return;
-      agencyWorkspaceClient.value = template.clientCode;
-      renderAgencyOperations();
-      for (const name of ["id", "title", "workType", "serviceId", "cadence", "nextDueDate", "weekday", "monthDay", "priority", "owner", "estimatedMinutes"]) {
-        if (agencyTemplateForm.elements[name]) agencyTemplateForm.elements[name].value = template[name] ?? "";
-      }
-      agencyTemplateForm.elements.isActive.checked = template.isActive;
-      agencyTemplateForm.querySelector('button[type="submit"]').textContent = "Update Recurring Delivery";
-      cancelAgencyTemplateEdit.hidden = false;
-      agencyTemplateForm.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    agencyDeliveryCalendar.addEventListener("click", (event) => {
-      const button = event.target.closest(".open-agency-module");
-      if (button) openAgencyWorkModule(button.dataset.workType, button.dataset.clientCode);
-    });
-    agencyHealthBoard.addEventListener("click", (event) => {
-      const button = event.target.closest(".review-agency-health");
-      if (!button) return;
-      agencyWorkspaceClient.value = button.dataset.clientCode;
-      renderAgencyOperations();
-      agencyHealthForm.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    agencyOpportunityList.addEventListener("click", (event) => {
-      const button = event.target.closest(".edit-agency-opportunity");
-      if (!button) return;
-      const opportunity = (currentAgencyGrowth.opportunities || []).find((item) => item.id === button.dataset.opportunityId);
-      if (!opportunity) return;
-      agencyWorkspaceClient.value = opportunity.clientCode;
-      renderAgencyOperations();
-      for (const name of ["id", "title", "opportunityType", "stage", "estimatedMonthlyValue", "targetDate", "owner", "notes"]) {
-        if (agencyOpportunityForm.elements[name]) agencyOpportunityForm.elements[name].value = opportunity[name] ?? "";
-      }
-      agencyOpportunityForm.querySelector('button[type="submit"]').textContent = "Update Opportunity";
-      cancelAgencyOpportunityEdit.hidden = false;
-      agencyOpportunityForm.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
     copyClientOnboardingTemplateButton.addEventListener("click", copyClientOnboardingTemplate);
     clientOnboardingBackButton.addEventListener("click", () => {
       const index = CLIENT_ONBOARDING_STEPS.indexOf(currentClientOnboardingStep);
@@ -11798,6 +11266,23 @@ Review retargeting when the warm audience is ready</textarea>
     refreshBankButton.addEventListener("click", loadBankAccounts);
     refreshActivityButton?.addEventListener("click", () => {
       Promise.all([loadActivity(), loadClients(), loadBankAccounts()]).catch(showActivityError);
+    });
+    document.getElementById("saveReportPhaseButton").addEventListener("click", async () => {
+      const clientCode = reportClient.value;
+      const phase = document.getElementById("reportPhase").value;
+      const button = document.getElementById("saveReportPhaseButton");
+      const status = document.getElementById("reportPhaseStatus");
+      if (!clientCode) { status.textContent = "Pilih client dahulu."; return; }
+      button.disabled = true;
+      try {
+        const response = await fetch("/api/clients", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ clientCode, phase }) });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Gagal simpan phase.");
+        currentClients = currentClients.map((client) => client.code === clientCode ? json.client : client);
+        if (reportClient.value === clientCode) status.textContent = "Phase disimpan: " + phase;
+        showToast("Phase client disimpan.");
+      } catch (error) { status.textContent = error.message || String(error); }
+      finally { button.disabled = false; }
     });
     reportClient.addEventListener("change", () => {
       localStorage.setItem(LAST_REPORT_CLIENT_KEY, reportClient.value);
@@ -11938,7 +11423,6 @@ Review retargeting when the warm audience is ready</textarea>
     loadTodayDashboard();
     loadRemoteAutomationStatus({ silent: true });
     loadClients();
-    loadAgencyOperations({ silent: true });
     loadMetaConnection();
     loadTikTokConnection();
     setupPushNotifications().catch(() => {});

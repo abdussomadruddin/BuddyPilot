@@ -1,0 +1,61 @@
+button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+.bp-tap-feedback { animation: bp-tap 180ms ease-out; }
+.bp-action-pending { position: relative; }
+.bp-action-progress {
+  position: absolute;
+  pointer-events: none;
+  left: 8px;
+  right: 8px;
+  bottom: 3px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+.bp-action-progress::after {
+  content: "";
+  position: absolute;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+  animation: bp-flow 900ms ease-in-out infinite alternate;
+}
+#bp-network-progress {
+  position: fixed;
+  z-index: 10000;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  pointer-events: none;
+  overflow: hidden;
+  background: transparent;
+  color: var(--blue, #1d9bf0);
+}
+#bp-network-progress[hidden] { display: none; }
+#bp-network-progress::after {
+  content: "";
+  position: absolute;
+  width: 35%;
+  height: 100%;
+  background: currentColor;
+  border-radius: 3px;
+  animation: bp-flow 1100ms ease-in-out infinite alternate;
+}
+@keyframes bp-tap {
+  0% { transform: scale(.97); filter: brightness(.94); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+@keyframes bp-flow {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(285%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bp-tap-feedback { animation: none; }
+  .bp-action-progress::after, #bp-network-progress::after {
+    animation: none;
+    transform: none;
+    width: 100%;
+  }
+}

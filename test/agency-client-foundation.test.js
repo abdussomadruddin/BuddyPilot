@@ -9,8 +9,8 @@ const clientApiSource = fs.readFileSync(path.join(root, "api_handlers", "clients
 const schemaSource = fs.readFileSync(path.join(root, "supabase", "schema.sql"), "utf8");
 
 test("Agency foundation is assimilated into Client Pilot", () => {
-  assert.match(appSource, />Agency Clients<\/button>/);
-  assert.match(appSource, />Add Agency Client<\/button>/);
+  assert.match(appSource, />Clients<\/button>/);
+  assert.match(appSource, />Add Client<\/button>/);
   assert.match(appSource, /id="client-detail-panel"/);
   assert.doesNotMatch(appSource, /data-tab-target="agencypilot"/);
 });

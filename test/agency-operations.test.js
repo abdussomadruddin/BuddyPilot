@@ -9,23 +9,9 @@ const apiSource = fs.readFileSync(path.join(root, "api_handlers", "clients", "ag
 const dataSource = fs.readFileSync(path.join(root, "lib", "agency-operations.js"), "utf8");
 const schemaSource = fs.readFileSync(path.join(root, "supabase", "schema.sql"), "utf8");
 
-test("Phase 2 agency overview stays inside Client Pilot", () => {
-  assert.match(appSource, /data-subtab-target="agency-overview-panel">Agency Overview/);
-  assert.match(appSource, /id="agencyActiveClients"/);
-  assert.match(appSource, /id="agencyMonthlyRevenue"/);
-  assert.match(appSource, /id="agencyManagedBudget"/);
-  assert.match(appSource, /id="agencyOpenTasks"/);
-  assert.doesNotMatch(appSource, /data-tab-target="agencypilot"/);
-});
 
-test("Service management and task tracker provide functional controls", () => {
-  for (const id of ["agencyServiceForm", "agencyTaskForm", "agencyWorkspaceClient", "agencyServiceList", "agencyTaskList"]) {
-    assert.match(appSource, new RegExp('id="' + id + '"'));
-  }
-  assert.match(appSource, /saveAgencyOperation\("service"/);
-  assert.match(appSource, /saveAgencyOperation\("task"/);
-  assert.match(appSource, /updateAgencyTaskStatus/);
-});
+
+
 
 test("Agency operations API uses existing authentication and validates enums", () => {
   assert.match(apiSource, /requireAuth\(req\)/);
@@ -48,15 +34,7 @@ test("Agency operation tables are additive and service-role only", () => {
   assert.doesNotMatch(schemaSource, /drop table (if exists )?public\.agency_(services|tasks)/);
 });
 
-test("Phase 3 adds recurring delivery templates and a 14 day calendar", () => {
-  for (const id of ["agencyDeliveryCalendar", "agencyTemplateForm", "agencyTemplateList", "generateAgencyRecurringButton"]) {
-    assert.match(appSource, new RegExp(`id="${id}"`));
-  }
-  assert.match(appSource, /Delivery Calendar/);
-  assert.match(appSource, /Recurring Deliveries/);
-  assert.match(appSource, /Sync Recurring Tasks/);
-  assert.match(appSource, /openAgencyWorkModule/);
-});
+
 
 test("recurring delivery generation is lazy, idempotent and has no new polling", () => {
   assert.match(dataSource, /generateDueAgencyTasks/);
@@ -76,11 +54,6 @@ test("Phase 3 migration protects templates and links generated tasks", () => {
 });
 
 test("Phase 4 adds agency profitability and team capacity", () => {
-  for (const id of ["agencyGrossProfit", "agencyGrossMargin", "agencyCompletionRate", "agencyOverdueTasks", "agencyClientProfitability", "agencyTeamCapacity"]) {
-    assert.match(appSource, new RegExp(`id="${id}"`));
-  }
-  assert.match(appSource, /Agency Performance/);
-  assert.match(appSource, /Team capacity/);
   assert.match(dataSource, /calculateAgencyInsights/);
   assert.match(dataSource, /completionRate/);
   assert.match(dataSource, /overdueTaskCount/);
@@ -98,11 +71,6 @@ test("Phase 4 stores optional internal cost and task effort safely", () => {
 });
 
 test("Phase 5 adds client health and retention controls", () => {
-  for (const id of ["agencyHealthyClients", "agencyWatchClients", "agencyRiskClients", "agencyCheckInsDue", "agencyHealthBoard", "agencyHealthForm"]) {
-    assert.match(appSource, new RegExp(`id="${id}"`));
-  }
-  assert.match(appSource, /Client Health & Retention/);
-  assert.match(appSource, /Save Health Check-in/);
   assert.match(apiSource, /resource === "health"/);
   assert.match(dataSource, /calculateClientHealth/);
   assert.match(dataSource, /saveAgencyHealth/);
@@ -126,11 +94,6 @@ test("Phase 5 health scoring has no background polling", () => {
 });
 
 test("Phase 6 adds renewal forecast and growth opportunity controls", () => {
-  for (const id of ["agencyRenewalValue", "agencyPipelineValue", "agencyWeightedForecast", "agencyAtRiskRevenue", "agencyGrowthForecast", "agencyOpportunityForm", "agencyOpportunityList"]) {
-    assert.match(appSource, new RegExp(`id="${id}"`));
-  }
-  assert.match(appSource, /Renewal & Growth Pipeline/);
-  assert.match(appSource, /saveAgencyOperation\("opportunity"/);
   assert.match(apiSource, /resource === "opportunity"/);
   assert.match(dataSource, /calculateGrowthPipeline/);
   assert.match(dataSource, /weightedForecast/);
@@ -150,4 +113,11 @@ test("Phase 6 forecast is request-driven without new polling", () => {
   assert.match(dataSource, /setUTCDate\(horizon\.getUTCDate\(\) \+ 90\)/);
   assert.match(dataSource, /const weights = \{ idea: 0\.1, discovery: 0\.3, proposal: 0\.6 \}/);
   assert.doesNotMatch(appSource, /setInterval\([^)]*(growth|opportunity|forecast)/i);
+});
+
+
+test("removed Agency Overview does not render controls or load its data", () => {
+  assert.doesNotMatch(appSource, /id="agency-overview-panel"|>Agency Overview</);
+  assert.doesNotMatch(appSource, /id="agency(ServiceForm|TaskForm|HealthForm|TemplateForm|OpportunityForm)"/);
+  assert.doesNotMatch(appSource, /fetch\("\/api\/clients\/agency-operations/);
 });
