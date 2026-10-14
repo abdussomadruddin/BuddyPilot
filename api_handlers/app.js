@@ -16,6 +16,8 @@ function pageHtml() {
   <title>BuddyPilot</title>
   <link rel="stylesheet" href="/action-feedback.css?v=1">
   <script src="/action-feedback.js?v=1" defer></script>
+  <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
+  <script src="/client-ads-monitor.js?v=1" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -4471,7 +4473,34 @@ function pageHtml() {
     </section>
 
     <section id="tab-adscmo" class="tab-panel" data-tab-panel="adscmo">
-      <section class="card app-panel">
+      <div class="ads-cmo-view-tabs" role="tablist" aria-label="Ads CMO mode">
+        <button id="adsModePersonal" class="ads-cmo-view-tab active" type="button" role="tab" aria-selected="true">Ads sendiri</button>
+        <button id="adsModeClient" class="ads-cmo-view-tab" type="button" role="tab" aria-selected="false">Client</button>
+      </div>
+      <section id="clientAdsPanel" class="app-panel" hidden>
+        <h1>${uiIcon("chart")}Ads CMO · Client</h1>
+        <div class="client-grid">
+          <div><label for="camClient">Client</label><select id="camClient" required><option value="">Pilih client</option></select></div>
+          <div><label class="check-row" for="camAll"><input id="camAll" type="checkbox">Semua client</label></div>
+          <div><label for="camPlatform">Platform</label><select id="camPlatform" required><option value="">Pilih platform</option><option value="meta">Meta Ads</option><option value="tiktok">TikTok Ads</option></select></div>
+          <div><label for="camResult">Result utama</label><select id="camResult" required><option value="">Pilih result</option><option value="purchase">Purchase</option><option value="lead">Lead</option></select></div>
+          <div id="camLeadField" hidden><label for="camLead">Jenis lead</label><select id="camLead"><option value="">Pilih jenis lead</option><option value="form">Form Lead</option><option value="message">WhatsApp / Message</option></select></div>
+          <div><label for="camPeriod">Tempoh</label><select id="camPeriod"><option value="today">Hari ini</option><option value="yesterday">Semalam</option><option value="7">7 hari</option><option value="30">30 hari</option><option value="custom">Custom</option></select></div>
+          <div id="camStartField" hidden><label for="camStart">Tarikh mula</label><input id="camStart" type="date"></div>
+          <div id="camEndField" hidden><label for="camEnd">Tarikh akhir</label><input id="camEnd" type="date"></div>
+        </div>
+        <div class="actions"><button id="camLoad" type="button" disabled>${uiIcon("refresh")}Refresh Data</button></div>
+        <p id="camStatus" class="note" role="status">Pilih client, platform dan result dahulu.</p>
+        <details id="camSettings"><summary>Account &amp; Product Settings</summary>
+          <label for="camAccount">Akaun dipautkan</label><select id="camAccount"><option value="">Pilih akaun</option></select>
+          <div class="actions"><button id="camSave" type="button" class="secondary" disabled>Simpan Tetapan</button><button id="camCampaignLoad" type="button" class="secondary" disabled>Muatkan Campaign</button></div>
+          <div id="camCampaignChoices"></div>
+          <h3>Produk</h3><div id="camProducts"></div>
+          <button id="camAddProduct" type="button" class="secondary" disabled>${uiIcon("file-text")}Tambah Produk</button>
+        </details>
+        <div id="camOutput" aria-live="polite"></div>
+      </section>
+      <section id="adsCmoPersonalPanel" class="card app-panel">
         <div class="section-heading">
           <div>
             <h1>${uiIcon("chart")}Ads CMO</h1>

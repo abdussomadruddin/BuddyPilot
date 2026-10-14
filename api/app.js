@@ -1,4 +1,5 @@
 const routes = {
+  "client-ads-monitor": require("../api_handlers/client-ads-monitor"),
   activity: require("../api_handlers/activity"),
   app: require("../api_handlers/app"),
   "bank-accounts": require("../api_handlers/bank-accounts"),
