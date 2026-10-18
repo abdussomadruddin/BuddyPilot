@@ -13,6 +13,12 @@ and business history. No production sends, generation or database restarts in te
   Credentials and query isolate requests, callers receive separate objects,
   and writes invalidate pending read sharing before and after completion.
 - Explicit permanent HTTP errors cannot trigger retry through misleading text.
+- Dashboard job summaries omit complete captions and image payloads; queue
+  claims and processing still fetch complete job data when required.
+- Repeated running progress skips identical writes while retaining cancellation.
+- Expiry cleanup first checks for an expired row, replacing empty PATCH calls
+  with a bounded ID-only read. An actual expiry requires one additional read.
+- Remote mutations default to minimal responses unless a caller needs rows.
 - Vercel ignores local outputs, isolated video tooling and local outreach files.
   Runtime public assets remain included.
 
