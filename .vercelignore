@@ -1,0 +1,11 @@
+.DS_Store
+.playwright-mcp/
+test-results/
+outputs/
+video-engine/
+posters-*/
+whatsapp-*.json
+whatsapp-*.md
+*-changes.patch
+supabase/.temp/
+tmp/facebook-test-generated.*
