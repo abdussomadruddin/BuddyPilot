@@ -2,6 +2,16 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { buildOperationsOverview, serviceContext, STALE_MS } = require("../lib/operations-center");
 
+test("removed Facebook Page integration does not affect dashboard health", () => {
+  const overview = buildOperationsOverview({
+    healthRows: [{ service_name: "facebook_page", status: "down" }],
+    incidentRows: [{ fingerprint: "service:facebook_page", service_name: "facebook_page", severity: "critical", status: "open" }],
+  });
+  assert.equal(overview.health.some((item) => item.id === "facebook_page"), false);
+  assert.equal(overview.incidents.some((item) => item.service === "facebook_page"), false);
+  assert.equal(serviceContext().facebook_page, undefined);
+});
+
 test("archived failures stay in history but not attention; new failures reappear", () => {
   const delivery = { id: "d1", status: "failed", client_code: "TEST", report_date: "2026-10-01", updated_at: "2026-10-02T01:00:00Z" };
   const job = { id: "j1", status: "failed", error: "Missing image", updatedAt: "2026-10-02T01:00:00Z" };
