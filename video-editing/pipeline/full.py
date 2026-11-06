@@ -66,10 +66,13 @@ def run(cmd):
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode: print(r.stderr[-2000:]); sys.exit(1)
 
+json.dump(pieces, open(f'{WK}/pieces.json','w'))
 if '--skip-video' not in sys.argv:
     prev = None; plist = []
     for n, (x0, x1, src, st, sh, rel, shl) in enumerate(pieces):
-        d = x1 - x0; path = A if src == 'A' else B(src); newshot = sh != prev; prev = sh
+        d = x1 - x0
+        if d < 0.02: continue  # float-duplicate cut points give empty pieces that break concat
+        path = A if src == 'A' else B(src); newshot = sh != prev; prev = sh
         base = (1.0 if sh % 4 in (0, 1) else 1.13) if src == 'A' else 1.0
         if src == 'A' and not newshot: base += 0.07 * (n % 2)
         z = f"({base}+0.06*(({rel:.3f}+t)/{shl:.3f})+0.35*max(0\\,1-({rel:.3f}+t)/0.22))"
