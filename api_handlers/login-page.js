@@ -11,12 +11,12 @@ function loginHtml({ error, setupMissing } = {}) {
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=3" sizes="180x180">
-  <link rel="manifest" href="/site.webmanifest?v=3">
+  <link rel="manifest" href="/site.webmanifest?v=4">
   <meta name="application-name" content="BuddyPilot">
   <meta name="apple-mobile-web-app-title" content="BuddyPilot">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#fafcfd">
   <style>
     :root {
       color-scheme: light;
@@ -211,8 +211,9 @@ function loginHtml({ error, setupMissing } = {}) {
     }
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=1">
+  <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261107-1">
 </head>
-<body>
+<body class="login-page">
   <main>
     <section class="card">
       <img class="logo" src="/icons/app-icon-512x512.png?v=3" alt="BuddyPilot" width="72" height="72">

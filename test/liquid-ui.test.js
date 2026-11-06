@@ -46,3 +46,21 @@ test("motion has an accessible off switch and no new continuous animation or API
   assert.match(css, /@keyframes bp-liquid-release/);
   assert.doesNotMatch(css, /\binfinite\b|@import|url\(https?:/);
 });
+
+test("mobile layer loads last, stays phone-scoped and keeps publishing out of the sticky bar", () => {
+  const mobileCss = fs.readFileSync(require.resolve("../public/buddypilot-mobile.css"), "utf8");
+  const source = fs.readFileSync(require.resolve("../api_handlers/app.js"), "utf8");
+  assert.ok(source.indexOf("buddypilot-mobile.css") > source.indexOf("buddypilot-liquid.css"));
+  const outsideQueries = mobileCss.slice(0, mobileCss.indexOf("@media"));
+  assert.doesNotMatch(outsideQueries, /\.tab-|\.subtab|#threads/);
+  assert.match(mobileCss, /#threadsPreviewButton \{[^}]*position: sticky/);
+  assert.doesNotMatch(mobileCss, /#threadsBatchPostButton \{[^}]*position: sticky/);
+  assert.doesNotMatch(mobileCss, /font-size: (?:[0-9]|1[01])px/);
+});
+
+test("service worker never caches pages and falls back offline only on network failure", () => {
+  const worker = fs.readFileSync(require.resolve("../public/sw.js"), "utf8");
+  assert.match(worker, /mode === "navigate"/);
+  assert.match(worker, /fetch\(event\.request\)\.catch\(\(\) => caches\.match\("\/offline\.html"\)\)/);
+  assert.doesNotMatch(worker, /addAll\(\[[^\]]*"\/"\s*,/);
+});

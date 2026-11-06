@@ -22,12 +22,12 @@ function pageHtml() {
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=3" sizes="180x180">
-  <link rel="manifest" href="/site.webmanifest?v=3">
+  <link rel="manifest" href="/site.webmanifest?v=4">
   <meta name="application-name" content="BuddyPilot">
   <meta name="apple-mobile-web-app-title" content="BuddyPilot">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#fafcfd">
   <style>
     :root {
       color-scheme: light;
@@ -4324,6 +4324,7 @@ function pageHtml() {
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
+  <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261107-1">
 </head>
 <body>
   <main>
@@ -4463,6 +4464,7 @@ function pageHtml() {
         <section class="operations-section operations-recent-section">
           <div class="dashboard-section-header"><h2>${uiIcon("file-text")}Recent operations</h2><span class="dashboard-section-kicker">Last 30 days</span></div>
           <div id="operationsRecent" class="operations-recent"></div>
+          <button id="operationsRecentMore" class="operations-recent-more secondary" type="button" hidden></button>
         </section>
       </section>
     </section>
@@ -5568,6 +5570,7 @@ Review retargeting when the warm audience is ready</textarea>
     const operationsActiveList = document.getElementById("operationsActiveList");
     const operationsHealth = document.getElementById("operationsHealth");
     const operationsRecent = document.getElementById("operationsRecent");
+    const operationsRecentMore = document.getElementById("operationsRecentMore");
     const refreshTodayButton = document.getElementById("refreshTodayButton");
     const checkAllHealthButton = document.getElementById("checkAllHealthButton");
     const resumeWorkButton = document.getElementById("resumeWorkButton");
@@ -6108,11 +6111,25 @@ Review retargeting when the warm audience is ready</textarea>
       operationsRecent.innerHTML = recent.length ? recent.map((item) =>
         '<article class="operations-recent-row"><span class="operations-item-status" data-status="' + escapeHtml(item.status) + '"></span><span class="operations-recent-copy"><strong>' + escapeHtml(item.title || "Operation") + '</strong><small>' + escapeHtml(item.detail || operationsStatusLabel(item.status)) + '</small></span><time>' + escapeHtml(formatOperationsTime(item.timestamp)) + '</time></article>'
       ).join("") : '<div class="operations-empty">Belum ada operasi direkodkan.</div>';
+      updateOperationsRecentMore(recent.length);
 
       todaySkeleton.hidden = true;
       todayContent.hidden = false;
       renderResumeWork();
     }
+
+    function updateOperationsRecentMore(total) {
+      const expanded = operationsRecent.classList.contains("is-expanded");
+      operationsRecentMore.hidden = total <= 5;
+      operationsRecentMore.dataset.total = String(total);
+      operationsRecentMore.textContent = expanded ? "Tunjuk 5 sahaja" : "Lihat semua (" + total + ")";
+      operationsRecentMore.setAttribute("aria-expanded", String(expanded));
+    }
+
+    operationsRecentMore.addEventListener("click", () => {
+      operationsRecent.classList.toggle("is-expanded");
+      updateOperationsRecentMore(Number(operationsRecentMore.dataset.total));
+    });
 
     async function loadTodayDashboard({ silent = false, force = false } = {}) {
       if (!force) {
@@ -6252,6 +6269,15 @@ Review retargeting when the warm audience is ready</textarea>
         emptyState.hidden = true;
       }
     }
+
+    document.addEventListener("click", (event) => {
+      const toggle = event.target.closest?.(".client-telegram-toggle");
+      if (!toggle) return;
+      const open = toggle.parentElement.classList.toggle("is-open");
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 
     function activateTab(name) {
       const previous = document.querySelector(".tab-button.active")?.dataset.tabTarget || "dashboard";
@@ -9313,6 +9339,7 @@ Review retargeting when the warm audience is ready</textarea>
             <span class="invoice-muted">\${escapeHtml(client.serviceType || "Service belum ditetapkan")}</span>
           </div>
           <div class="client-card-telegram" data-label="Telegram Daily Report">
+            <button class="client-telegram-toggle" type="button" aria-expanded="false">Telegram · \${(client.telegramReportConfig?.recipients || []).filter((recipient) => recipient.connected).length}/2 connected</button>
             \${(client.telegramReportConfig?.recipients || [{ slot: 1 }, { slot: 2 }]).map((recipient) => \`
               <span><strong>Penerima \${recipient.slot}</strong> \${recipient.connected ? '<span class="default-pill">Connected</span>' : '<span class="qr-pill">Not Connected</span>'}</span>
               <span class="invoice-muted">\${escapeHtml(recipient.displayName || (recipient.username ? "@" + recipient.username : "Generate link & tekan Start"))}</span>

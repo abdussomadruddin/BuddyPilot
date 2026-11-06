@@ -1,0 +1,101 @@
+/*
+ * BuddyPilot mobile layer.
+ * Loaded last, after buddypilot-redesign.css and buddypilot-liquid.css.
+ * Phone rules stay inside the 600px query so desktop is unaffected.
+ */
+
+/* Only shown on phones. */
+.operations-recent-more,
+.client-telegram-toggle { display: none; }
+
+/* Login is the one screen styled at every width: redesign.css resets main. */
+.login-page { min-height: 100dvh; }
+.login-page main {
+  width: min(430px, calc(100% - 32px));
+  margin: auto;
+  padding: 24px 0;
+}
+
+@media (max-width: 600px) {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { font-size: 14px; }
+
+  /* Type scale: nothing a person needs to read goes below 12px. */
+  label, summary, .note, .hero p, .section-heading .note, .operations-header p { font-size: 13px; }
+  .today-eyebrow, .dashboard-section-kicker { font-size: 12px; }
+  .invoice-muted, .quick-card-copy small, .operations-recent-copy small,
+  .health-card-copy small, .health-card-meta { font-size: 13px; }
+  .health-badge, .default-pill, .qr-pill, .agency-status-pill,
+  .operations-summary span, .operations-overall small, .resume-work small { font-size: 12px; }
+  .ads-cmo-view-tab, .ads-cmo-status, .subtab-button { font-size: 13px; }
+
+  /* Tabs: one row each, and nested tabs read as a second level. */
+  .subtabs { margin: 8px 0 12px; }
+  .postpilot-subtabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .postpilot-subtabs .subtab-button { min-height: 48px; padding: 6px 4px; font-size: 13px; line-height: 1.2; }
+  .subtab-panel > .subtabs { padding: 0; border: 0; border-bottom: 1px solid var(--bp-line); border-radius: 0; background: transparent; box-shadow: none; }
+  .subtab-panel > .subtabs .subtab-button { min-height: 44px; border-radius: 0; background: transparent; box-shadow: none; }
+  .subtab-panel > .subtabs .subtab-button.active { color: var(--bp-accent); box-shadow: inset 0 -2px 0 var(--bp-accent); }
+
+  .workflow-steps span { font-size: 12px; padding: 7px 3px; }
+
+  /* Filter chips scroll sideways; the fade shows there is more. */
+  .client-filter-chips {
+    gap: 6px;
+    padding-right: 32px;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  }
+  .client-filter-chips button { flex: 0 0 auto; font-size: 13px; padding: 8px 12px; }
+
+  /* Dashboard: recent operations start at five rows. */
+  .operations-recent:not(.is-expanded) > .operations-recent-row:nth-child(n + 6) { display: none; }
+  .operations-recent-more:not([hidden]) { display: block; width: 100%; min-height: 44px; margin-top: 10px; }
+
+  /* Client cards: contact details get a full row so email stays whole. */
+  .client-row .client-card-contact,
+  .client-row .client-card-price { grid-column: 1 / -1; text-align: left; }
+  .client-card-contact { overflow-wrap: anywhere; }
+
+  .client-telegram-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .client-row .client-card-telegram::before { display: none !important; }
+  .client-telegram-toggle::after { content: "+"; font-size: 18px; font-weight: 500; }
+  .client-telegram-toggle[aria-expanded="true"]::after { content: "\2212"; }
+  .client-card-telegram:not(.is-open) > :not(.client-telegram-toggle) { display: none; }
+
+  /* Post Pilot: Generate stays in reach. POST 5 NOW stays in the page flow,
+     away from the tab bar, because a stray tap there publishes. */
+  #threadsForm > .actions { display: contents; }
+  #threadsPreviewButton {
+    position: sticky;
+    z-index: 20;
+    bottom: calc(92px + env(safe-area-inset-bottom));
+    width: 100%;
+    margin-top: 12px;
+    box-shadow: 0 8px 20px rgba(34, 60, 80, .18);
+  }
+  #threadsBatchPostButton { width: 100%; margin-top: 10px; }
+
+  /* Touch targets: larger hit areas without changing the layout. */
+  .postpilot-gallery-item button { position: absolute; }
+  .postpilot-gallery-item button::after { content: ""; position: absolute; inset: -8px; }
+  #adsCmoAutoEnabled { width: 24px; height: 24px; }
+}
+
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) {
+  .tab-panel.active { will-change: auto; }
+}
