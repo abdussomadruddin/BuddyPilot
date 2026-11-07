@@ -137,7 +137,9 @@ for gi, g in enumerate(groups):
         if kidx + 1 < len(g): lines.append(('ln ' + ('r' if gi % 2 else 'c'), g[kidx + 1:]))
     html = []
     for cls, ts in lines:
-        style = f' style="font-size:{keysize(ts[0]["w"])}px"' if cls == 'key' else ''
+        if cls == 'key': style = f' style="font-size:{keysize(ts[0]["w"])}px"'
+        else:
+            nch = sum(len(x['w']) + 1 for x in ts); style = f' style="font-size:{int(min(62, 800 / (0.66 * nch)))}px"' if nch * 0.66 * 62 > 800 else ''
         spans = ''.join(f'<span id="g{gi}_{toks.index(x)}">{x["w"]}{"<i class=strike></i>" if id(x) in STRIKE else ""}</span>' for x in ts)
         html.append(f'<div class="{cls}"{style}>{spans}</div>')
     top = 760 if oncard else 1110
