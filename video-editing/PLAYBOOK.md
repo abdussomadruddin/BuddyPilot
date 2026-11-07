@@ -89,3 +89,56 @@ Built while editing the Honda City promo (Nov 2026). Tools: **FFmpeg** (cut and 
   and delete the file afterwards.
 - The Claude app on a phone cannot download large video file cards, and the mobile browser player has no save button.
   Deliver through a Drive link.
+
+---
+
+## E. V2 recipe: kinetic-typography talking head (Honda IMG_0851, Nov 2026)
+
+Style reference: a TikTok reel the user supplied (talking head, white sans and red serif-italic words, icon props,
+full-screen cards). Output: `HONDA_V3_FULL.mp4`, 3:41, 1080x1920, about -14 LUFS.
+
+### Rules for this style
+
+1. Keep the **full A-roll**. Drop only duplicate sentences, mid-video CTAs and filler. List every drop in a comment in `v2_cut.py`.
+2. **Every spoken word appears on screen**, word by word, timed to Whisper word timestamps. No separate subtitles.
+3. Small words use Montserrat 800, white, 62px. **One keyword per group** uses Playfair Display 900 italic, red `#e3172d`, up to 168px,
+   revealed with a clip-path wipe. Numbers merge with their unit ("8 tahun", "5 kali", "satu juta").
+4. A group holds at most 5 words or ends at a pause over 0.45s. Each group ends before the next one starts.
+   Long lines shrink to fit inside an 800px width. Text never sits over the face.
+5. Layout: face at 34–39% of frame height. Kinetic text at about 1110px from the top. White badges and counters in the top 6–16%.
+6. **Full-screen cards** (red or white with floating icon orbs) on hook questions and big reveals, about 1.5–4.5s each.
+   The voice keeps playing, and the card's words appear inside it in themed colours (dark on white, white on red).
+7. Shots last about 2.6s and cycle through framings M 1.75x / C 2.25x / W 1.3x, with a 5% push-in.
+   Shot changes rotate blur, glitch (RGB shift + noise) and whoosh-zoom.
+8. **Grade must stay neutral, not yellow.** Showroom lighting is already warm. Use the warm-ish base grade *followed by* the
+   neutralising `colorbalance=rs=-0.04:bs=0.07:rm=-0.09:gm=-0.01:bm=0.12:rh=-0.04:bh=0.08,curves 0.5→0.53,saturation 0.9`.
+   The moody look comes only from the HTML spotlight overlay (a radial vignette plus a bottom fade to black).
+   Check: in mid-tones, B should not sit more than about 15 points below R.
+9. Numbers on screen come only from the speaker's words. Re-transcribe uncertain figures in isolation and flag any doubt
+   to the user (here RM40 vs RM400). The user confirms promo figures with the dealer.
+10. Deliver **both** ways: send the file in chat **and** upload to Drive. Phones cannot download from the in-app file card,
+    so the Drive link is the reliable download.
+
+### Steps
+
+1. **Ingest:** `curl -L "https://drive.usercontent.google.com/download?id=<ID>&export=download&confirm=t" -o IMG_0851.MOV`.
+2. **Audio + transcript:** `ffmpeg -i IMG_0851.MOV -vn -ac 1 -ar 16000 a.wav`, then Whisper `medium` (`language='ms'`,
+   `word_timestamps`, domain `initial_prompt`). Save `words.json` as `[start, end, word]`.
+3. **Face track:** `pip install "opencv-python-headless<5" scipy` (OpenCV 5 has no Haar cascades). Run the frontal and profile Haar
+   cascades at 4fps on a 360x640 copy, then save `face.json`. `v2_cut.py` median-filters and gaussian-smooths the track.
+4. **Cut:** `python3 pipeline/v2_cut.py <workdir>`. This sets the phrase list (`BREAKS`, `DROP`), the chunks (pre 0.06 / post 0.14 / gap 0.30),
+   and per-piece `zoompan` crops that follow the face frame by frame (use `on/30`, not `t`; never `scale eval=frame` + `crop`).
+   It writes `cut/video.mp4`, `voice.npy` and `data.json`. It takes about 35 min on 4 cores, with 2 parallel 4K HEVC decodes.
+5. **Music/SFX:** `python3 pipeline/synth.py <scratch>/audio`. The music is low-passed at 3.2kHz for the moodier tone.
+6. **HyperFrames project:** `npm i hyperframes gsap @fontsource/montserrat @fontsource/playfair-display`. Copy `gsap.min.js` and the
+   fonts (`fonts/montserrat-800.woff2`, `montserrat-600.woff2`, `playfair-900i.woff2`) into the project.
+7. **Graphics + mix:** `python3 pipeline/v2_gen.py <workdir> <project>`. This writes `index.html` (text groups, cards,
+   badges, counters, icon orbs, z-index = track) and `base.mp4` (video + voice + music ducked 55% + SFX, `loudnorm I=-14`).
+   Add `--no-audio` to rebuild only the HTML.
+8. **QA:** `npx hyperframes lint` (the nested-structure warnings are expected), then `npx hyperframes snapshot --at <times> --no-end`.
+   Check text over the face, clipped lines, card text contrast and badge overlap.
+9. **Render:** `npx hyperframes render -o HONDA_V3_FULL.mp4 --crf 18` (about 20 min for 3:41 when nothing else runs; stop Whisper first).
+   Make a delivery copy: `-crf 23 -maxrate 4M -movflags +faststart` (about 86MB).
+10. **Verify:** re-transcribe the final audio, check loudness with `ebur128`, and spot-check frames.
+11. **Deliver:** use SendUserFile with `display: attach`, then do the Drive resumable upload through `content.googleapis.com`
+    (see Gotchas) into folder `1USG2l0hx-iaPx0AyvkvDL55Yct1KD3X9`. Compare the md5 checksums, then delete the token file.
