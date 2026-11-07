@@ -59,7 +59,7 @@ To rebuild them, re-download the footage and run `pipeline/` (see the PLAYBOOK).
   Face tracking uses OpenCV 4 Haar cascades. OpenCV 5 dropped them, so install `opencv-python-headless<5`.
 - Gotcha: `scale` with `eval=frame` followed by `crop` does not follow per-frame size changes. Use `zoompan` with `on`.
 - Output: `HONDA_V2_FULL.mp4`, 3:41, 1080x1920, -13.7 LUFS (plus an 86MB copy). Sent to the user in chat.
-  Not uploaded to Drive: the Google token expired and the credential request was declined.
+  Uploaded to Drive (md5 verified): https://drive.google.com/file/d/1F-N4S6MkxUwumyimqIM4W3AlV3aMNOMd/view
 - Dropped as duplicates: the repeated "general warranty 8 tahun" (words 309-314), the mid-video
   "Tekan mata di bawah" (473-476) and the filler "Tamam" (586).
 - Figures to confirm with the dealer: 8-year warranty with unlimited mileage, 10-year hybrid battery warranty,

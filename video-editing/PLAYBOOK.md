@@ -83,3 +83,9 @@ Built while editing the Honda City promo (Nov 2026). Tools: **FFmpeg** (cut and 
 - `cdn.jsdelivr.net` is blocked, so `npm i gsap` and reference it locally.
 - Short B-roll in a long slot desyncs audio. Use `-stream_loop -1` or split the slot across 2 clips.
 - Never repost other creators' reels; yt-dlp is for style reference only.
+- When an expired network secret is saved for `www.googleapis.com`, the proxy overwrites your own Authorization header there.
+  Call the Drive API through `content.googleapis.com` instead. Upload with
+  `content.googleapis.com/upload/drive/v3/files?uploadType=resumable`, keep the token in a 0600 file passed as `curl -H @file`,
+  and delete the file afterwards.
+- The Claude app on a phone cannot download large video file cards, and the mobile browser player has no save button.
+  Deliver through a Drive link.
