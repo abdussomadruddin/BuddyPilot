@@ -47,3 +47,21 @@ To rebuild them, re-download the footage and run `pipeline/` (see the PLAYBOOK).
   A short-lived Drive token is saved as a network secret for www.googleapis.com on the Default environment.
 - Next ideas the user may want: 15–30s ad clips cut from the full version, a SAFRICH logo outro,
   or a trending track added in TikTok.
+
+## Session 2 (7 Nov 2026): IMG_0851 full edit in kinetic-typography style
+
+- New A-roll: Drive file `IMG_0851.MOV` (id 1YigsNUk5854qGINy-NrMXOf2hdIWUcj5), 4:09, a Honda salesman in an HR-V polo
+  talking about warranty, hybrid battery and free gifts.
+- Style reference: the user's TikTok reel (talking head, white sans and red serif-italic kinetic words, 3D icon props,
+  full-screen white/red cards, blur and glitch transitions, moody grade).
+- Pipeline: `pipeline/v2_cut.py` (cut list, face-tracked zoompan punch-ins, grade, voice) and
+  `pipeline/v2_gen.py` + `v2_style.css` (kinetic text, cards, badges, counters, SFX and music mix).
+  Face tracking uses OpenCV 4 Haar cascades. OpenCV 5 dropped them, so install `opencv-python-headless<5`.
+- Gotcha: `scale` with `eval=frame` followed by `crop` does not follow per-frame size changes. Use `zoompan` with `on`.
+- Output: `HONDA_V2_FULL.mp4`, 3:41, 1080x1920, -13.7 LUFS (plus an 86MB copy). Sent to the user in chat.
+  Not uploaded to Drive: the Google token expired and the credential request was declined.
+- Dropped as duplicates: the repeated "general warranty 8 tahun" (words 309-314), the mid-video
+  "Tekan mata di bawah" (473-476) and the filler "Tamam" (586).
+- Figures to confirm with the dealer: 8-year warranty with unlimited mileage, 10-year hybrid battery warranty,
+  service vouchers RM600 / RM40 (RM40 is uncertain, maybe RM400), RM3,000 voucher this month, 5x free labour,
+  10 merchandise items, 2 umbrellas.
