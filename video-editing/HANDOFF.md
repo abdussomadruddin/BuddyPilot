@@ -65,3 +65,6 @@ To rebuild them, re-download the footage and run `pipeline/` (see the PLAYBOOK).
 - Figures to confirm with the dealer: 8-year warranty with unlimited mileage, 10-year hybrid battery warranty,
   service vouchers RM600 / RM40 (RM40 is uncertain, maybe RM400), RM3,000 voucher this month, 5x free labour,
   10 merchandise items, 2 umbrellas.
+- V3 (15:27 UTC): the user reported a yellow cast, so the grade was neutralised (mid-tone RGB is now about 73/69/66).
+  `HONDA_V3_FULL_1080p.mp4` (87MB) was sent in chat. Not yet on Drive: the token expired, so a new `ya29.` token is needed.
+  The Drive link above is still the older yellowish V2.
