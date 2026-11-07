@@ -119,7 +119,8 @@ if '--skip-video' not in sys.argv:
               "rgbashift=rh=-18:bh=18:enable='lt(t,0.1)',noise=alls=40:allf=t:enable='lt(t,0.1)'," if tr == 'glitch' else ''
         vf = (f"zoompan=z='{zexp}':x='clip(({cx})*iw-iw/zoom/2\\,0\\,iw-iw/zoom)':y='clip(({cy})*ih-{ty}*ih/zoom\\,0\\,ih-ih/zoom)'"
               f":d=1:s=1080x1920:fps=30,{fx_}curves=all='0/0 0.5/0.46 0.85/0.76 1/0.86',"
-              f"colorbalance=rs=0.04:bs=-0.06:rm=0.05:bm=-0.05:rh=0.02:bh=-0.04,eq=contrast=1.1:saturation=1.05,format=yuv420p")
+              f"colorbalance=rs=0.04:bs=-0.06:rm=0.05:bm=-0.05:rh=0.02:bh=-0.04,eq=contrast=1.1:saturation=1.05,"
+              f"colorbalance=rs=-0.04:bs=0.07:rm=-0.09:gm=-0.01:bm=0.12:rh=-0.04:bh=0.08,curves=all='0/0 0.5/0.53 1/1',eq=saturation=0.9,format=yuv420p")
         f = f'{WK}/p/v{n:03d}.mp4'
         if not os.path.exists(f):
             jobs.append(['ffmpeg', '-v', 'error', '-y', '-ss', f"{p['st']:.3f}", '-i', A, '-t', f'{d:.3f}', '-an',
