@@ -23,8 +23,8 @@ PH = [(0, 11, EXT), (12, 21, EXT), (22, 30, EXT), (35, 48, EXT), (49, 65, EXT), 
       (381, 390, TNT), (392, 400, TNT), (401, 408, TNT), (413, 418, TNT), (422, 426, INT), (438, 449, EXT),
       (451, 455, EXT), (456, 461, EXT), (462, 477, EXT), (496, 506, EXT), (510, 524, EXT), (525, 536, EXT),
       (537, 542, EXT), (543, 549, EXT), (551, 572, EXT), (573, 581, [])]
-START_FIX = {66: 28.68, 451: 181.47}   # whisper marked these words late (verified by audio energy)
-END_FIX = {73: 31.54}                   # speech runs on without pause into the next word
+START_FIX = {66: 28.68, 451: 181.47, 401: 161.62, 392: 157.90}   # whisper marked these words late (verified by audio energy)
+END_FIX = {73: 31.54, 400: 161.60}                   # speech runs on without pause into the next word
 PRE, POST, GAP = 0.06, 0.12, 0.28
 wst = lambda i: words[i][0]; wen = lambda i: words[i][1]
 
@@ -85,8 +85,19 @@ if '--skip-video' not in sys.argv:
             run(['ffmpeg', '-v', 'error', '-y', '-stream_loop', '-1' if src != 'A' else '0', '-ss', f'{st:.3f}', '-i', path,
                  '-t', f'{d:.3f}', '-an', '-vf', vf, '-c:v', 'libx264', '-preset', 'fast', '-crf', '17', '-r', '30', f])
         plist.append(f); print('v', n, len(pieces), flush=True)
-    open(f'{WK}/v.txt', 'w').write(''.join(f"file '{p}'\n" for p in plist))
-    run(['ffmpeg', '-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', f'{WK}/v.txt', '-c', 'copy', f'{WK}/video.mp4'])
+    # frame-exact concat: each piece trimmed to its frame-grid length (pad by 2 cloned frames if short)
+    L = []
+    for n, p in enumerate(pieces):
+        if p[1] - p[0] < 0.02: continue
+        f = f'{WK}/p/v{n:03d}.mp4'; N = round(p[1] * 30) - round(p[0] * 30)
+        M = int(subprocess.run(['ffprobe', '-v', 'error', '-count_packets', '-select_streams', 'v:0', '-show_entries',
+                                'stream=nb_read_packets', '-of', 'csv=p=0', f], capture_output=True, text=True).stdout.strip())
+        if M < N:
+            run(['ffmpeg', '-v', 'error', '-y', '-i', f, '-vf', 'tpad=stop_mode=clone:stop=2', '-c:v', 'libx264', '-preset', 'fast', '-crf', '17', f + '.pad.mp4'])
+            os.replace(f + '.pad.mp4', f)
+        L.append(f"file '{f}'\noutpoint {N/30:.6f}\n")
+    open(f'{WK}/v.txt', 'w').write(''.join(L))
+    run(['ffmpeg', '-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', f'{WK}/v.txt', '-c:v', 'libx264', '-preset', 'fast', '-crf', '17', '-r', '30', f'{WK}/video.mp4'])
 
 # ---------- audio ----------
 def load(p):
