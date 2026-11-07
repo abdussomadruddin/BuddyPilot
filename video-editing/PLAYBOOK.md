@@ -15,7 +15,8 @@ Built while editing the Honda City promo (Nov 2026). Tools: **FFmpeg** (cut and 
 4. **Sound:** music that changes by scene, plus SFX on every cut and reveal.
 5. **Motion explainer graphics** for numbers and offers (counters, equation cards, timelines, checklists).
 6. **Finish fully without asking for approval of steps.** Report when the final file is ready to download.
-7. Do not invent numbers. Every figure on screen must come from what the speaker actually said.
+7. **No yellowish look.** Neutral white balance on every clip (see C6). Never add warmth, keep saturation ≈1.03, no vignette.
+8. Do not invent numbers. Every figure on screen must come from what the speaker actually said.
    Remind the user to confirm promo figures with the dealer before posting.
 
 ## B. Shoot rules (to get close to the premium reference style)
@@ -48,8 +49,12 @@ Built while editing the Honda City promo (Nov 2026). Tools: **FFmpeg** (cut and 
 6. **Shots:** split each sentence into shots of 1.9s or less, alternating A-roll and topic-matched B-roll
    (exterior / interior / wheel / hybrid / tint pools), rotating offsets to avoid repeats.
    Motion per shot: continuous push-in of +6%, a whoosh zoom (1.35→1.0 in 0.22s) plus a boxblur on the first frames,
-   alternating A-roll punch-in levels (1.0 / 1.13, +0.07 on jump cuts), and the grade
-   `eq=contrast=1.08:saturation=1.15`, `vignette`.
+   alternating A-roll punch-in levels (1.0 / 1.13, +0.07 on jump cuts).
+   **Grade (anti-yellow):** per source clip, sample 3 frames and average only bright, low-chroma pixels
+   (white/grey surfaces; this excludes red paint). Gains = mean/channel, applied as `colorchannelmixer=rr:gg:bb`,
+   then `eq=contrast=1.06:saturation=1.03:brightness=0.015`. Verify that the graded white areas have |B−R| ≤ 3.
+   Drop any clip that can't be neutralised (for example IMG_8379, lit by orange venue lights).
+   Showroom footage is warm (A-roll raw B−R ≈ −16). The old saturation 1.15 + vignette grade made it worse.
 7. **Audio mix** (numpy): voice (normalised) + music × 0.16 with sidechain ducking (−55% while talking) + SFX × 0.9,
    tanh limiter, then `loudnorm I=-14 TP=-1.5`.
    Music sections: intro build (hook) → main beat (offers) → calm breakdown (warranty) → main (gifts) → outro (CTA),
