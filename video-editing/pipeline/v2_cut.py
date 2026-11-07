@@ -3,7 +3,7 @@ Usage: python3 v2_cut.py <workdir>   (workdir holds IMG_0851.MOV, a.wav, words.j
 """
 import json, subprocess, os, sys
 import numpy as np
-S = sys.argv[1]
+S = os.path.abspath(sys.argv[1])
 A = f'{S}/IMG_0851.MOV'
 WK = f'{S}/cut'; os.makedirs(f'{WK}/p', exist_ok=True)
 SR = 48000

@@ -2,7 +2,7 @@
 top badges/counters, SFX + music mix. Usage: python3 v2_gen.py <workdir> <hyperframes project dir>"""
 import json, subprocess, wave, os, re, sys
 import numpy as np
-S, HF = sys.argv[1], sys.argv[2]
+S, HF = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
 PIPE = os.path.dirname(os.path.abspath(__file__))
 AUD = os.path.join(os.path.dirname(S.rstrip('/')), 'audio')
 WK = f'{S}/cut'
@@ -228,7 +228,6 @@ badge(T(346), phend(348) + 0.1, 'CHECK', 'capping mileage?')
 badge(T(352), phend(362) + 0.1, '7 TAHUN + CAP 100,000', 'tak berbaloi', '')
 rows([('General warranty', '8 tahun', T(431), None), ('Bateri hybrid', '10 tahun', T(437), None)], phend(454) + 0.1)
 chips([('Tinted', T(492)), ('Spec JPJ', T(501)), ('Gelap habis', T(507))], phend(510) + 0.1)
-badge(T(515), phend(517) + 0.2, 'PERCUMA', 'dashcam')
 badge(T(538), phend(545) + 0.1, 'PAYUNG', 'x0', 'bukan satu', cnt=(2, 'x', '', T(545) + 0.2))
 badge(T(546), phend(550) + 0.1, 'MERCHANDISE HONDA', '0', '', cnt=(10, '', '', T(547) + 0.25))
 badge(T(553), phend(558) + 0.1, 'SERVICE VOUCHER', '3 jenis')
