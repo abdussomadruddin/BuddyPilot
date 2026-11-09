@@ -3,6 +3,9 @@
 const { spawnSync } = require("node:child_process");
 
 const project = process.env.VERCEL_PROJECT || "invoice-pilot";
+const scope = process.env.VERCEL_SCOPE || "abdussomadruddin-projects";
+const production = process.argv.includes("--production");
+const previewVerified = process.argv.includes("--preview-verified");
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -15,7 +18,7 @@ function run(command, args, options = {}) {
 }
 
 function vercel(args) {
-  run("npx", ["vercel", ...args]);
+  run("npx", ["--yes", "vercel@65.12.1", ...args, "--scope", scope]);
 }
 
 function usage() {
@@ -27,10 +30,10 @@ Usage:
 Commands:
   check      Check JavaScript syntax
   link       Link this folder to the Vercel project (${project})
-  pull       Pull Vercel production settings/env
-  build      Build Vercel production output locally
-  deploy     Deploy the current prebuilt output to production
-  repair     Link, pull, check, build, and deploy production
+  pull       Pull Vercel preview settings/env
+  build      Build Vercel preview output locally
+  deploy     Check, test, and deploy prebuilt output to preview
+  repair     Install, check, test, build, and deploy preview
   db:setup   Create Supabase tables using SUPABASE_DB_URL
   db:migrate Import old Drive JSON client/settings data into Supabase
   env        List Vercel environment variables
@@ -39,10 +42,37 @@ Commands:
 
 Env:
   VERCEL_PROJECT  Override project name, default: invoice-pilot
+  VERCEL_SCOPE    Override team, default: abdussomadruddin-projects
+
+Production:
+  pull/build accept --production for production configuration.
+  deploy/repair require --production --preview-verified after preview smoke checks.
+  Production deployments are staged with --skip-domain; promote separately
+  only after smoke checks and explicit production authorization.
 `);
 }
 
 const command = process.argv[2] || "help";
+
+if (production && ["deploy", "repair"].includes(command) && !previewVerified) {
+  console.error("Production requires a verified preview. Complete CLOUD_SETUP.md checks, then use --production --preview-verified with explicit production authorization.");
+  process.exit(1);
+}
+
+function checkAndTest() {
+  run("npm", ["run", "check"]);
+  run("npm", ["test"]);
+}
+
+function build() {
+  vercel(production ? ["build", "--prod"] : ["build"]);
+}
+
+function deploy() {
+  vercel(production
+    ? ["deploy", "--prebuilt", "--prod", "--skip-domain"]
+    : ["deploy", "--prebuilt"]);
+}
 
 if (command === "help" || command === "--help" || command === "-h") {
   usage();
@@ -51,17 +81,19 @@ if (command === "help" || command === "--help" || command === "-h") {
 } else if (command === "link") {
   vercel(["link", "--yes", "--project", project]);
 } else if (command === "pull") {
-  vercel(["pull", "--yes", "--environment", "production", "--project", project]);
+  vercel(["pull", "--yes", "--environment", production ? "production" : "preview"]);
 } else if (command === "build") {
-  vercel(["build", "--prod"]);
+  build();
 } else if (command === "deploy") {
-  vercel(["deploy", "--prebuilt", "--prod"]);
+  checkAndTest();
+  deploy();
 } else if (command === "repair") {
   vercel(["link", "--yes", "--project", project]);
-  vercel(["pull", "--yes", "--environment", "production", "--project", project]);
-  run("npm", ["run", "check"]);
-  vercel(["build", "--prod"]);
-  vercel(["deploy", "--prebuilt", "--prod"]);
+  vercel(["pull", "--yes", "--environment", production ? "production" : "preview"]);
+  run("npm", ["ci"]);
+  checkAndTest();
+  build();
+  deploy();
 } else if (command === "db:setup") {
   run("node", ["scripts/setup-supabase.js"]);
 } else if (command === "db:migrate") {

@@ -1,6 +1,6 @@
 # BuddyPilot
 
-BuddyPilot is a simple Vercel webapp for managing business workflows, creatives, reports, invoices, receipts, and direct Facebook Page publishing.
+BuddyPilot is a Vercel webapp for managing business workflows, creatives, reports, invoices, receipts, and paired-Mac social posting.
 
 Copywriting is generated from the uploaded creative note plus the supplied salespage URL. The app fetches the salespage title, meta description, headings, and visible text snippets so it is not locked to one product.
 
@@ -49,7 +49,11 @@ npm run ip -- env:add APP_PASSWORD production
 npm run ip -- repair
 ```
 
-`npm run ip -- repair` links to the `invoice-pilot` Vercel project, pulls production settings, checks syntax, builds, and deploys production.
+`npm run ip -- repair` links to the `invoice-pilot` project in the `abdussomadruddin-projects` team, pulls preview settings, installs from the lockfile, checks syntax, runs tests, builds, and deploys a preview. `pull`, `build`, and `deploy` also default to preview. The CLI uses pinned Vercel CLI 65.12.1.
+
+Follow `CLOUD_SETUP.md` to verify the preview on desktop and iPhone 15. With explicit production authorization, `npm run ip -- repair --production --preview-verified` runs the checks again and stages a production build with `--skip-domain`. Verify that staged URL before promoting the exact deployment using `npx vercel@65.12.1 promote <production-deployment-url> --scope abdussomadruddin-projects`. The verification flag records the operator's confirmation; it does not run browser checks.
+
+The `googleapis-common` override keeps its HTTP transport on Gaxios 7.3.1 within the same major version, removing the vulnerable legacy rimraf/glob dependency chain. Keep the lockfile and override together; re-evaluate it when upgrading Google APIs.
 
 Set `VERCEL_PROJECT=your-project-name` if you need to target a different Vercel project.
 

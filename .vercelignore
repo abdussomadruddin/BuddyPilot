@@ -9,3 +9,5 @@ whatsapp-*.md
 *-changes.patch
 supabase/.temp/
 tmp/facebook-test-generated.*
+node_modules.nosync/
+output/playwright/

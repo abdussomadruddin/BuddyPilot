@@ -6,3 +6,18 @@
 node_modules/
 *.log
 .vercel
+
+# Local artifacts and business data stay outside source control.
+.DS_Store
+node_modules.nosync/
+.playwright-mcp/
+test-results/
+output/playwright/
+outputs/
+posters-*/
+public/ebook-mastery-emotional-20260827/
+whatsapp-*.json
+whatsapp-*.md
+*-changes.patch
+supabase/.temp/
+tmp/facebook-test-generated.*
