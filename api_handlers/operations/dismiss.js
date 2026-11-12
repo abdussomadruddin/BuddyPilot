@@ -1,5 +1,5 @@
 const { requireAuth } = require("../../lib/auth");
-const { readJsonBody } = require("../../lib/postpilot");
+const { readJsonBody } = require("../../lib/http-body");
 const { getOperationsOverview } = require("../../lib/operations-center");
 const { dismissOperationsIncident } = require("../../lib/supabase-db");
 

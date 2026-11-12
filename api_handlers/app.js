@@ -1,12 +1,6 @@
-const { buildThreadsPromoteCaption } = require("../lib/threads-promote-caption");
 const { requireAuth } = require("../lib/auth");
-const threadsViralTemplates = require("../lib/threads-viral-templates");
-const { buildThreadsGeneralText } = require("../lib/threads-general-copy");
 
 function pageHtml() {
-  const threadsPromoteCaptionSource = buildThreadsPromoteCaption.toString().replace(/</g, "\\u003c");
-  const threadsViralTemplatesJson = JSON.stringify(threadsViralTemplates).replace(/</g, "\\u003c");
-  const threadsGeneralCopySource = buildThreadsGeneralText.toString().replace(/</g, "\\u003c");
   const uiIcon = (name, tone = "") => `<svg class="icon section-icon ${tone}" aria-hidden="true"><use href="/icons.svg#${name}"></use></svg>`;
   return `<!doctype html>
 <html lang="ms">
@@ -4324,7 +4318,7 @@ function pageHtml() {
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
-  <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261107-1">
+  <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261112-1">
 </head>
 <body>
   <main>
@@ -4338,7 +4332,6 @@ function pageHtml() {
         <span class="nav-liquid-indicator" aria-hidden="true"></span>
         <button class="tab-button active" type="button" data-tab-target="dashboard"><svg class="icon" aria-hidden="true"><use href="/icons.svg#layout-dashboard"></use></svg><span>Dashboard</span></button>
         <button class="tab-button" type="button" data-tab-target="adscmo"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart"></use></svg><span>Ads CMO</span></button>
-        <button class="tab-button" type="button" data-tab-target="personalpostpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#send"></use></svg><span>Post Pilot</span></button>
         <button class="tab-button" type="button" data-tab-target="clientpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Client Pilot</span></button>
       </nav>
       <details class="topbar-menu">
@@ -4427,16 +4420,6 @@ function pageHtml() {
               <span class="dashboard-section-kicker">Mulakan kerja</span>
             </div>
             <div class="quick-grid">
-              <button class="quick-card" type="button" data-action-key="personal-post" data-go-tab="personalpostpilot" data-go-subtab="postpilot-auto-panel">
-                <span class="quick-card-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#sparkles"></use></svg></span>
-                <span class="quick-card-copy"><strong>Buat Post Personal</strong><small>Facebook personal</small></span>
-                <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
-              </button>
-              <button class="quick-card" type="button" data-action-key="threads-post" data-go-tab="personalpostpilot" data-go-subtab="threads-viral-panel">
-                <span class="quick-card-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#message"></use></svg></span>
-                <span class="quick-card-copy"><strong>Buat Post Threads</strong><small>Threads General</small></span>
-                <span class="quick-card-arrow" aria-hidden="true"><svg class="icon"><use href="/icons.svg#arrow-right"></use></svg></span>
-              </button>
               <button class="quick-card" type="button" data-action-key="weekly-report" data-go-tab="clientpilot" data-go-subtab="client-report-panel">
                 <span class="quick-card-icon"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart"></use></svg></span>
                 <span class="quick-card-copy"><strong>Buat Weekly Report</strong><small>Report Pilot</small></span>
@@ -4581,247 +4564,6 @@ function pageHtml() {
           <section class="ads-cmo-section" style="margin-top:14px"><h2>${uiIcon("message", "tone-amber")}Tracking Warnings</h2><ul id="adsCmoWarnings"></ul></section>
         </section>
         <div id="adsCmoEmpty" class="ads-cmo-empty">Pilih account dan load snapshot. Jika belum tersedia, gunakan Retry Report.</div>
-      </section>
-    </section>
-
-    <section id="tab-personalpostpilot" class="tab-panel" data-tab-panel="personalpostpilot">
-      <section class="card app-panel" data-panel="personalpostpilot">
-        <div class="hero">
-          <div>
-            <h1>${uiIcon("send")}Post Pilot</h1>
-            <p>Facebook dan Threads Promote kini aliran berasingan. Pilih tab untuk sediakan post.</p>
-          </div>
-        </div>
-
-        <section class="remote-automation-panel" aria-labelledby="remoteAutomationHeading">
-          <div>
-            <p id="remoteAutomationHeading" class="remote-automation-heading"><span id="remoteDeviceDot" class="remote-status-dot"></span>Mac Automation</p>
-            <p id="remoteDeviceStatus" class="remote-automation-status">Semak extension Mac...</p>
-            <p id="remoteJobStatus" class="remote-automation-job">Tiada automation aktif.</p>
-            <code id="remotePairCode" class="remote-pair-code" hidden></code>
-          </div>
-          <div class="remote-automation-actions">
-            <button id="remoteRefreshButton" class="secondary" type="button" title="Refresh Mac status"><svg class="icon" aria-hidden="true"><use href="/icons.svg#refresh"></use></svg><span>Refresh</span></button>
-            <button id="remotePairButton" class="secondary" type="button">Pair Mac</button>
-            <button id="remoteCancelButton" class="secondary" type="button" hidden>Cancel</button>
-            <button id="remoteClearButton" class="secondary" type="button" hidden>Clear</button>
-            <button id="remoteRetryButton" class="secondary" type="button" hidden>Retry</button>
-          </div>
-        </section>
-
-        <div class="subtabs postpilot-subtabs">
-          <button class="subtab-button active" type="button" data-subtab-group="post-pilot" data-subtab-target="postpilot-auto-panel">Facebook</button>
-          <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="threads-promote-panel">Threads Promote</button>
-          <button class="subtab-button" type="button" data-subtab-group="post-pilot" data-subtab-target="threads-viral-panel">Threads General</button>
-        </div>
-
-        <section id="threads-promote-panel" class="subtab-panel card" data-subtab-panel="post-pilot">
-          <h2>${uiIcon("send", "tone-green")}Threads Promote</h2>
-          <p class="note">Panggil target market → perkara menarik → CTA komen / DM. Satu post dengan 5 gambar. Semak caption sebelum tekan Post.</p>
-          <label for="promoteProductSelect">Produk</label>
-          <select id="promoteProductSelect"></select>
-          <label for="promoteTargetMarket">Target market (wajib)</label>
-          <input id="promoteTargetMarket" type="text" maxlength="80" required placeholder="Siapa yang produk ini ditujukan?">
-          <label for="promoteHighlight">Apa yang menarik tentang produk</label>
-          <input id="promoteHighlight" type="text" maxlength="100" placeholder="Ciri atau manfaat sebenar produk">
-          <button id="savePromoteAudienceButton" type="button" class="secondary">Simpan Maklumat Produk</button>
-          <label for="promoteHookImages">Tambah gambar produk</label>
-          <input id="promoteHookImages" type="file" multiple accept="image/jpeg,image/png,image/webp">
-          <p id="promoteGalleryStatus" class="note">Perlu sekurang-kurangnya 5 gambar.</p>
-          <label for="promoteCaption">Caption pendek</label>
-          <textarea id="promoteCaption" maxlength="280" rows="3" placeholder="Tekan Random Ayat untuk jana caption."></textarea>
-          <div class="inline-actions"><button id="promoteRandomButton" type="button" class="secondary">Random Ayat</button><button id="promotePostButton" type="button">Post · 5 Gambar</button></div>
-          <p class="note">Mac memerlukan <a href="/postpilot-assist-0.4.0.zip" download>Post Pilot Assist v0.4.0</a>. Ekstrak ZIP dan Load unpacked / Reload di chrome://extensions. Extension lama tidak akan mengambil kerja ini.</p>
-          <div id="promoteResult" class="result" role="status"></div>
-        </section>
-
-
-        <div id="postpilot-auto-panel" class="subtab-panel active" data-subtab-panel="post-pilot">
-          <div class="workflow-steps" aria-label="Aliran Post Pilot"><span class="active">1 Pilih</span><span>2 Generate</span><span>3 Review</span><span>4 Post</span></div>
-          <form id="threadsForm" class="client-form">
-            <div class="client-grid">
-              <div>
-                <label for="threadsProductSelect">Produk aktif</label>
-                <select id="threadsProductSelect" aria-label="Produk aktif"></select>
-                <div class="inline-actions product-actions">
-                  <button id="showAddProductButton" class="secondary" type="button">Tambah produk</button>
-                  <button id="deleteProductButton" class="danger" type="button">Delete produk</button>
-                </div>
-              </div>
-              <div id="addProductPanel" hidden>
-                <label for="newProductName">Produk baru</label>
-                <input id="newProductName" type="text" placeholder="Nama produk" required>
-                <label for="newProductTargetMarket">Target market (wajib)</label>
-                <input id="newProductTargetMarket" type="text" maxlength="80" required placeholder="Contoh: owner bisnes yang urus order sendiri">
-                <label for="newProductHighlight">Apa yang menarik tentang produk</label>
-                <input id="newProductHighlight" type="text" maxlength="100" placeholder="Nyatakan ciri atau manfaat sebenar produk">
-                <input id="newProductLink" type="url" placeholder="https://link-produk.com">
-                <div class="inline-actions">
-                  <button id="saveNewProductButton" type="button">Simpan produk</button>
-                  <button id="cancelNewProductButton" class="secondary" type="button">Batal</button>
-                </div>
-              </div>
-              <div>
-                <label for="threadsProductName">Nama produk</label>
-                <input id="threadsProductName" name="product_name" type="text" value="K-Method" placeholder="Contoh: K-Method" readonly required>
-              </div>
-              <div>
-                <label for="threadsAffiliateLink">Affiliate / comment link</label>
-                <input id="threadsAffiliateLink" name="affiliate_link" type="url" value="https://swiy.co/kmethod" placeholder="Link yang nak letak di komen" readonly>
-              </div>
-              <div>
-                <label for="threadsPostMode">Mode post</label>
-                <select id="threadsPostMode" name="post_mode">
-                  <option value="auto" selected>Auto rotate random</option>
-                  <option value="soft">Soft story</option>
-                  <option value="hard">Hard sell</option>
-                  <option value="proof">Proof</option>
-                  <option value="engagement">Engagement question</option>
-                  <option value="objection">Objection</option>
-                </select>
-              </div>
-              <details class="full advanced-panel">
-                <summary>${uiIcon("message")}Voice Lock</summary>
-                <p class="note">Kekalkan cara cakap yang sama untuk produk ini, walaupun pattern post berubah.</p>
-                <div class="client-grid">
-                  <div>
-                    <label for="postPilotVoiceSlang">Gaya bahasa</label>
-                    <select id="postPilotVoiceSlang">
-                      <option value="light">Santai ringan</option>
-                      <option value="moderate" selected>Malaysia natural</option>
-                      <option value="strong">Lebih slang</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label for="postPilotVoiceEnglish">Malay-English mix</label>
-                    <select id="postPilotVoiceEnglish">
-                      <option value="off">BM sahaja</option>
-                      <option value="light" selected>Light</option>
-                      <option value="moderate">Moderate</option>
-                    </select>
-                  </div>
-                  <div class="full">
-                    <label for="postPilotVoicePreferred">Ayat yang aku selalu guna</label>
-                    <input id="postPilotVoicePreferred" type="text" placeholder="Contoh, jujur aku rasa, senang cerita">
-                  </div>
-                  <div class="full">
-                    <label for="postPilotVoiceBanned">Ayat yang jangan guna</label>
-                    <input id="postPilotVoiceBanned" type="text" placeholder="Pisahkan dengan koma">
-                  </div>
-                </div>
-                <button id="savePostPilotVoiceButton" class="secondary" type="button">Save Voice Lock</button>
-              </details>
-              <div>
-                <label for="threadsHookImage">Gambar hook</label>
-                <input id="threadsHookImage" name="hook_image" type="file" multiple accept="image/jpeg,image/png,image/webp">
-                <div class="hook-image-preview">
-                  <img id="threadsHookImagePreview" alt="Preview gambar hook terakhir" hidden>
-                  <p class="note" id="threadsHookImageStatus">Galeri gambar hook belum dimuatkan.</p>
-                </div>
-                <div id="threadsHookGallery" class="postpilot-gallery" aria-live="polite"></div>
-              </div>
-            </div>
-            <div class="actions">
-              <button id="threadsPreviewButton" type="submit">Generate Preview</button>
-              <button id="threadsBatchPostButton" class="approve" type="button">POST 5 NOW</button>
-            </div>
-          </form>
-
-          <section id="threadsPreviewPanel" class="preview" hidden>
-            <h2>${uiIcon("file-text")}Preview Post Pilot</h2>
-            <p class="note" id="threadsPreviewMeta"></p>
-
-            <label for="threadsPostPreview">Post utama</label>
-            <textarea id="threadsPostPreview"></textarea>
-
-            <div class="actions">
-              <button class="approve" id="sendThreadsExtensionButton" type="button">POST NOW</button>
-              <button class="regenerate" id="regenerateThreadsButton" type="button">Jana Semula Post</button>
-            </div>
-          </section>
-
-          <div id="threadsResult" class="result"></div>
-        </div>
-
-        <div id="threads-viral-panel" class="subtab-panel" data-subtab-panel="post-pilot">
-          <section class="client-form">
-            <div class="section-heading">
-              <div>
-                <h2>${uiIcon("sparkles")}Threads General Post Generator</h2>
-                <p class="note">Generate text-only Threads posts. Review dulu, kemudian post satu-satu ke Threads.</p>
-              </div>
-            </div>
-            <div class="client-grid">
-              <div>
-                <label for="viralPattern">Pattern</label>
-                <select id="viralPattern"></select>
-              </div>
-              <div>
-                <label for="viralTone">Tone</label>
-                <select id="viralTone"></select>
-              </div>
-              <div>
-                <label for="viralCategory">Post category</label>
-                <select id="viralCategory"></select>
-              </div>
-              <div>
-                <label for="viralAudience">Audience</label>
-                <select id="viralAudience"></select>
-              </div>
-              <div class="full" hidden>
-                <label class="check-row" for="viralHashtags">
-                  <input id="viralHashtags" type="checkbox">
-                  Include hashtags
-                </label>
-              </div>
-            </div>
-            <div class="actions">
-              <button id="generateViralOneButton" type="button" disabled>Generate &amp; Post 1 to Threads</button>
-              <button id="generateViralTenButton" class="secondary" type="button" disabled>Generate &amp; Post 10 to Threads</button>
-              <button id="generateViralFiftyButton" class="secondary" type="button" disabled>Generate &amp; Post 50 to Threads</button>
-            </div>
-            <div id="viralResult" class="result"></div>
-            <div id="viralOutput" class="viral-post-grid"></div>
-          </section>
-
-          <section class="saved-viral-panel">
-            <div class="section-heading">
-              <div>
-                <h2>${uiIcon("file-text")}Saved posts</h2>
-                <p class="note">Favorites disimpan dalam browser.</p>
-              </div>
-            </div>
-            <div class="viral-toolbar">
-              <div>
-                <label for="viralSavedSearch">Search saved posts</label>
-                <input id="viralSavedSearch" type="search" placeholder="Search text">
-              </div>
-              <div>
-                <label for="viralSavedCategoryFilter">Filter category</label>
-                <select id="viralSavedCategoryFilter"></select>
-              </div>
-              <div>
-                <label for="viralSavedToneFilter">Filter tone</label>
-                <select id="viralSavedToneFilter"></select>
-              </div>
-            </div>
-            <div class="actions">
-              <button id="exportSavedViralButton" class="secondary" type="button">Export Saved CSV</button>
-              <button id="clearSavedViralButton" class="secondary" type="button">Clear Saved Posts</button>
-            </div>
-            <div id="viralSavedOutput" class="viral-post-grid"></div>
-          </section>
-          <section class="saved-viral-panel">
-            <div class="section-heading">
-              <div>
-                <h2>${uiIcon("refresh")}Post history</h2>
-                <p class="note">History server digunakan untuk elak pattern dan ayat berulang pada semua device.</p>
-              </div>
-              <button id="refreshViralHistoryButton" class="secondary" type="button">Refresh</button>
-            </div>
-            <div id="viralHistoryOutput" class="viral-post-grid"></div>
-          </section>
-        </div>
       </section>
     </section>
 
@@ -5355,65 +5097,6 @@ Review retargeting when the warm audience is ready</textarea>
   <div id="appToast" class="app-toast" role="status" aria-live="polite" hidden></div>
 
   <script>
-    const buildThreadsPromoteCaption = ${threadsPromoteCaptionSource};
-    const threadsForm = document.getElementById("threadsForm");
-    const threadsProductSelect = document.getElementById("threadsProductSelect");
-    const showAddProductButton = document.getElementById("showAddProductButton");
-    const deleteProductButton = document.getElementById("deleteProductButton");
-    const addProductPanel = document.getElementById("addProductPanel");
-    const newProductName = document.getElementById("newProductName");
-    const newProductLink = document.getElementById("newProductLink");
-    const saveNewProductButton = document.getElementById("saveNewProductButton");
-    const cancelNewProductButton = document.getElementById("cancelNewProductButton");
-    const threadsPreviewButton = document.getElementById("threadsPreviewButton");
-    const threadsPreviewPanel = document.getElementById("threadsPreviewPanel");
-    const threadsPreviewMeta = document.getElementById("threadsPreviewMeta");
-    const threadsPostPreview = document.getElementById("threadsPostPreview");
-    const sendThreadsExtensionButton = document.getElementById("sendThreadsExtensionButton");
-    const regenerateThreadsButton = document.getElementById("regenerateThreadsButton");
-    const threadsHookImage = document.getElementById("threadsHookImage");
-    const threadsHookImagePreview = document.getElementById("threadsHookImagePreview");
-    const threadsHookImageStatus = document.getElementById("threadsHookImageStatus");
-    const threadsHookGallery = document.getElementById("threadsHookGallery");
-    const threadsBatchPostButton = document.getElementById("threadsBatchPostButton");
-    const postPilotVoiceSlang = document.getElementById("postPilotVoiceSlang");
-    const postPilotVoiceEnglish = document.getElementById("postPilotVoiceEnglish");
-    const postPilotVoicePreferred = document.getElementById("postPilotVoicePreferred");
-    const postPilotVoiceBanned = document.getElementById("postPilotVoiceBanned");
-    const savePostPilotVoiceButton = document.getElementById("savePostPilotVoiceButton");
-    const threadsResult = document.getElementById("threadsResult");
-    const remoteDeviceDot = document.getElementById("remoteDeviceDot");
-    const remoteDeviceStatus = document.getElementById("remoteDeviceStatus");
-    const remoteJobStatus = document.getElementById("remoteJobStatus");
-    const remotePairCode = document.getElementById("remotePairCode");
-    const remotePairButton = document.getElementById("remotePairButton");
-    const remoteRefreshButton = document.getElementById("remoteRefreshButton");
-    const remoteCancelButton = document.getElementById("remoteCancelButton");
-    const remoteClearButton = document.getElementById("remoteClearButton");
-    const remoteRetryButton = document.getElementById("remoteRetryButton");
-    const viralTemplates = ${threadsViralTemplatesJson};
-    const buildThreadsGeneralText = ${threadsGeneralCopySource};
-    const viralPattern = document.getElementById("viralPattern");
-    const viralCategory = document.getElementById("viralCategory");
-    const viralTone = document.getElementById("viralTone");
-    const viralAudience = document.getElementById("viralAudience");
-    const viralHashtags = document.getElementById("viralHashtags");
-    const generateViralOneButton = document.getElementById("generateViralOneButton");
-    const generateViralTenButton = document.getElementById("generateViralTenButton");
-    const generateViralFiftyButton = document.getElementById("generateViralFiftyButton");
-    const autoPostViralTenButton = document.getElementById("autoPostViralTenButton");
-    const autoPostViralFiftyButton = document.getElementById("autoPostViralFiftyButton");
-    const exportViralCsvButton = document.getElementById("exportViralCsvButton");
-    const viralResult = document.getElementById("viralResult");
-    const viralOutput = document.getElementById("viralOutput");
-    const viralSavedSearch = document.getElementById("viralSavedSearch");
-    const viralSavedCategoryFilter = document.getElementById("viralSavedCategoryFilter");
-    const viralSavedToneFilter = document.getElementById("viralSavedToneFilter");
-    const exportSavedViralButton = document.getElementById("exportSavedViralButton");
-    const clearSavedViralButton = document.getElementById("clearSavedViralButton");
-    const viralSavedOutput = document.getElementById("viralSavedOutput");
-    const viralHistoryOutput = document.getElementById("viralHistoryOutput");
-    const refreshViralHistoryButton = document.getElementById("refreshViralHistoryButton");
     const invoicePeriod = document.getElementById("invoicePeriod");
     const generateInvoicesButton = document.getElementById("generateInvoicesButton");
     const uploadInvoicesButton = document.getElementById("uploadInvoicesButton");
@@ -5579,47 +5262,18 @@ Review retargeting when the warm audience is ready</textarea>
     const clientFilterChips = document.querySelector(".client-filter-chips");
     const MAX_DIRECT_UPLOAD_BYTES = 4 * 1024 * 1024;
     const TARGET_UPLOAD_BYTES = Math.floor(3.75 * 1024 * 1024);
-    const POSTPILOT_INPUT_STORAGE_KEY = "postpilot-last-input-v1";
-    const POSTPILOT_IMAGE_STORAGE_KEY = "postpilot-last-hook-image-v1";
-    const POSTPILOT_SAVED_IMAGE_MAX_BYTES = 900 * 1024;
     const LAST_WORK_STORAGE_KEY = "buddypilot-last-work-v1";
     const QUICK_ACTION_STORAGE_KEY = "buddypilot-quick-actions-v1";
     const LAST_REPORT_CLIENT_KEY = "buddypilot-last-report-client-v1";
     const TODAY_CACHE_KEY = "buddypilot-operations-cache-v1";
     const OPERATIONS_CACHE_MS = 5 * 60 * 1000;
-    const NAV_ITEMS = ["dashboard", "adscmo", "personalpostpilot", "clientpilot"];
-    const NAV_TITLES = { dashboard: "Hari Ini", adscmo: "Ads CMO", personalpostpilot: "Post Pilot", clientpilot: "Client Pilot" };
+    const NAV_ITEMS = ["dashboard", "adscmo", "clientpilot"];
+    const NAV_TITLES = { dashboard: "Hari Ini", adscmo: "Ads CMO", clientpilot: "Client Pilot" };
     let currentPreview = null;
     let seenVariations = [];
     let preparedCreativeFile = null;
     let preparedCreativeNotice = "";
-    let currentThreadsPreview = null;
-    let seenThreadsVariations = [];
-    let preparedThreadsImageFile = null;
-    let preparedThreadsImageNotice = "";
-    let savedThreadsImage = null;
-    let postPilotSaveTimer = null;
-    let currentThreadsImagePreviewUrl = "";
-    let postPilotGalleryImages = [];
-    let postPilotProducts = [];
-    let activePostPilotProductId = "";
-    let currentRemoteJob = null;
     let suppressTabClickUntil = 0;
-    let remoteStatusLoading = false;
-    let viralGeneratedPosts = [];
-    let viralSavedPosts = [];
-    const VIRAL_SAVED_STORAGE_KEY = "postpilot-threads-viral-saved-v1";
-    const VIRAL_BANNED_WORDS = [...(viralTemplates.bannedWords || [])];
-    const VIRAL_PROMO_PHRASES = [...(viralTemplates.promotionalPhrases || [])];
-    const VIRAL_ROBOTIC_PHRASES = [
-      "yang menarik bukan sekadar produk dia",
-      "sangat berpotensi",
-      "harus diingat",
-      "kesimpulannya",
-      "dalam era digital",
-      "adalah penting untuk",
-      "membuka mata",
-    ];
     let currentInvoices = [];
     let currentReceipts = [];
     let currentClients = [];
@@ -5638,191 +5292,27 @@ Review retargeting when the warm audience is ready</textarea>
     let toastTimer = null;
 
 
-    if (threadsHookImagePreview) {
-      threadsHookImagePreview.addEventListener("error", () => {
-        threadsHookImagePreview.hidden = true;
-      });
-    }
 
-    threadsHookImage.addEventListener("change", () => {
-      preparedThreadsImageFile = null;
-      preparedThreadsImageNotice = "";
-      threadsResult.className = "result";
-      threadsResult.textContent = "";
-      const files = [...(threadsHookImage.files || [])];
-      const file = files[0];
-      if (currentThreadsImagePreviewUrl) URL.revokeObjectURL(currentThreadsImagePreviewUrl);
-      currentThreadsImagePreviewUrl = file ? URL.createObjectURL(file) : "";
-      updatePostPilotHookImageStatus();
-      if (files.length) {
-        uploadPostPilotGalleryFiles(files).catch(showThreadsError);
-      }
-    });
 
-    threadsProductSelect.addEventListener("change", () => {
-      setPostWorkflowStep(1);
-      activatePostPilotProduct(threadsProductSelect.value).catch(showThreadsError);
-    });
 
-    showAddProductButton.addEventListener("click", () => {
-      addProductPanel.hidden = false;
-      newProductName.focus();
-    });
 
-    cancelNewProductButton.addEventListener("click", () => {
-      addProductPanel.hidden = true;
-      newProductName.value = "";
-      newProductLink.value = "";
-      document.getElementById("newProductTargetMarket").value = "";
-      document.getElementById("newProductHighlight").value = "";
-    });
 
-    saveNewProductButton.addEventListener("click", () => {
-      createPostPilotProductFromForm().catch(showThreadsError);
-    });
 
-    deleteProductButton.addEventListener("click", () => {
-      deleteActivePostPilotProduct().catch(showThreadsError);
-    });
 
-    savePostPilotVoiceButton.addEventListener("click", () => {
-      savePostPilotVoiceProfile().catch(showThreadsError);
-    });
 
     function showError(error) {
       result.className = "result err";
       result.textContent = error.message || String(error);
     }
 
-    function showThreadsError(error) {
-      threadsResult.className = "result err";
-      threadsResult.textContent = error.message || String(error);
-    }
 
-    function remoteJobDescription(job) {
-      if (!job) return "Tiada automation aktif.";
-      const progress = job.progress || {};
-      const total = Number(progress.total || 0);
-      const index = Number(progress.index || 0);
-      const counter = total ? Math.min(Math.max(index, 0), total) + "/" + total + " · " : "";
-      const status = String(job.status || "").replace(/_/g, " ");
-      return counter + (progress.message || progress.phase || status) + (job.error ? " · " + job.error : "");
-    }
 
-    function renderRemoteAutomation(overview) {
-      const device = overview?.device || null;
-      const activeJob = overview?.activeJob || null;
-      const latestJob = activeJob || overview?.jobs?.[0] || null;
-      currentRemoteJob = latestJob;
-      remoteDeviceDot.className = "remote-status-dot " + (device?.status || "");
-      remoteDeviceStatus.textContent = device
-        ? device.name + " · " + (device.status === "busy" ? "Busy" : device.status === "online" ? "Online" : "Offline") + (device.lastSeenAt ? " · last seen " + new Date(device.lastSeenAt).toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" }) : "")
-        : "Not Paired · generate code dan masukkan dalam popup extension Mac.";
-      remoteJobStatus.textContent = remoteJobDescription(latestJob);
-      remotePairButton.textContent = device ? "Pair semula" : "Pair Mac";
-      remoteClearButton.hidden = !latestJob;
-      remoteJobStatus.hidden = !latestJob;
-      remoteCancelButton.hidden = !activeJob;
-      remoteRetryButton.hidden = !latestJob || !["failed", "cancelled", "expired"].includes(latestJob.status);
-    }
 
-    async function loadRemoteAutomationStatus({ silent = true } = {}) {
-      if (remoteStatusLoading) return;
-      remoteStatusLoading = true;
-      try {
-        const response = await fetch("/api/postpilot-remote/device", { cache: "no-store" });
-        const json = await readApiJson(response);
-        if (response.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-        if (!response.ok || !json.ok) throw new Error(json.error || "Gagal semak Mac automation.");
-        renderRemoteAutomation(json);
-      } catch (error) {
-        if (!silent) showThreadsError(error);
-        remoteDeviceDot.className = "remote-status-dot offline";
-        remoteDeviceStatus.textContent = error.message || String(error);
-      } finally {
-        remoteStatusLoading = false;
-      }
-    }
 
-    async function createRemoteAutomationJob(body, target = threadsResult) {
-      const response = await fetch("/api/postpilot-remote/jobs", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const json = await readApiJson(response);
-      if (response.status === 401) {
-        window.location.href = "/login";
-        return null;
-      }
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal hantar arahan ke Chrome Mac.");
-      currentRemoteJob = json.job;
-      target.className = "result ok";
-      target.textContent = "Arahan diterima. Chrome Mac akan mula auto post apabila online.";
-      await loadRemoteAutomationStatus({ silent: true });
-      return json.job;
-    }
 
-    async function runRemoteJobAction(action) {
-      if (!currentRemoteJob?.id) return;
-      const response = await fetch("/api/postpilot-remote/jobs/action", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ job_id: currentRemoteJob.id, action }),
-      });
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal " + action + " automation.");
-      currentRemoteJob = json.job;
-      await loadRemoteAutomationStatus({ silent: false });
-    }
 
-    remotePairButton.addEventListener("click", async () => {
-      remotePairButton.disabled = true;
-      try {
-        const response = await fetch("/api/postpilot-remote/pair-code", { method: "POST" });
-        const json = await readApiJson(response);
-        if (!response.ok || !json.ok) throw new Error(json.error || "Gagal jana pairing code.");
-        remotePairCode.hidden = false;
-        remotePairCode.textContent = json.pairing.code;
-        remoteJobStatus.textContent = "Masukkan code ini dalam popup extension Mac. Sah sehingga " + new Date(json.pairing.expiresAt).toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" }) + ".";
-      } catch (error) {
-        showThreadsError(error);
-      } finally {
-        remotePairButton.disabled = false;
-      }
-    });
 
-    remoteClearButton.addEventListener("click", async () => {
-      remoteClearButton.disabled = true;
-      remoteJobStatus.hidden = true;
-      remoteRetryButton.hidden = true;
-      remoteCancelButton.hidden = true;
-      try {
-        await runRemoteJobAction("clear");
-        showToast("Kerja di-clear dan dibatalkan. Step yang sedang dihantar mungkin sudah selesai.");
-      } catch (error) {
-        remoteJobStatus.hidden = false;
-        await loadRemoteAutomationStatus({ silent: true });
-        showThreadsError(error);
-      } finally { remoteClearButton.disabled = false; }
-    });
-    remoteCancelButton.addEventListener("click", () => runRemoteJobAction("cancel").catch(showThreadsError));
-    remoteRetryButton.addEventListener("click", () => runRemoteJobAction("retry").catch(showThreadsError));
-    remoteRefreshButton.addEventListener("click", () => loadRemoteAutomationStatus({ silent: false }));
 
-    window.addEventListener("message", (event) => {
-      if (event.source !== window) return;
-      const data = event.data;
-      if (!data || data.source !== "postpilot-extension" || data.type !== "POSTPILOT_DRAFT_STATUS") return;
-      const statusTarget = document.getElementById("threads-viral-panel")?.classList.contains("active") ? viralResult : threadsResult;
-      statusTarget.className = data.ok ? "result ok" : "result err";
-      statusTarget.textContent = data.ok
-        ? (data.message || "Post Pilot extension sudah start.")
-        : (data.error || "Post Pilot extension tidak respond. Reload extension dan refresh webapp.");
-    });
 
     function showInvoiceError(error) {
       invoiceResult.className = "result err";
@@ -5955,7 +5445,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     function activeSubtabFor(tabName) {
-      const group = tabName === "personalpostpilot" ? "post-pilot" : tabName === "clientpilot" ? "client-modules" : "";
+      const group = tabName === "clientpilot" ? "client-modules" : "";
       return group ? document.querySelector(\`.subtab-panel.active[data-subtab-panel="\${group}"]\`)?.id || "" : "";
     }
 
@@ -5985,8 +5475,6 @@ Review retargeting when the warm audience is ready</textarea>
         const isClientInnerPanel = subtab === "client-list-panel" || subtab === "client-add-panel";
         activateSubtab("client-modules", isClientInnerPanel ? "client-overview-panel" : subtab || "client-overview-panel");
         if (isClientInnerPanel) activateSubtab("client", subtab);
-      } else if (subtab) {
-        activateSubtab("post-pilot", subtab);
       }
       if (target.innerSubtab) {
         activateSubtab(subtab === "client-invoice-panel" ? "invoice-pilot" : "client", target.innerSubtab);
@@ -6092,9 +5580,9 @@ Review retargeting when the warm audience is ready</textarea>
           : "";
         return renderOperationItem({
           status: job.status,
-          title: job.type === "threads_text" ? "Threads automation" : job.channel === "threads_promote" ? "Threads Promote" : job.channel === "facebook" ? "Facebook automation" : "Facebook + Threads automation",
+          title: job.title || "Operasi sedang berjalan",
           detail: recoveryDetail || job.progress?.message || "Job sedang berjalan.",
-        }, registerOperationsAction({ kind: "automation", operation: "cancel", label: "Cancel", jobId: job.id }));
+        }, "");
       }).join("");
 
       operationsHealth.innerHTML = (overview.health || []).map((item) => {
@@ -6211,8 +5699,6 @@ Review retargeting when the warm audience is ready</textarea>
         let response;
         if (action.kind === "dismiss") {
           response = await fetch("/api/operations/dismiss", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fingerprints: [action.fingerprint] }) });
-        } else if (action.kind === "automation") {
-          response = await fetch("/api/postpilot-remote/jobs/action", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ job_id: action.jobId, action: action.operation }) });
         } else if (action.kind === "telegram") {
           response = await fetch("/api/telegram/action", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "send-yesterday", clientCode: action.clientCode, recipientSlot: action.recipientSlot || 1 }) });
         }
@@ -6640,10 +6126,10 @@ Review retargeting when the warm audience is ready</textarea>
       const requestedTab = requestedParams.get("tab");
       const requestedPanel = requestedParams.get("panel");
       let savedMainTab = requestedTab || localStorage.getItem("active-main-tab") || "dashboard";
-      if (savedMainTab === "postpilot") {
-        savedMainTab = "personalpostpilot";
+      if (savedMainTab === "postpilot" || savedMainTab === "personalpostpilot") {
+        savedMainTab = "dashboard";
         localStorage.setItem("active-main-tab", savedMainTab);
-        localStorage.setItem("active-subtab-post-pilot", "postpilot-auto-panel");
+        localStorage.removeItem("active-subtab-post-pilot");
       }
       if (savedMainTab === "copypilot") {
         savedMainTab = "dashboard";
@@ -6670,10 +6156,9 @@ Review retargeting when the warm audience is ready</textarea>
       const subtabDefaults = {
         "client-modules": "client-overview-panel",
         "invoice-pilot": "invoice-panel",
-        client: "client-list-panel",
-        "post-pilot": "postpilot-auto-panel"
+        client: "client-list-panel"
       };
-      ["client-modules", "invoice-pilot", "client", "post-pilot"].forEach((group) => {
+      ["client-modules", "invoice-pilot", "client"].forEach((group) => {
         const fallback = subtabDefaults[group] || document.querySelector(\`.subtab-button[data-subtab-group="\${group}"]\`)?.dataset.subtabTarget;
         let saved = group === "invoice-pilot" && requestedPanel ? requestedPanel : localStorage.getItem(\`active-subtab-\${group}\`);
         if (requestedTab === "clientpilot" && requestedPanel === "client-list-panel") {
@@ -6740,18 +6225,6 @@ Review retargeting when the warm audience is ready</textarea>
       return new File([blob], filename, { type: blob.type || "application/octet-stream", lastModified: Date.now() });
     }
 
-    function readFileAsDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        if (!file) {
-          resolve("");
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ""));
-        reader.onerror = () => reject(new Error("Gagal baca gambar hook."));
-        reader.readAsDataURL(file);
-      });
-    }
 
     function uploadLimitMessage(file) {
       return \`File ini \${formatMb(file.size)}MB. Auto-compress tidak berjaya turunkan file bawah 4MB. Vercel Serverless Function ada request body limit sekitar 4.5MB, jadi file besar tidak boleh dihantar terus melalui route ini. Cuba video lebih pendek/resolution lebih rendah, atau guna flow chunked/direct storage.\`;
@@ -6973,956 +6446,56 @@ Review retargeting when the warm audience is ready</textarea>
       return compressed;
     }
 
-    async function prepareThreadsImageFile(file) {
-      preparedThreadsImageFile = null;
-      preparedThreadsImageNotice = "";
-      if (!file) return null;
-      if (!file.type.startsWith("image/")) throw new Error("Post Pilot buat masa ini support gambar hook sahaja.");
-      if (file.size <= TARGET_UPLOAD_BYTES) {
-        preparedThreadsImageFile = file;
-        return file;
-      }
 
-      const compressed = await compressImageFile(file);
-      preparedThreadsImageFile = compressed;
-      preparedThreadsImageNotice = \`Auto-compress gambar hook: \${formatMb(file.size)}MB -> \${formatMb(compressed.size)}MB (\${compressed.name}).\`;
-      return compressed;
-    }
 
-    function threadsPayloadFromForm() {
-      return {
-        product_id: activePostPilotProductId,
-        active_product_id: activePostPilotProductId,
-        product_name: document.getElementById("threadsProductName").value,
-        affiliate_link: document.getElementById("threadsAffiliateLink").value,
-        post_mode: document.getElementById("threadsPostMode").value
-      };
-    }
 
-    function updatePostPilotHookImageStatus() {
-      if (!threadsHookImageStatus) return;
-      const selected = threadsHookImage.files?.[0];
-      const previewSrc = selected
-        ? currentThreadsImagePreviewUrl
-        : savedThreadsImage?.dataUrl || savedThreadsImage?.url || "";
-      if (threadsHookImagePreview) {
-        if (previewSrc) {
-          threadsHookImagePreview.src = previewSrc;
-          threadsHookImagePreview.hidden = false;
-        } else {
-          threadsHookImagePreview.removeAttribute("src");
-          threadsHookImagePreview.hidden = true;
-        }
-      }
-      if (selected) {
-        threadsHookImageStatus.textContent = \`Dipilih sekarang: \${selected.name}\`;
-        return;
-      }
-      if (savedThreadsImage?.name) {
-        const source = savedThreadsImage.url ? "Supabase" : "browser";
-        threadsHookImageStatus.textContent = \`Gambar terakhir tersimpan: \${savedThreadsImage.name} (\${source}). Akan digunakan semula selepas refresh.\`;
-        return;
-      }
-      threadsHookImageStatus.textContent = "Belum ada gambar hook tersimpan.";
-    }
 
-    function setPostPilotSavedImage(image) {
-      savedThreadsImage = image && (image.dataUrl || image.url) ? image : null;
-      try {
-        if (savedThreadsImage) {
-          localStorage.setItem(POSTPILOT_IMAGE_STORAGE_KEY, JSON.stringify(savedThreadsImage));
-        } else {
-          localStorage.removeItem(POSTPILOT_IMAGE_STORAGE_KEY);
-        }
-      } catch {
-        // If localStorage quota is full, keep the image in memory for the current send.
-      }
-      updatePostPilotHookImageStatus();
-    }
 
-    function restorePostPilotInputs() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(POSTPILOT_INPUT_STORAGE_KEY) || "{}");
-        const fields = {
-          product_name: "threadsProductName",
-          affiliate_link: "threadsAffiliateLink"
-        };
-        Object.entries(fields).forEach(([key, id]) => {
-          const node = document.getElementById(id);
-          if (node && typeof saved[key] === "string") node.value = saved[key];
-        });
-      } catch {
-        localStorage.removeItem(POSTPILOT_INPUT_STORAGE_KEY);
-      }
 
-      const postMode = document.getElementById("threadsPostMode");
-      if (postMode) postMode.value = "auto";
 
-      try {
-        const image = JSON.parse(localStorage.getItem(POSTPILOT_IMAGE_STORAGE_KEY) || "null");
-        savedThreadsImage = image?.dataUrl || image?.url ? image : null;
-      } catch {
-        localStorage.removeItem(POSTPILOT_IMAGE_STORAGE_KEY);
-        savedThreadsImage = null;
-      }
-      updatePostPilotHookImageStatus();
-    }
 
-    function applyPostPilotDraft(draft) {
-      if (!draft) return;
-      const values = {
-        product_name: draft.productName,
-        affiliate_link: draft.affiliateLink
-      };
-      const fields = {
-        product_name: "threadsProductName",
-        affiliate_link: "threadsAffiliateLink"
-      };
-      Object.entries(fields).forEach(([key, id]) => {
-        const node = document.getElementById(id);
-        if (node && typeof values[key] === "string") node.value = values[key];
-      });
-      const postMode = document.getElementById("threadsPostMode");
-      if (postMode) postMode.value = "auto";
-      if (draft.activeProductId && postPilotProducts.some((product) => product.id === draft.activeProductId)) {
-        activePostPilotProductId = draft.activeProductId;
-        threadsProductSelect.value = draft.activeProductId;
-        const product = postPilotProducts.find((item) => item.id === draft.activeProductId);
-        document.getElementById("threadsProductName").value = product.name;
-        document.getElementById("threadsAffiliateLink").value = product.affiliateLink;
-      }
-      savePostPilotInputs();
-      if (draft.hasHookImage) {
-        const localDataUrl = savedThreadsImage?.savedAt === draft.hookImageUpdatedAt
-          ? savedThreadsImage.dataUrl || ""
-          : "";
-        setPostPilotSavedImage({
-          name: draft.hookImageName || "post-hook.jpg",
-          type: draft.hookImageMime || "image/jpeg",
-          url: \`/api/personal-post-hook-image?t=\${encodeURIComponent(draft.hookImageUpdatedAt || Date.now())}\`,
-          dataUrl: localDataUrl,
-          savedAt: draft.hookImageUpdatedAt || "",
-        });
-      }
-    }
 
-    async function loadPostPilotDraftFromSupabase() {
-      try {
-        const response = await fetch("/api/personal-post-draft");
-        const json = await readApiJson(response);
-        if (response.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-        if (!response.ok || !json.ok) throw new Error(json.error || "Load Post Pilot draft failed.");
-        applyPostPilotDraft(json.draft);
-      } catch {
-        // Local storage remains the fallback when Supabase is not configured yet.
-      }
-    }
 
-    function savePostPilotInputs() {
-      try {
-        localStorage.setItem(POSTPILOT_INPUT_STORAGE_KEY, JSON.stringify(threadsPayloadFromForm()));
-      } catch {
-        // Ignore private browsing/quota issues; the current form still works.
-      }
-    }
 
-    async function savePostPilotInputsToSupabase() {
-      const response = await fetch("/api/personal-post-draft", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(threadsPayloadFromForm())
-      });
-      const json = await readApiJson(response);
-      if (response.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
-      if (!response.ok || !json.ok) throw new Error(json.error || "Save Post Pilot draft failed.");
-      applyPostPilotDraft(json.draft);
-    }
 
-    function schedulePostPilotSave() {
-      savePostPilotInputs();
-      window.clearTimeout(postPilotSaveTimer);
-      postPilotSaveTimer = window.setTimeout(() => {
-        savePostPilotInputsToSupabase().catch(() => {});
-      }, 650);
-    }
 
-    function syncThreadsPromote() {
-      const select = document.getElementById("promoteProductSelect");
-      select.replaceChildren(...[...threadsProductSelect.options].map((option) => option.cloneNode(true)));
-      select.value = activePostPilotProductId;
-      const product = postPilotProducts.find((item) => item.id === activePostPilotProductId);
-      document.getElementById("promoteTargetMarket").value = product?.targetMarket || "";
-      document.getElementById("promoteHighlight").value = product?.highlight || "";
-      document.getElementById("promoteGalleryStatus").textContent = postPilotGalleryImages.length + "/20 gambar produk · 5 gambar dipilih untuk satu post.";
-    }
-    document.getElementById("promoteProductSelect").addEventListener("change", async (event) => {
-      try { await activatePostPilotProduct(event.target.value); document.getElementById("promoteCaption").value = ""; syncThreadsPromote(); }
-      catch (error) { document.getElementById("promoteResult").textContent = error.message; }
-    });
-    document.getElementById("promoteHookImages").addEventListener("change", async (event) => {
-      const input = event.target;
-      input.disabled = true;
-      try { await uploadPostPilotGalleryFiles([...input.files]); syncThreadsPromote(); }
-      catch (error) { document.getElementById("promoteResult").textContent = error.message; }
-      finally { input.disabled = false; input.value = ""; }
-    });
-    async function savePromoteProductInfo() {
-      if (!document.getElementById("promoteTargetMarket").reportValidity()) throw new Error("Target market wajib diisi.");
-      const response = await fetch("/api/personal-post-products", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ product_id: activePostPilotProductId, target_market: document.getElementById("promoteTargetMarket").value, highlight: document.getElementById("promoteHighlight").value }) });
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal simpan maklumat produk.");
-      postPilotProducts = postPilotProducts.map((item) => item.id === json.product.id ? json.product : item);
-      return json.product;
-    }
-    document.getElementById("savePromoteAudienceButton").addEventListener("click", async (event) => {
-      event.currentTarget.disabled = true;
-      try { await savePromoteProductInfo(); document.getElementById("promoteResult").textContent = "Maklumat produk disimpan."; }
-      catch (error) { document.getElementById("promoteResult").textContent = error.message; }
-      finally { event.target.disabled = false; }
-    });
-    let previousPromoteAngle = -1;
-    document.getElementById("promoteRandomButton").addEventListener("click", () => {
-      const product = postPilotProducts.find((item) => item.id === activePostPilotProductId);
-      if (!product) return;
-      try {
-        if (!document.getElementById("promoteTargetMarket").reportValidity()) return;
-        let index = Math.floor(Math.random() * 4);
-        if (index === previousPromoteAngle) index = (index + 1) % 4;
-        previousPromoteAngle = index;
-        document.getElementById("promoteCaption").value = buildThreadsPromoteCaption({ ...product, targetMarket: document.getElementById("promoteTargetMarket").value, highlight: document.getElementById("promoteHighlight").value }, index);
-      } catch (error) { document.getElementById("promoteResult").textContent = error.message; }
-    });
-    document.getElementById("promotePostButton").addEventListener("click", async (event) => {
-      const button = event.currentTarget;
-      const result = document.getElementById("promoteResult");
-      button.disabled = true;
-      try {
-        await savePromoteProductInfo();
-        await createRemoteAutomationJob({ type: "facebook_threads", channel: "threads_promote", product_id: activePostPilotProductId, caption: document.getElementById("promoteCaption").value }, result);
-        result.textContent = "Satu post Threads dengan 5 gambar masuk queue Mac.";
-      } catch (error) { result.textContent = error.message; }
-      finally { button.disabled = false; }
-    });
 
-    function renderPostPilotProducts() {
-      threadsProductSelect.innerHTML = "";
-      postPilotProducts.forEach((product) => {
-        const option = document.createElement("option");
-        option.value = product.id;
-        option.textContent = product.name;
-        threadsProductSelect.appendChild(option);
-      });
-      syncThreadsPromote();
-      deleteProductButton.disabled = postPilotProducts.length <= 1;
-      deleteProductButton.title = postPilotProducts.length <= 1
-        ? "Tambah produk lain sebelum delete produk ini"
-        : "Delete produk aktif dan semua gambar miliknya";
-    }
 
-    async function loadPostPilotProducts() {
-      const response = await fetch("/api/personal-post-products");
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load produk Post Pilot.");
-      postPilotProducts = Array.isArray(json.products) ? json.products : [];
-      renderPostPilotProducts();
-    }
 
-    async function loadPostPilotVoiceProfile() {
-      if (!activePostPilotProductId) return;
-      const response = await fetch(\`/api/postpilot-voice-profile?channel=promote&product_id=\${encodeURIComponent(activePostPilotProductId)}\`);
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load Voice Lock.");
-      const profile = json.profile || {};
-      postPilotVoiceSlang.value = profile.slang || "moderate";
-      postPilotVoiceEnglish.value = profile.englishMix || "light";
-      postPilotVoicePreferred.value = (profile.preferredPhrases || []).join(", ");
-      postPilotVoiceBanned.value = (profile.bannedPhrases || []).join(", ");
-    }
 
-    async function savePostPilotVoiceProfile() {
-      if (!activePostPilotProductId) throw new Error("Pilih produk dahulu.");
-      const response = await fetch(\`/api/postpilot-voice-profile?channel=promote&product_id=\${encodeURIComponent(activePostPilotProductId)}\`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          profile: {
-            pronouns: "aku_kau",
-            slang: postPilotVoiceSlang.value,
-            englishMix: postPilotVoiceEnglish.value,
-            emoji: false,
-            preferredPhrases: postPilotVoicePreferred.value.split(",").map((value) => value.trim()).filter(Boolean),
-            bannedPhrases: postPilotVoiceBanned.value.split(",").map((value) => value.trim()).filter(Boolean)
-          }
-        })
-      });
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal save Voice Lock.");
-      setMessage(threadsResult, "ok", "Voice Lock produk sudah disimpan.");
-    }
 
-    async function activatePostPilotProduct(productId, { persist = true } = {}) {
-      const product = postPilotProducts.find((item) => item.id === productId);
-      if (!product) return;
-      activePostPilotProductId = product.id;
-      threadsProductSelect.value = product.id;
-      document.getElementById("threadsProductName").value = product.name;
-      document.getElementById("threadsAffiliateLink").value = product.affiliateLink;
-      postPilotGalleryImages = [];
-      savedThreadsImage = null;
-      threadsPreviewPanel.hidden = true;
-      threadsPostPreview.value = "";
-      renderPostPilotGallery();
-      if (persist) await savePostPilotInputsToSupabase();
-      await Promise.all([loadPostPilotGallery(), loadPostPilotVoiceProfile()]);
-    }
 
-    async function createPostPilotProductFromForm() {
-      if (!newProductName.reportValidity() || !document.getElementById("newProductTargetMarket").reportValidity()) return;
-      const response = await fetch("/api/personal-post-products", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: newProductName.value, affiliate_link: newProductLink.value, target_market: document.getElementById("newProductTargetMarket").value, highlight: document.getElementById("newProductHighlight").value }),
-      });
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal tambah produk.");
-      postPilotProducts.push(json.product);
-      renderPostPilotProducts();
-      addProductPanel.hidden = true;
-      newProductName.value = "";
-      newProductLink.value = "";
-      document.getElementById("newProductTargetMarket").value = "";
-      document.getElementById("newProductHighlight").value = "";
-      await activatePostPilotProduct(json.product.id, { persist: false });
-      setMessage(threadsResult, "ok", \`Produk \${json.product.name} ditambah dan diaktifkan.\`);
-    }
 
-    async function deleteActivePostPilotProduct() {
-      const product = postPilotProducts.find((item) => item.id === activePostPilotProductId);
-      if (!product) throw new Error("Pilih produk yang hendak dipadam.");
-      if (postPilotProducts.length <= 1) throw new Error("Produk terakhir tidak boleh dipadam. Tambah produk lain dahulu.");
-      if (!window.confirm(\`Delete produk \${product.name} dan semua gambar yang disimpan untuk produk ini?\`)) return;
 
-      deleteProductButton.disabled = true;
-      try {
-        const response = await fetch("/api/personal-post-products", {
-          method: "DELETE",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ product_id: product.id }),
-        });
-        const json = await readApiJson(response);
-        if (!response.ok || !json.ok) throw new Error(json.error || "Gagal delete produk.");
-        postPilotProducts = Array.isArray(json.products) ? json.products : [];
-        renderPostPilotProducts();
-        await activatePostPilotProduct(json.active_product.id, { persist: false });
-        setMessage(threadsResult, "ok", \`Produk \${product.name} dan \${json.deleted_image_count || 0} gambar sudah dipadam.\`);
-      } finally {
-        deleteProductButton.disabled = postPilotProducts.length <= 1;
-      }
-    }
 
-    async function setupPostPilotInputStorage() {
-      restorePostPilotInputs();
-      threadsForm.querySelectorAll("input:not([type='file']), textarea, select").forEach((node) => {
-        node.addEventListener("input", schedulePostPilotSave);
-        node.addEventListener("change", schedulePostPilotSave);
-      });
-      try {
-        await loadPostPilotProducts();
-        await loadPostPilotDraftFromSupabase();
-        const initialId = activePostPilotProductId || postPilotProducts[0]?.id || "";
-        if (initialId) await activatePostPilotProduct(initialId, { persist: false });
-      } catch (error) {
-        showThreadsError(error);
-      }
-    }
 
-    function blobToDataUrl(blob) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ""));
-        reader.onerror = () => reject(new Error("Gagal simpan gambar hook."));
-        reader.readAsDataURL(blob);
-      });
-    }
 
-    function normalizePostPilotMainTextForSend(value, link) {
-      const safeLink = String(link || "https://swiy.co/kmethod").trim() || "https://swiy.co/kmethod";
-      const lines = String(value || "")
-        .replace(/https?:\\/\\/\\S+/gi, "")
-        .split(/\\n{2,}|\\r?\\n/)
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .filter((line) => !/^klik\\s+sini\\b/i.test(line));
-      const selected = [];
-      let total = 0;
-      for (const line of lines) {
-        const nextTotal = total + line.length + (selected.length ? 2 : 0);
-        if (nextTotal > 3700) break;
-        selected.push(line);
-        total = nextTotal;
-      }
-      return [
-        ...selected,
-        \`baca salespage penuh dekat sini,\\n\${safeLink}\`,
-        "kalau rasa posting ni bermanfaat,\\nshare posting ni."
-      ].join("\\n\\n").trim();
-    }
 
-    async function compressImageForPostPilotStorage(file) {
-      if (!file || !file.type.startsWith("image/")) throw new Error("Gambar hook mesti image.");
-      if (file.size <= POSTPILOT_SAVED_IMAGE_MAX_BYTES) return file;
 
-      const image = await imageBitmapFromFile(file);
-      const maxDims = [1200, 960, 720, 540];
-      const qualities = [0.82, 0.74, 0.66, 0.58, 0.5, 0.42];
 
-      for (const maxDim of maxDims) {
-        const scale = Math.min(1, maxDim / Math.max(image.width, image.height));
-        const width = Math.max(1, Math.round(image.width * scale));
-        const height = Math.max(1, Math.round(image.height * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(image, 0, 0, width, height);
 
-        for (const quality of qualities) {
-          const blob = await canvasToBlob(canvas, "image/jpeg", quality);
-          if (blob.size <= POSTPILOT_SAVED_IMAGE_MAX_BYTES) {
-            return fileFromBlob(blob, file.name.replace(/\.[^.]+$/, "") + "-saved.jpg");
-          }
-        }
-      }
 
-      throw new Error("Gambar hook terlalu besar untuk disimpan. Pilih gambar lebih kecil.");
-    }
 
-    async function savePostPilotImageInput(file) {
-      const storedFile = await compressImageForPostPilotStorage(file);
-      const localImage = {
-        name: storedFile.name || file.name || "post-hook.jpg",
-        type: storedFile.type || file.type || "image/jpeg",
-        dataUrl: await readFileAsDataUrl(storedFile),
-        savedAt: new Date().toISOString()
-      };
-      setPostPilotSavedImage(localImage);
 
-      const payload = new FormData();
-      payload.append("hookImage", storedFile);
-      let response;
-      let json;
-      try {
-        response = await fetch("/api/personal-post-hook-image", {
-          method: "POST",
-          body: payload
-        });
-        json = await readApiJson(response);
-      } catch (error) {
-        threadsResult.className = "result ok";
-        threadsResult.textContent = "Gambar hook sudah disimpan untuk Post Pilot. Extension akan guna gambar terakhir ini.";
-        return;
-      }
-      if (response.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
-      if (!response.ok || !json.ok) {
-        threadsResult.className = "result ok";
-        threadsResult.textContent = "Gambar hook sudah disimpan untuk Post Pilot. Extension akan guna gambar terakhir ini.";
-        return;
-      }
-      if (json.storage === "browser") {
-        setPostPilotSavedImage({
-          ...localImage,
-          savedAt: json.draft?.hookImageUpdatedAt || localImage.savedAt
-        });
-        threadsResult.className = "result ok";
-        threadsResult.textContent = "Gambar hook sudah disimpan untuk Post Pilot. Extension akan guna gambar terakhir ini.";
-        return;
-      }
-      const image = {
-        name: json.draft?.hookImageName || storedFile.name || "post-hook.jpg",
-        type: json.draft?.hookImageMime || storedFile.type || "image/jpeg",
-        url: \`/api/personal-post-hook-image?t=\${encodeURIComponent(json.draft?.hookImageUpdatedAt || Date.now())}\`,
-        dataUrl: localImage.dataUrl,
-        savedAt: json.draft?.hookImageUpdatedAt || new Date().toISOString()
-      };
-      setPostPilotSavedImage(image);
-      threadsResult.className = "result ok";
-      threadsResult.textContent = "Gambar hook sudah disimpan dalam Supabase untuk Post Pilot.";
-    }
 
-    function postPilotGalleryImageUrl(image) {
-      return image.url || \`/api/personal-post-hook-images?id=\${encodeURIComponent(image.id)}\`;
-    }
 
-    function renderPostPilotGallery() {
-      syncThreadsPromote();
-      if (!threadsHookGallery || !threadsHookImageStatus) return;
-      threadsHookGallery.innerHTML = "";
-      postPilotGalleryImages.forEach((image) => {
-        const item = document.createElement("div");
-        item.className = "postpilot-gallery-item";
-        const preview = document.createElement("img");
-        preview.src = postPilotGalleryImageUrl(image);
-        preview.alt = image.name || "Gambar hook";
-        preview.loading = "lazy";
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.textContent = "x";
-        remove.title = \`Delete \${image.name || "gambar"}\`;
-        remove.setAttribute("aria-label", remove.title);
-        remove.addEventListener("click", () => deletePostPilotGalleryImage(image));
-        item.append(preview, remove);
-        threadsHookGallery.appendChild(item);
-      });
-      threadsHookImageStatus.textContent = postPilotGalleryImages.length
-        ? \`\${postPilotGalleryImages.length}/20 gambar hook tersimpan. Rotation akan pilih gambar paling lama belum digunakan.\`
-        : "Belum ada gambar dalam galeri. Upload sekurang-kurangnya satu gambar untuk POST NOW.";
-      if (threadsHookImagePreview) threadsHookImagePreview.hidden = true;
-    }
 
-    async function loadPostPilotGallery() {
-      if (!activePostPilotProductId) return;
-      const response = await fetch(\`/api/personal-post-hook-images?product_id=\${encodeURIComponent(activePostPilotProductId)}\`);
-      const json = await readApiJson(response);
-      if (response.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load galeri gambar hook.");
-      postPilotGalleryImages = Array.isArray(json.images) ? json.images : [];
-      renderPostPilotGallery();
-    }
 
-    async function uploadPostPilotGalleryFiles(files) {
-      const available = Math.max(0, 20 - postPilotGalleryImages.length);
-      if (!available) throw new Error("Galeri gambar hook sudah penuh (20). Delete satu gambar dahulu.");
-      const selected = files.slice(0, available);
-      const skipped = files.length - selected.length;
-      for (let index = 0; index < selected.length; index += 1) {
-        threadsHookImageStatus.textContent = \`Simpan gambar \${index + 1}/\${selected.length}...\`;
-        const storedFile = await compressImageForPostPilotStorage(selected[index]);
-        const payload = new FormData();
-        payload.append("hookImage", storedFile);
-        const response = await fetch(\`/api/personal-post-hook-images?product_id=\${encodeURIComponent(activePostPilotProductId)}\`, { method: "POST", body: payload });
-        const json = await readApiJson(response);
-        if (!response.ok || !json.ok) throw new Error(json.error || \`Gagal simpan \${selected[index].name}.\`);
-        postPilotGalleryImages.push(json.image);
-        renderPostPilotGallery();
-      }
-      threadsHookImage.value = "";
-      threadsResult.className = "result ok";
-      threadsResult.textContent = [
-        \`\${selected.length} gambar hook disimpan dalam Supabase.\`,
-        skipped ? \`\${skipped} gambar tidak dimuat naik kerana galeri maksimum 20.\` : "",
-      ].filter(Boolean).join("\\n");
-    }
 
-    async function deletePostPilotGalleryImage(image) {
-      const response = await fetch(\`/api/personal-post-hook-images?id=\${encodeURIComponent(image.id)}\`, { method: "DELETE" });
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal delete gambar hook.");
-      postPilotGalleryImages = postPilotGalleryImages.filter((item) => item.id !== image.id);
-      renderPostPilotGallery();
-      threadsResult.className = "result ok";
-      threadsResult.textContent = "Gambar hook sudah dibuang daripada galeri.";
-    }
 
-    async function buildPostPilotBatchDraft(count) {
-      const response = await fetch("/api/personal-post-batch", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...threadsPayloadFromForm(), count })
-      });
-      const json = await readApiJson(response);
-      if (response.status === 401) {
-        window.location.href = "/login";
-        return null;
-      }
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal jana batch Post Pilot.");
-      const posts = [];
-      for (const post of json.posts || []) {
-        if (!post.image?.url) throw new Error(\`Gambar hook untuk \${post.id} tidak lengkap.\`);
-        const imageResponse = await fetch(post.image.url);
-        if (!imageResponse.ok) throw new Error(\`Gagal load gambar hook untuk \${post.id}.\`);
-        const imageBlob = await imageResponse.blob();
-        const imageDataUrl = await readFileAsDataUrl(fileFromBlob(imageBlob, post.image.name || "post-hook.jpg"));
-        posts.push({
-          ...post,
-          image: {
-            name: post.image.name,
-            type: post.image.type,
-            dataUrl: imageDataUrl
-          }
-        });
-      }
-      if (posts.length !== count) throw new Error("Batch Post Pilot tidak lengkap.");
-      const automationId = \`postpilot-batch-\${Date.now()}\`;
-      return {
-        source: "postpilot-webapp",
-        type: "POSTPILOT_BATCH_DRAFT",
-        draft: { id: automationId, automationId, createdAt: new Date().toISOString(), autoPublish: true, batchDelayMs: 30000, posts }
-      };
-    }
 
-    async function startPostPilotBatch(count) {
-      const button = count === 5 ? threadsBatchPostButton : threadsPreviewButton;
-      const otherButton = count === 5 ? threadsPreviewButton : threadsBatchPostButton;
-      button.disabled = true;
-      otherButton.disabled = true;
-      button.textContent = count === 5 ? "Preparing 5 posts..." : "Preparing post...";
-      threadsResult.className = "result";
-      threadsResult.textContent = "";
-      try {
-        await savePostPilotInputsToSupabase();
-        await createRemoteAutomationJob({
-          type: "facebook_threads",
-          channel: "facebook",
-          count,
-          personal: threadsPayloadFromForm()
-        }, threadsResult);
-        threadsResult.className = "result ok";
-        threadsResult.textContent = count === 5
-          ? "5 post Facebook masuk queue Mac, dengan jarak 30 saat."
-          : "Post Facebook masuk queue Mac.";
-      } catch (error) {
-        showThreadsError(error);
-      } finally {
-        threadsPreviewButton.disabled = false;
-        threadsBatchPostButton.disabled = false;
-        threadsPreviewButton.textContent = "Generate Preview";
-        threadsBatchPostButton.textContent = "POST 5 NOW";
-      }
-    }
 
-    function showThreadsPreview(json, { reveal = true, message = "" } = {}) {
-      currentThreadsPreview = json.preview;
-      seenThreadsVariations = [Number(currentThreadsPreview.variation || 0)];
-      threadsPostPreview.value = currentThreadsPreview.facebook_post_text || currentThreadsPreview.post_text || "";
-      threadsPreviewMeta.textContent = [
-        \`Produk: \${currentThreadsPreview.product_context?.product_name || currentThreadsPreview.product_name || "-"}\`,
-        \`Concept: \${Number(currentThreadsPreview.variation || 0) + 1}/120\`,
-        \`Style: \${currentThreadsPreview.style || "-"}\`
-      ].join(" | ");
-      threadsPreviewPanel.className = reveal ? "preview show" : "preview";
-      threadsPreviewPanel.hidden = !reveal;
-      setPostWorkflowStep(3);
-      if (message || reveal) {
-        threadsResult.className = "result ok";
-        threadsResult.textContent = [
-          message || "Preview Post Pilot siap. Caption panjang akan dipecahkan menjadi post berangkai di Threads jika perlu.",
-          savedThreadsImage && !threadsHookImage.files[0] ? "Gambar hook last key in tersedia untuk extension." : "",
-          preparedThreadsImageNotice || ""
-        ].filter(Boolean).join("\\n\\n");
-      }
-    }
 
-    async function buildThreadsExtensionDraft() {
-      if (!currentThreadsPreview) throw new Error("Preview Post Pilot belum dijana.");
-      const selectedImage = preparedThreadsImageFile || threadsHookImage.files[0] || null;
-      let imageDataUrl = "";
-      let imageNotice = "";
-      if (selectedImage) {
-        const imageForExtension = await prepareThreadsImageFile(selectedImage);
-        if (imageForExtension && imageForExtension.size <= TARGET_UPLOAD_BYTES) {
-          imageDataUrl = await readFileAsDataUrl(imageForExtension);
-        } else if (imageForExtension) {
-          imageNotice = "Gambar terlalu besar untuk dihantar ke extension. Pilih gambar secara manual di Facebook.";
-        }
-      } else if (savedThreadsImage?.dataUrl) {
-        imageDataUrl = savedThreadsImage.dataUrl;
-      } else if (savedThreadsImage?.url) {
-        try {
-          const response = await fetch(savedThreadsImage.url);
-          if (!response.ok) throw new Error("Gagal load gambar hook dari Supabase.");
-          imageDataUrl = await blobToDataUrl(await response.blob());
-        } catch (error) {
-          imageNotice = \`Gambar hook terakhir tidak dapat dibaca dari Supabase. Upload gambar secara manual di Facebook. Detail: \${error.message || String(error)}\`;
-        }
-      }
 
-      return {
-        source: "postpilot-webapp",
-        type: "POSTPILOT_SAVE_DRAFT",
-        draft: {
-          id: \`postpilot-\${Date.now()}\`,
-          createdAt: new Date().toISOString(),
-          postText: normalizePostPilotMainTextForSend(
-            threadsPostPreview.value,
-            currentThreadsPreview.affiliate_link || document.getElementById("threadsAffiliateLink").value
-          ),
-          facebookPostText: normalizePostPilotMainTextForSend(
-            threadsPostPreview.value,
-            currentThreadsPreview.affiliate_link || document.getElementById("threadsAffiliateLink").value
-          ),
-          threadsPostText: currentThreadsPreview.threads_post_text || normalizePostPilotMainTextForSend(
-            threadsPostPreview.value,
-            currentThreadsPreview.affiliate_link || document.getElementById("threadsAffiliateLink").value
-          ),
-          productName: currentThreadsPreview.product_name || currentThreadsPreview.product_context?.product_name || "",
-          affiliateLink: currentThreadsPreview.affiliate_link || "",
-          postMode: currentThreadsPreview.post_mode || "soft",
-          style: currentThreadsPreview.style || "",
-          autoPublish: true,
-          image: imageDataUrl ? {
-            name: (preparedThreadsImageFile || selectedImage)?.name || savedThreadsImage?.name || "post-hook.jpg",
-            type: (preparedThreadsImageFile || selectedImage)?.type || savedThreadsImage?.type || "image/jpeg",
-            dataUrl: imageDataUrl
-          } : null,
-          imageNotice
-        }
-      };
-    }
 
-    async function sendThreadsDraftToExtension() {
-      if (!currentThreadsPreview) throw new Error("Preview Post Pilot belum dijana.");
-      const postText = normalizePostPilotMainTextForSend(
-        threadsPostPreview.value,
-        currentThreadsPreview.affiliate_link || document.getElementById("threadsAffiliateLink").value
-      );
-      if (!postText) throw new Error("Post utama kosong.");
-      await createRemoteAutomationJob({
-        type: "facebook_threads",
-        channel: "facebook",
-        product_id: activePostPilotProductId,
-        posts: [{
-          id: "postpilot-preview-" + Date.now(),
-          postText,
-          facebookPostText: postText,
-          threadsPostText: currentThreadsPreview.threads_post_text || postText,
-          postMode: currentThreadsPreview.post_mode || "custom",
-          style: currentThreadsPreview.style || "custom"
-        }]
-      }, threadsResult);
-      threadsResult.className = "result ok";
-      threadsResult.textContent = "Draft Facebook masuk queue. Menunggu Chrome Mac.";
-      setPostWorkflowStep(4);
-      showToast("Post masuk queue Mac.");
-      loadTodayDashboard({ silent: true, force: true });
-    }
 
-    function setPostWorkflowStep(step) {
-      document.querySelectorAll(".workflow-steps span").forEach((item, index) => item.classList.toggle("active", index + 1 === step));
-    }
 
-    async function generatePostPilotPreview() {
-      threadsPreviewButton.disabled = true;
-      threadsBatchPostButton.disabled = true;
-      threadsPreviewButton.textContent = "Generating...";
-      setPostWorkflowStep(2);
-      try {
-        await savePostPilotInputsToSupabase();
-        const response = await fetch("/api/personal-post-preview", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(threadsPayloadFromForm())
-        });
-        const json = await readApiJson(response);
-        if (response.status === 401) return void (window.location.href = "/login");
-        if (!response.ok || !json.ok) throw new Error(json.error || "Gagal jana preview Post Pilot.");
-        showThreadsPreview(json);
-      } catch (error) {
-        setPostWorkflowStep(1);
-        showThreadsError(error);
-      } finally {
-        threadsPreviewButton.disabled = false;
-        threadsBatchPostButton.disabled = false;
-        threadsPreviewButton.textContent = "Generate Preview";
-      }
-    }
 
-    function pickRandom(list) {
-      return list[Math.floor(Math.random() * list.length)] || "";
-    }
 
-    function fillSelectOptions(select, values, includeAllLabel) {
-      if (!select) return;
-      select.innerHTML = "";
-      if (includeAllLabel) {
-        const allOption = document.createElement("option");
-        allOption.value = "";
-        allOption.textContent = includeAllLabel;
-        select.appendChild(allOption);
-      }
-      [...new Set(values)].forEach((value) => {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        select.appendChild(option);
-      });
-    }
 
-    function normalizeWords(value) {
-      return String(value || "")
-        .toLowerCase()
-        .replace(/https?:\\/\\/\\S+/g, " ")
-        .replace(/[^a-z0-9\\u00c0-\\u024f\\u1e00-\\u1eff\\s-]/gi, " ")
-        .split(/\\s+/)
-        .map((word) => word.trim())
-        .filter((word) => word.length >= 3);
-    }
 
-    function similarityScore(a, b) {
-      const aWords = new Set(normalizeWords(a));
-      const bWords = new Set(normalizeWords(b));
-      if (!aWords.size || !bWords.size) return 0;
-      const intersection = [...aWords].filter((word) => bWords.has(word)).length;
-      const union = new Set([...aWords, ...bWords]).size;
-      return intersection / union;
-    }
 
-    function tooSimilarToBatch(text, posts) {
-      return posts.some((post) => similarityScore(text, post.postText || post.post_text || "") > 0.72);
-    }
 
-    function containsAnyPhrase(text, phrases) {
-      const lower = String(text || "").toLowerCase();
-      return phrases.some((phrase) => lower.includes(String(phrase || "").toLowerCase()));
-    }
-
-    function cleanViralText(value) {
-      return String(value || "")
-        .replace(/\\*\\*/g, "")
-        .replace(/:/g, ",")
-        .replace(/\\s+([?.!,])/g, "$1")
-        .replace(/[ \\t]+/g, " ")
-        .replace(/\\n{3,}/g, "\\n\\n")
-        .trim();
-    }
-
-    function withTopic(template, topic) {
-      return String(template || "").replace(/\\{topic\\}/g, topic);
-    }
-
-    function withViralContext(template, topic, audience) {
-      return withTopic(template, topic).replace(/\\{audience\\}/g, audience);
-    }
-
-    function maybeHashtags(category, topic) {
-      if (!viralHashtags.checked) return "";
-      const raw = [category, topic, "ThreadsMY"]
-        .map((item) => String(item || "").replace(/[^a-z0-9]/gi, ""))
-        .filter(Boolean)
-        .slice(0, 3);
-      return raw.length ? "\\n\\n" + raw.map((item) => "#" + item).join(" ") : "";
-    }
-
-    function viralContextFor(category) {
-      if (["business", "marketing", "sales", "side income", "ai automation", "tiktok ads", "facebook ads", "local brand", "content creation", "personal branding", "entrepreneurship", "startup", "freelancing", "finance", "investment", "ecommerce", "online business", "customer service", "leadership", "management", "technology"].includes(String(category || "").toLowerCase())) {
-        return pickRandom(viralTemplates.businessContextPhrases);
-      }
-      return pickRandom(viralTemplates.malaysianContextPhrases);
-    }
-
-    function buildViralText(parts) {
-      return buildThreadsGeneralText(parts);
-    }
-
-    function validateViralPost(text, existingPosts) {
-      const safe = cleanViralText(text);
-      if (!safe) return { ok: false, reason: "empty" };
-      if (safe.length > 500) return { ok: false, reason: "over_500" };
-      if (!viralHashtags.checked && /(^|\\s)#\\w+/i.test(safe)) return { ok: false, reason: "hashtag_disabled" };
-      if (containsAnyPhrase(safe, VIRAL_BANNED_WORDS)) return { ok: false, reason: "banned_word" };
-      if (containsAnyPhrase(safe, VIRAL_PROMO_PHRASES)) return { ok: false, reason: "too_promotional" };
-      if (containsAnyPhrase(safe, VIRAL_ROBOTIC_PHRASES)) return { ok: false, reason: "robotic_phrase" };
-      if (/\\*\\*|:/.test(safe)) return { ok: false, reason: "robotic_punctuation" };
-      if (/\\?\\s*(?:#\\w+(?:\\s+#\\w+)*)?$/i.test(safe)) return { ok: false, reason: "question_ending" };
-      if (tooSimilarToBatch(safe, existingPosts)) return { ok: false, reason: "too_similar" };
-      return { ok: true, text: safe };
-    }
-
-    function makeViralPost(existingPosts = [], override = {}) {
-      const category = String(override.category || viralCategory.value || "business").toLowerCase();
-      const tone = override.tone || viralTone.value || "Casual";
-      const audience = override.audience || viralAudience.value || pickRandom(viralTemplates.audienceTypes);
-      const topic = (override.topic || category).trim();
-
-      for (let attempt = 0; attempt < 160; attempt += 1) {
-        const structure = pickRandom(viralTemplates.structures);
-        const toneTemplates = viralTemplates.toneLeadIns?.[tone] || viralTemplates.toneLeadIns?.Casual || [];
-        const parts = {
-          angle: pickRandom(viralTemplates.contentAngles),
-          audience,
-          audienceLead: withViralContext(pickRandom(viralTemplates.audienceLeadIns || []), topic, audience),
-          category,
-          context: viralContextFor(category),
-          emotion: pickRandom(viralTemplates.emotionalTriggers),
-          hook: withTopic(pickRandom(viralTemplates.hooks), topic),
-          middle: pickRandom(viralTemplates.middleSentencePatterns),
-          opening: withTopic(pickRandom(viralTemplates.openingStyles), topic),
-          pain: pickRandom(viralTemplates.painPoints),
-          structure,
-          tone,
-          toneLead: withViralContext(pickRandom(toneTemplates), topic, audience),
-          topic,
-        };
-        let text = buildViralText(parts) + maybeHashtags(category, topic);
-        text = cleanViralText(text);
-        const validation = validateViralPost(text, existingPosts);
-        if (validation.ok) {
-          return {
-            id: "viral-" + Date.now() + "-" + Math.random().toString(16).slice(2),
-            postText: validation.text,
-            characterCount: validation.text.length,
-            category,
-            tone,
-            audience,
-            structure,
-            createdAt: new Date().toISOString(),
-          };
-        }
-      }
-
-      const fallbackText = cleanViralText([
-        "aku rasa " + topic + " tak perlu complicated.",
-        "mula dengan satu benda yang paling senang nampak dulu."
-      ].join("\\n\\n") + maybeHashtags(category, topic));
-      return {
-        id: "viral-" + Date.now() + "-" + Math.random().toString(16).slice(2),
-        postText: fallbackText.slice(0, 500),
-        characterCount: Math.min(fallbackText.length, 500),
-        category,
-        tone,
-        audience,
-        structure: "Recommendation",
-        createdAt: new Date().toISOString(),
-      };
-    }
-
-    async function requestViralPosts(count, randomize = false) {
-      if (!viralCategory.value || !viralAudience.value) throw new Error("Pilih post category dan audience dahulu.");
-      const response = await fetch("/api/threads-general", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          count,
-          randomize,
-          patternId: count === 1 ? viralPattern.value : "",
-          category: viralCategory.value,
-          tone: viralTone.value,
-          audience: viralAudience.value,
-          hashtags: viralHashtags.checked
-        })
-      });
-      const json = await readApiJson(response);
-      if (response.status === 401) return void (window.location.href = "/login");
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal jana Threads General.");
-      return json.posts || [];
-    }
-
-    async function generateViralPosts(count) {
-      viralGeneratedPosts = await requestViralPosts(count, false);
-      renderViralPosts();
-      loadViralHistory().catch(() => {});
-      setMessage(viralResult, "ok", count + " Threads General post generated.");
-    }
 
     function shuffledViralValues(values, count) {
       const source = [...new Set((values || []).filter(Boolean))];
@@ -7938,459 +6511,32 @@ Review retargeting when the warm audience is ready</textarea>
       return output.slice(0, count);
     }
 
-    function randomViralOverride() {
-      return {
-        audience: pickRandom(viralTemplates.audienceTypes || []),
-        category: pickRandom(viralTemplates.categories || []),
-        tone: pickRandom(viralTemplates.toneOptions || []),
-        topic: pickRandom(viralTemplates.topicOptions || viralTemplates.categories || []),
-      };
-    }
-
-    async function generateRandomViralPosts(count) {
-      viralGeneratedPosts = await requestViralPosts(count, true);
-      renderViralPosts();
-      loadViralHistory().catch(() => {});
-      setMessage(viralResult, "ok", count + " random Threads General post generated.");
-    }
-
-    async function ensureViralPostCount(count) {
-      if (viralGeneratedPosts.length < count) {
-        viralGeneratedPosts = await requestViralPosts(count, true);
-      }
-      renderViralPosts();
-      return viralGeneratedPosts.slice(0, count);
-    }
-
-    function csvEscape(value) {
-      return '"' + String(value || "").replace(/"/g, '""') + '"';
-    }
-
-    function exportViralCsv(posts, filename) {
-      if (!posts.length) {
-        setMessage(viralResult, "err", "Tiada post untuk export.");
-        return;
-      }
-      const rows = [[
-        "post_text",
-        "character_count",
-        "category",
-        "tone",
-        "pattern_id",
-        "pattern_label",
-        "angle_id",
-        "rhythm_id",
-        "robot_risk",
-        "created_at"
-      ]];
-      posts.forEach((post) => {
-        rows.push([
-          post.postText,
-          post.characterCount,
-          post.category,
-          post.tone,
-          post.patternId,
-          post.patternLabel || post.structure,
-          post.angleId,
-          post.rhythmId,
-          post.robotRisk,
-          post.createdAt
-        ]);
-      });
-      const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    async function copyText(text, button) {
-      await navigator.clipboard.writeText(text);
-      if (button) markButtonSuccess(button, "Copied");
-    }
-
-    function isViralSaved(post) {
-      return viralSavedPosts.some((saved) => saved.postText === post.postText);
-    }
-
-    function saveViralPosts() {
-      localStorage.setItem(VIRAL_SAVED_STORAGE_KEY, JSON.stringify(viralSavedPosts));
-    }
-
-    function loadViralPosts() {
-      try {
-        viralSavedPosts = JSON.parse(localStorage.getItem(VIRAL_SAVED_STORAGE_KEY) || "[]");
-      } catch {
-        viralSavedPosts = [];
-        localStorage.removeItem(VIRAL_SAVED_STORAGE_KEY);
-      }
-    }
-
-    function toggleViralFavorite(post) {
-      if (isViralSaved(post)) {
-        viralSavedPosts = viralSavedPosts.filter((saved) => saved.postText !== post.postText);
-      } else {
-        viralSavedPosts.unshift({ ...post, savedAt: new Date().toISOString() });
-      }
-      saveViralPosts();
-      renderViralPosts();
-      renderSavedViralPosts();
-    }
-
-    async function regenerateViralPost(postId) {
-      const index = viralGeneratedPosts.findIndex((post) => post.id === postId);
-      if (index < 0) return;
-      const [replacement] = await requestViralPosts(1, false);
-      if (replacement) viralGeneratedPosts[index] = replacement;
-      renderViralPosts();
-    }
-
-    async function rateViralPost(post, rating) {
-      const response = await fetch("/api/postpilot-copy-history", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: post.id, rating })
-      });
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal simpan rating post.");
-      post.rating = rating;
-      renderViralPosts();
-      loadViralHistory().catch(() => {});
-      setMessage(viralResult, "ok", "Rating disimpan. Pattern engine akan belajar daripada pilihan ini.");
-    }
-
-    async function postViralToThreads(post) {
-      try {
-        await createRemoteAutomationJob({
-          type: "threads_text",
-          posts: [{
-            id: post.id,
-            postText: post.postText,
-            category: post.category,
-            tone: post.tone,
-            structure: post.structure,
-            textHash: post.textHash,
-            patternId: post.patternId,
-            patternLabel: post.patternLabel,
-            angleId: post.angleId,
-            rhythmId: post.rhythmId
-          }],
-          batchDelayMs: 30000
-        }, viralResult);
-        setMessage(viralResult, "ok", "Post Threads masuk queue Chrome Mac.");
-      } catch (error) {
-        setMessage(viralResult, "err", error.message || String(error));
-      }
-    }
-
-    async function postViralBatchToThreads(count, triggerButton) {
-      if (!viralCategory.value || !viralAudience.value) {
-        setMessage(viralResult, "err", "Pilih post category dan audience dahulu.");
-        return;
-      }
-      const finish = setButtonBusy(triggerButton, "Generating...");
-      const buttons = [generateViralOneButton, generateViralTenButton, generateViralFiftyButton];
-      [viralCategory, viralAudience, viralTone, viralPattern].forEach((select) => { select.disabled = true; });
-      buttons.forEach((button) => { button.disabled = true; });
-      try {
-        const posts = await requestViralPosts(count);
-        if (posts.length !== count) throw new Error("Jumlah post tidak lengkap. Tiada post dihantar.");
-        viralGeneratedPosts = posts;
-        renderViralPosts();
-        triggerButton.textContent = "Queueing...";
-        await createRemoteAutomationJob({
-          type: "threads_text",
-          posts: posts.map((post) => ({
-            id: post.id,
-            postText: post.postText,
-            category: post.category,
-            tone: post.tone,
-            structure: post.structure,
-            textHash: post.textHash,
-            patternId: post.patternId,
-            patternLabel: post.patternLabel,
-            angleId: post.angleId,
-            rhythmId: post.rhythmId
-          })),
-          batchDelayMs: 30000
-        }, viralResult);
-        setMessage(viralResult, "ok", posts.length + " Threads posts masuk queue Chrome Mac.");
-      } catch (error) {
-        setMessage(viralResult, "err", error.message || String(error));
-      } finally {
-        finish();
-        [viralCategory, viralAudience, viralTone, viralPattern].forEach((select) => { select.disabled = false; });
-        updateViralSelectionButtons();
-      }
-    }
-
-    function updateViralSelectionButtons() {
-      const incomplete = !viralCategory.value || !viralAudience.value;
-      [generateViralOneButton, generateViralTenButton, generateViralFiftyButton].forEach((button) => {
-        button.disabled = incomplete;
-      });
-    }
-
-    function viralCard(post, options = {}) {
-      const card = document.createElement("article");
-      card.className = "viral-post-card" + (isViralSaved(post) ? " favorite" : "");
-
-      const text = document.createElement("p");
-      text.className = "viral-post-text";
-      text.textContent = post.postText;
-
-      const meta = document.createElement("div");
-      meta.className = "viral-meta";
-      [
-        post.characterCount + " chars",
-        post.patternLabel || post.structure,
-        post.tone,
-        post.category,
-        "robot " + Number(post.robotRisk || 0)
-      ].forEach((item) => {
-        const span = document.createElement("span");
-        span.textContent = item;
-        meta.appendChild(span);
-      });
-
-      const actions = document.createElement("div");
-      actions.className = "actions";
-
-      const copyButton = document.createElement("button");
-      copyButton.className = "secondary";
-      copyButton.type = "button";
-      copyButton.textContent = "Copy";
-      copyButton.addEventListener("click", () => copyText(post.postText, copyButton).catch(showThreadsError));
-      actions.appendChild(copyButton);
-
-      if (!options.savedOnly) {
-        const regenerateButton = document.createElement("button");
-        regenerateButton.className = "regenerate";
-        regenerateButton.type = "button";
-        regenerateButton.textContent = "Regenerate";
-        regenerateButton.addEventListener("click", () => regenerateViralPost(post.id).catch(showThreadsError));
-        actions.appendChild(regenerateButton);
-      }
-
-      const favoriteButton = document.createElement("button");
-      favoriteButton.className = "secondary";
-      favoriteButton.type = "button";
-      favoriteButton.textContent = isViralSaved(post) ? "Saved" : "Favorite";
-      favoriteButton.addEventListener("click", () => toggleViralFavorite(post));
-      actions.appendChild(favoriteButton);
-
-      if (!options.savedOnly) {
-        [["winner", "Winner"], ["average", "Average"], ["weak", "Weak"]].forEach(([rating, label]) => {
-          const ratingButton = document.createElement("button");
-          ratingButton.className = post.rating === rating ? "approve" : "secondary";
-          ratingButton.type = "button";
-          ratingButton.textContent = label;
-          ratingButton.addEventListener("click", () => rateViralPost(post, rating).catch(showThreadsError));
-          actions.appendChild(ratingButton);
-        });
-      }
-
-      const postButton = document.createElement("button");
-      postButton.className = "approve";
-      postButton.type = "button";
-      postButton.textContent = "Post to Threads";
-      postButton.addEventListener("click", () => postViralToThreads(post));
-      actions.appendChild(postButton);
-
-      card.append(text, meta, actions);
-      return card;
-    }
-
-    function renderViralPosts() {
-      viralOutput.innerHTML = "";
-      viralGeneratedPosts.forEach((post) => viralOutput.appendChild(viralCard(post)));
-    }
-
-    function filteredSavedViralPosts() {
-      const query = String(viralSavedSearch.value || "").toLowerCase();
-      const category = viralSavedCategoryFilter.value;
-      const tone = viralSavedToneFilter.value;
-      return viralSavedPosts.filter((post) => {
-        if (query && !post.postText.toLowerCase().includes(query)) return false;
-        if (category && post.category !== category) return false;
-        if (tone && post.tone !== tone) return false;
-        return true;
-      });
-    }
-
-    function renderSavedViralPosts() {
-      viralSavedOutput.innerHTML = "";
-      const posts = filteredSavedViralPosts();
-      posts.forEach((post) => viralSavedOutput.appendChild(viralCard(post, { savedOnly: true })));
-      if (!posts.length) {
-        const empty = document.createElement("p");
-        empty.className = "note";
-        empty.textContent = "Belum ada saved posts.";
-        viralSavedOutput.appendChild(empty);
-      }
-    }
-
-    function setupThreadsViralGenerator() {
-      viralPattern.innerHTML = "";
-      const autoPatternOption = document.createElement("option");
-      autoPatternOption.value = "";
-      autoPatternOption.textContent = "Auto rotate 300 patterns";
-      viralPattern.appendChild(autoPatternOption);
-      (viralTemplates.patterns || []).forEach((pattern, index) => {
-        const option = document.createElement("option");
-        option.value = pattern.id;
-        option.textContent = String(index + 1).padStart(3, "0") + " · " + pattern.label;
-        viralPattern.appendChild(option);
-      });
-      fillSelectOptions(viralCategory, viralTemplates.categories || [], "Pilih post category");
-      fillSelectOptions(viralTone, viralTemplates.toneOptions || [], "Auto rotate tones");
-      fillSelectOptions(viralAudience, viralTemplates.audienceTypes || [], "Pilih audience");
-      viralCategory.required = true;
-      viralAudience.required = true;
-      viralCategory.addEventListener("change", updateViralSelectionButtons);
-      viralAudience.addEventListener("change", updateViralSelectionButtons);
-      updateViralSelectionButtons();
-      fillSelectOptions(viralSavedCategoryFilter, viralTemplates.categories || [], "All categories");
-      fillSelectOptions(viralSavedToneFilter, viralTemplates.toneOptions || [], "All tones");
-      loadViralPosts();
-      renderSavedViralPosts();
-      loadViralHistory().catch(() => {});
-    }
-
-    async function loadViralHistory() {
-      const response = await fetch("/api/postpilot-copy-history?channel=threads_general&limit=30");
-      const json = await readApiJson(response);
-      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load post history.");
-      viralHistoryOutput.innerHTML = "";
-      (json.posts || []).forEach((post) => {
-        const card = document.createElement("article");
-        card.className = "viral-post-card";
-        const text = document.createElement("p");
-        text.className = "viral-post-text";
-        text.textContent = post.postText;
-        const meta = document.createElement("div");
-        meta.className = "viral-meta";
-        [
-          post.metadata?.patternLabel || post.patternFamily || "pattern",
-          post.metadata?.publishedAt ? "Published" : (post.rating || "unrated"),
-          new Date(post.createdAt).toLocaleDateString("ms-MY")
-        ].forEach((value) => {
-          const span = document.createElement("span");
-          span.textContent = value;
-          meta.appendChild(span);
-        });
-        const actions = document.createElement("div");
-        actions.className = "actions";
-        [["winner", "Winner"], ["average", "Average"], ["weak", "Weak"]].forEach(([rating, label]) => {
-          const button = document.createElement("button");
-          button.className = post.rating === rating ? "approve" : "secondary";
-          button.type = "button";
-          button.textContent = label;
-          button.addEventListener("click", () => rateViralPost(post, rating).catch(showThreadsError));
-          actions.appendChild(button);
-        });
-        card.append(text, meta, actions);
-        viralHistoryOutput.appendChild(card);
-      });
-    }
 
 
-    threadsForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      await generatePostPilotPreview();
-    });
 
-    threadsBatchPostButton.addEventListener("click", () => startPostPilotBatch(5));
 
-    regenerateThreadsButton.addEventListener("click", async () => {
-      if (!currentThreadsPreview) return;
-      threadsResult.className = "result";
-      threadsResult.textContent = "";
-      regenerateThreadsButton.disabled = true;
-      regenerateThreadsButton.textContent = "Generating...";
 
-      try {
-        const response = await fetch("/api/personal-post-regenerate", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            product_id: activePostPilotProductId,
-            product_name: currentThreadsPreview.product_name,
-            affiliate_link: currentThreadsPreview.affiliate_link,
-            post_mode: currentThreadsPreview.post_mode,
-            product_context: currentThreadsPreview.product_context?.raw,
-            variation: currentThreadsPreview.variation,
-            seen_variations: seenThreadsVariations
-          })
-        });
-        const json = await readApiJson(response);
-        if (response.status === 401) {
-          window.location.href = "/login";
-          return;
-        }
-        if (!response.ok || !json.ok) throw new Error(json.error || "Post Pilot regenerate failed.");
 
-        currentThreadsPreview = {
-          ...currentThreadsPreview,
-          post_text: json.preview.post_text,
-          facebook_post_text: json.preview.facebook_post_text || json.preview.post_text,
-          threads_post_text: json.preview.threads_post_text || json.preview.post_text,
-          product_context: json.preview.product_context,
-          variation: json.preview.variation,
-          style: json.preview.style
-        };
-        seenThreadsVariations.push(Number(currentThreadsPreview.variation || 0));
-        threadsPostPreview.value = currentThreadsPreview.facebook_post_text || currentThreadsPreview.post_text || "";
-        threadsPreviewMeta.textContent = [
-          \`Produk: \${currentThreadsPreview.product_context?.product_name || currentThreadsPreview.product_name || "-"}\`,
-          \`Concept: \${Number(currentThreadsPreview.variation || 0) + 1}/120\`,
-          \`Style: \${currentThreadsPreview.style || "-"}\`
-        ].join(" | ");
-        threadsResult.className = "result ok";
-        threadsResult.textContent = "Variasi post baru sudah dijana.";
-      } catch (error) {
-        showThreadsError(error);
-      } finally {
-        regenerateThreadsButton.disabled = false;
-        regenerateThreadsButton.textContent = "Jana Semula Post";
-      }
-    });
 
-    generateViralOneButton.addEventListener("click", () => postViralBatchToThreads(1, generateViralOneButton));
-    generateViralTenButton.addEventListener("click", () => postViralBatchToThreads(10, generateViralTenButton));
-    generateViralFiftyButton.addEventListener("click", () => postViralBatchToThreads(50, generateViralFiftyButton));
-    exportSavedViralButton.addEventListener("click", () => exportViralCsv(filteredSavedViralPosts(), "threads-viral-saved-posts.csv"));
-    clearSavedViralButton.addEventListener("click", () => {
-      viralSavedPosts = [];
-      saveViralPosts();
-      renderViralPosts();
-      renderSavedViralPosts();
-    });
-    viralSavedSearch.addEventListener("input", renderSavedViralPosts);
-    viralSavedCategoryFilter.addEventListener("change", renderSavedViralPosts);
-    viralSavedToneFilter.addEventListener("change", renderSavedViralPosts);
-    refreshViralHistoryButton.addEventListener("click", () => loadViralHistory().catch(showThreadsError));
 
-    sendThreadsExtensionButton.addEventListener("click", async () => {
-      sendThreadsExtensionButton.disabled = true;
-      sendThreadsExtensionButton.textContent = "Sending...";
-      threadsResult.className = "result";
-      threadsResult.textContent = "";
 
-      try {
-        await sendThreadsDraftToExtension();
-      } catch (error) {
-        showThreadsError(error);
-      } finally {
-        sendThreadsExtensionButton.disabled = false;
-        sendThreadsExtensionButton.textContent = "POST NOW";
-      }
-    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     function numericValue(value) {
       const number = Number(String(value || "0").replace(/,/g, ""));
@@ -10926,7 +9072,6 @@ Review retargeting when the warm audience is ready</textarea>
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }
     });
-    setupPostPilotInputStorage();
     sortQuickActions();
     resetClientFormMode();
     resetBankFormMode();
@@ -11225,9 +9370,7 @@ Review retargeting when the warm audience is ready</textarea>
       reviewReceiptPdf(button.dataset.clientCode).catch(showReceiptError);
     });
     uploadReceiptsButton.addEventListener("click", uploadReceipts);
-    setupThreadsViralGenerator();
     loadTodayDashboard();
-    loadRemoteAutomationStatus({ silent: true });
     loadClients();
     loadMetaConnection();
     loadTikTokConnection();

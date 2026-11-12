@@ -1,5 +1,5 @@
 const { requireAuth } = require("../../lib/auth");
-const { readJsonBody } = require("../../lib/postpilot");
+const { readJsonBody } = require("../../lib/http-body");
 const { recordActivity } = require("../../lib/supabase-db");
 const {
   createAgencyOpportunity,

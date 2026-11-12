@@ -1,6 +1,6 @@
 const { requireAuth } = require("../../lib/auth");
 const { buildReportPdf } = require("../../lib/invoices");
-const { readJsonBody } = require("../../lib/postpilot");
+const { readJsonBody } = require("../../lib/http-body");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {

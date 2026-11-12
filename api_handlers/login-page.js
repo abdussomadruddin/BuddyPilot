@@ -211,7 +211,7 @@ function loginHtml({ error, setupMissing } = {}) {
     }
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=1">
-  <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261107-1">
+  <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261112-1">
 </head>
 <body class="login-page">
   <main>

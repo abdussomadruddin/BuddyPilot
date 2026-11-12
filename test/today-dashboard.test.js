@@ -9,11 +9,10 @@ test("Today dashboard prioritizes expiring TikTok authorization", () => {
     now,
     clients: [{ serviceStatus: "active" }],
     tiktok: { connected: true, expiresAt: "2026-07-27T02:00:00.000Z" },
-    remote: { jobs: [{ status: "failed", error: "Failed" }] },
   });
   assert.equal(dashboard.nextAction.id, "tiktok-expiry");
   assert.equal(dashboard.nextAction.subtab, "settings-panel");
-  assert.equal(dashboard.summary.attention, 2);
+  assert.equal(dashboard.summary.attention, 1);
 });
 
 test("Today dashboard counts today's completed work in Kuala Lumpur", () => {
@@ -29,6 +28,6 @@ test("Today dashboard counts today's completed work in Kuala Lumpur", () => {
 
 test("Today dashboard keeps working with empty partial data", () => {
   const dashboard = buildTodayDashboard({ now });
-  assert.equal(dashboard.nextAction.id, "create-post");
+  assert.equal(dashboard.nextAction.id, "all-clear");
   assert.deepEqual(dashboard.clients, { total: 0, active: 0 });
 });

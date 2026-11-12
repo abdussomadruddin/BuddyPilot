@@ -5,7 +5,7 @@ const {
   recordActivity,
   uploadBankQrImage,
 } = require("../../lib/supabase-db");
-const { parseMultipart, readJsonBody, readRequestBody } = require("../../lib/postpilot");
+const { parseMultipart, readJsonBody, readRequestBody } = require("../../lib/http-body");
 
 function queryParam(req, key) {
   const parsed = new URL(req.url || "/", "http://localhost");

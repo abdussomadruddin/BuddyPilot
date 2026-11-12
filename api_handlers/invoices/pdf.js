@@ -1,6 +1,6 @@
 const { requireAuth } = require("../../lib/auth");
 const { generateInvoicePdf } = require("../../lib/invoices");
-const { readJsonBody, readRequestBody } = require("../../lib/postpilot");
+const { readJsonBody, readRequestBody } = require("../../lib/http-body");
 
 function queryParam(req, key) {
   const parsed = new URL(req.url || "/", "http://localhost");

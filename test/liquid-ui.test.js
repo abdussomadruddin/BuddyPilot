@@ -20,9 +20,9 @@ test("liquid UI is a local presentation layer with existing accessible icons", a
   assert.equal(response.statusCode, 200);
   assert.ok(html.indexOf("buddypilot-liquid.css") > html.indexOf("buddypilot-redesign.css"));
   const icons = [...html.matchAll(/<svg class="icon section-icon [^"]*" aria-hidden="true"><use href="\/icons.svg#([^"]+)"><\/use><\/svg>/g)];
-  assert.ok(icons.length >= 40);
+  assert.ok(icons.length >= 30);
   for (const [, name] of icons) assert.ok(sprite.includes(`id="${name}"`), `Missing icon: ${name}`);
-  for (const id of ["uploadReportButton", "adsCmoLiveButton", "clientForm", "weeklyReportPushButton", "threadsForm", "settingsForm"]) {
+  for (const id of ["uploadReportButton", "adsCmoLiveButton", "clientForm", "weeklyReportPushButton", "uploadInvoicesButton", "settingsForm"]) {
     assert.ok(html.includes(`id="${id}"`), `Workflow control missing: ${id}`);
   }
   assert.doesNotMatch(html, /https?:[^"\s]+buddypilot-liquid/);
@@ -47,14 +47,14 @@ test("motion has an accessible off switch and no new continuous animation or API
   assert.doesNotMatch(css, /\binfinite\b|@import|url\(https?:/);
 });
 
-test("mobile layer loads last, stays phone-scoped and keeps publishing out of the sticky bar", () => {
+test("mobile layer loads last, fits the three main tabs and keeps text readable", () => {
   const mobileCss = fs.readFileSync(require.resolve("../public/buddypilot-mobile.css"), "utf8");
   const source = fs.readFileSync(require.resolve("../api_handlers/app.js"), "utf8");
   assert.ok(source.indexOf("buddypilot-mobile.css") > source.indexOf("buddypilot-liquid.css"));
-  const outsideQueries = mobileCss.slice(0, mobileCss.indexOf("@media"));
-  assert.doesNotMatch(outsideQueries, /\.tab-|\.subtab|#threads/);
-  assert.match(mobileCss, /#threadsPreviewButton \{[^}]*position: sticky/);
-  assert.doesNotMatch(mobileCss, /#threadsBatchPostButton \{[^}]*position: sticky/);
+  assert.equal((source.match(/class="tab-button[^"]*" type="button" data-tab-target=/g) || []).length, 3);
+  assert.match(mobileCss, /\.topbar \.topbar-tabs \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(mobileCss, /\.nav-liquid-indicator \{[^}]*width: calc\(\(100% - 10px\) \/ 3\)/);
+  assert.doesNotMatch(mobileCss, /threads|postpilot/i);
   assert.doesNotMatch(mobileCss, /font-size: (?:[0-9]|1[01])px/);
 });
 

@@ -6,7 +6,7 @@ const {
   updateClientDetails,
 } = require("../lib/invoices");
 const { recordActivity } = require("../lib/supabase-db");
-const { readJsonBody } = require("../lib/postpilot");
+const { readJsonBody } = require("../lib/http-body");
 const { normalizeAdsReportConfig } = require("../lib/meta-ads");
 
 function publicClient(client) {

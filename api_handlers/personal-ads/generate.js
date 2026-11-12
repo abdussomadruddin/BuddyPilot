@@ -1,5 +1,5 @@
 const { requireAuth } = require("../../lib/auth");
-const { readJsonBody } = require("../../lib/postpilot");
+const { readJsonBody } = require("../../lib/http-body");
 const { generatePersonalAdsReport, yesterdayDate } = require("../../lib/personal-ads-cmo");
 
 module.exports = async function handler(req, res) {

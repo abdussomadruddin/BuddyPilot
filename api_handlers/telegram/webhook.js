@@ -2,7 +2,7 @@ const { connectTelegramClient, sendTelegramMessage } = (() => {
   const reports = require("../../lib/telegram-reports");
   return { connectTelegramClient: reports.connectTelegramClient, sendTelegramMessage: reports.telegramApi };
 })();
-const { readJsonBody } = require("../../lib/postpilot");
+const { readJsonBody } = require("../../lib/http-body");
 
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");

@@ -4,15 +4,6 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 const path = require("node:path");
 
-test("precomputed similarity retains exact text comparison scores", () => {
-  const { semanticTokens, semanticSimilarity } = require("../lib/postpilot-pattern-engine");
-  for (const a of ["", "aku nak belajar ads hari ini", "test https://example.com satu dua tiga empat"]) {
-    for (const b of ["", "aku nak belajar ads esok", a]) {
-      assert.equal(semanticSimilarity(semanticTokens(a), semanticTokens(b)), semanticSimilarity(a, b));
-    }
-  }
-});
-
 test("router loads only the requested handler and rejects unknown routes", async () => {
   const loaded = [];
   const module = { exports: {} };
@@ -21,8 +12,8 @@ test("router loads only the requested handler and rejects unknown routes", async
     require(name) { loaded.push(name); return async () => "handled"; },
   });
   assert.equal(loaded.length, 0);
-  assert.equal(await module.exports({ url: "/api/postpilot-extension/claim" }, {}), "handled");
-  assert.deepEqual(loaded, ["../api_handlers/postpilot-extension/claim"]);
+  assert.equal(await module.exports({ url: "/api/clients/whatsapp" }, {}), "handled");
+  assert.deepEqual(loaded, ["../api_handlers/clients/whatsapp"]);
   const response = { setHeader() {}, end(value) { this.body = value; } };
   await module.exports({ url: "/api/unknown" }, response);
   assert.equal(response.statusCode, 404);

@@ -1,6 +1,6 @@
 const { requireAuth } = require("../../lib/auth");
 const { getOperationsOverview, runHealthChecks, SERVICE_DEFINITIONS } = require("../../lib/operations-center");
-const { readJsonBody } = require("../../lib/postpilot");
+const { readJsonBody } = require("../../lib/http-body");
 
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");

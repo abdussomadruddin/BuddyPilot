@@ -1,6 +1,6 @@
 const { requireAuth } = require("../../lib/auth");
 const { getMergedClientsWithStatus } = require("../../lib/invoices");
-const { readJsonBody } = require("../../lib/postpilot");
+const { readJsonBody } = require("../../lib/http-body");
 const {
   buildReportDraft,
   fetchMetaCustomReport,

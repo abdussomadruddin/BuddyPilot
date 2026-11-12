@@ -5,7 +5,7 @@ const {
   recordActivity,
   uploadBusinessLogo,
 } = require("../../lib/supabase-db");
-const { parseMultipart, readJsonBody, readRequestBody } = require("../../lib/postpilot");
+const { parseMultipart, readJsonBody, readRequestBody } = require("../../lib/http-body");
 
 module.exports = async function handler(req, res) {
   try {

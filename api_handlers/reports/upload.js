@@ -1,6 +1,6 @@
 const { requireAuth } = require("../../lib/auth");
 const { uploadReportToDrive } = require("../../lib/invoices");
-const { readJsonBody } = require("../../lib/postpilot");
+const { readJsonBody } = require("../../lib/http-body");
 const { reportOperationalFailure, reportOperationalSuccess } = require("../../lib/operations-events");
 
 module.exports = async function handler(req, res) {
