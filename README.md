@@ -123,19 +123,17 @@ Required Supabase env:
 ```text
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
 ```
 
-`SUPABASE_PUBLISHABLE_KEY` is used only for the Post Pilot Realtime wake signal. Drafts, image paths, and device tokens are fetched through authenticated BuddyPilot endpoints and are never included in the broadcast payload.
+`SUPABASE_PUBLISHABLE_KEY` is no longer used. It served the Post Pilot Realtime wake signal, and Post Pilot has been removed. Its tables stay in Supabase with their data.
 
-### Post Pilot Remote Trigger
+### Daily workflow
 
-1. Load `chrome-extension/postpilot` as an unpacked extension in Chrome on the MacBook.
-2. Open Post Pilot on the phone and press `Pair Mac` under `Mac Automation`.
-3. Enter the eight-character code in the extension popup on the Mac.
-4. Keep Chrome open and stay logged in to Facebook and Threads.
-
-All Post Pilot posting buttons create a private Supabase job. The paired Mac receives a Supabase Realtime wake signal and checks once on Chrome startup or Realtime reconnect. There is no periodic Vercel polling while idle; `Check Remote` in the extension popup remains the manual fallback. Transient automation failures retry locally twice before BuddyPilot opens an incident. Only one job can run at a time, and queued jobs expire after 24 hours if the Mac remains offline.
+- **Perlu buat hari ini** on the Dashboard ranks today's work: open ads alerts, overdue invoices, paid invoices without a receipt, WhatsApp queues with clients ready, agency tasks due, missing monthly invoices, the weekly report and an expiring TikTok authorization.
+- **Status bayaran** in Client Pilot > Invoice lists the last three months of uploaded invoices. Payment status is stored in `invoice_uploads.metadata.payment`; an uploaded receipt also counts as paid. Unpaid invoices are overdue after seven days. Re-uploading an invoice keeps its payment status.
+- **Giliran WhatsApp** steps through active clients for this month's invoice or receipt, or this week's report. It opens WhatsApp with the message written; it never sends by itself. A send is recorded as `client_whatsapp_opened` activity.
+- **Had amaran iklan** in each client's details sets a cost per result, minimum ROAS and daily spend limit (`invoice_clients.metadata.adsAlerts`). The daily ads cron checks yesterday's totals and opens an `ads_alerts` incident, with a push notification, on a breach; a clean day resolves it.
+- **Ads CMO** lists own Meta and TikTok advertisers. TikTok accounts are stored in `personal_ads_accounts` with a `tiktok:` prefix.
 
 Optional setup env for local schema creation:
 

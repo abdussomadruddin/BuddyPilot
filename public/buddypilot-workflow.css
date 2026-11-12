@@ -1,0 +1,155 @@
+/*
+ * Daily workflow features: today list, WhatsApp queue, invoice payments and
+ * ads alerts. Uses the colour tokens from buddypilot-liquid.css.
+ */
+
+.workflow-card {
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--bp-line, #dce5ea);
+  border-radius: 16px;
+  background: var(--bp-panel, #fff);
+}
+.workflow-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.workflow-card-head h2, .workflow-card-head h3 { margin: 0 0 2px; }
+.workflow-card-head .note { margin: 0; }
+.workflow-card-head button { flex: 0 0 auto; }
+
+/* Shared status pill */
+.payment-pill, .today-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bp-soft, #eef3f6);
+  color: var(--bp-muted, #61717f);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.payment-pill[data-status="paid"], .today-pill[data-tone="ok"] { background: var(--bp-green-soft, #e4f5ec); color: var(--bp-green, #087b5e); }
+.payment-pill[data-status="unpaid"], .today-pill[data-tone="warning"] { background: var(--bp-amber-soft, #fff4dc); color: var(--bp-amber, #925b08); }
+.payment-pill[data-status="overdue"], .today-pill[data-tone="danger"] { background: var(--bp-red-soft, #fdecef); color: var(--bp-red, #b42339); }
+
+/* Invoice payments */
+.payment-summary { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 10px; color: var(--bp-muted, #61717f); font-size: 13px; }
+.payment-summary strong { color: var(--bp-ink, #18232d); font-size: 15px; }
+.payment-list { display: grid; gap: 8px; }
+.payment-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--bp-line, #dce5ea);
+  border-radius: 12px;
+}
+.payment-row[data-status="overdue"] { border-color: color-mix(in srgb, var(--bp-red, #b42339) 35%, transparent); }
+.payment-copy { display: grid; gap: 2px; min-width: 0; }
+.payment-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.payment-copy span { color: var(--bp-muted, #61717f); font-size: 13px; overflow-wrap: anywhere; }
+.payment-actions { display: flex; align-items: center; gap: 8px; }
+.payment-actions button, .payment-actions a { min-height: 40px; }
+.payment-empty { padding: 12px; color: var(--bp-muted, #61717f); font-size: 13px; }
+.payment-toggle { justify-self: start; min-height: 40px; }
+
+@media (max-width: 600px) {
+  .workflow-card { padding: 12px; border-radius: 14px; }
+  .payment-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .payment-copy strong { white-space: normal; overflow-wrap: anywhere; }
+  .payment-actions { grid-column: 1 / -1; }
+  .payment-actions button { flex: 1 1 auto; min-height: 44px; }
+}
+
+/* Today list */
+.today-todo { margin-bottom: 20px; }
+.today-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.today-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--bp-line, #dce5ea);
+  border-radius: 12px;
+}
+.today-item[data-tone="danger"] { border-color: color-mix(in srgb, var(--bp-red, #b42339) 35%, transparent); }
+.today-copy { display: grid; gap: 2px; min-width: 0; }
+.today-copy span { color: var(--bp-muted, #61717f); font-size: 13px; overflow-wrap: anywhere; }
+.today-item button { min-height: 40px; white-space: nowrap; }
+.today-list:empty { display: none; }
+
+/* WhatsApp queue */
+.queue-dialog {
+  width: min(560px, calc(100% - 24px));
+  max-height: min(90dvh, 820px);
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: var(--bp-panel, #fff);
+  color: var(--bp-ink, #18232d);
+  box-shadow: 0 24px 70px rgba(15, 30, 45, .28);
+}
+.queue-dialog::backdrop { background: rgba(15, 25, 35, .42); }
+.queue-sheet { display: grid; gap: 12px; padding: 16px; }
+.queue-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.queue-head h2 { margin: 0 0 2px; font-size: 20px; }
+.queue-head .note { margin: 0; }
+.queue-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.queue-types { display: inline-grid; grid-auto-flow: column; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bp-soft, #eef3f6); }
+.queue-types button { min-height: 40px; padding: 6px 14px; border: 0; border-radius: 9px; background: transparent; color: var(--bp-muted, #61717f); box-shadow: none; font-weight: 700; }
+.queue-types button.active { background: var(--bp-panel, #fff); color: var(--bp-ink, #18232d); box-shadow: 0 1px 3px rgba(15, 30, 45, .12); }
+.queue-controls label { display: grid; gap: 4px; font-size: 13px; }
+.queue-card { display: grid; gap: 4px; padding: 14px; border: 1px solid var(--bp-line, #dce5ea); border-radius: 14px; background: var(--bp-soft, #f6f9fb); }
+.queue-card strong { font-size: 18px; }
+.queue-card > span { color: var(--bp-muted, #61717f); font-size: 13px; }
+.queue-kicker { color: var(--bp-muted, #61717f); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.queue-message { max-height: 132px; margin: 8px 0 4px; padding: 10px; overflow: auto; border-radius: 10px; background: var(--bp-panel, #fff); font-size: 13px; white-space: pre-line; overflow-wrap: anywhere; }
+.queue-message.muted { color: var(--bp-muted, #61717f); }
+.queue-actions { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-top: 4px; }
+.queue-actions button { min-height: 48px; }
+.queue-empty { display: grid; gap: 4px; padding: 14px; border-radius: 14px; background: var(--bp-soft, #f6f9fb); }
+.queue-empty span { color: var(--bp-muted, #61717f); font-size: 13px; }
+.queue-list { display: grid; gap: 6px; max-height: 260px; overflow: auto; }
+.queue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--bp-line, #dce5ea);
+  border-radius: 10px;
+  background: var(--bp-panel, #fff);
+  color: var(--bp-ink, #18232d);
+  box-shadow: none;
+  font-weight: 600;
+  text-align: left;
+}
+.queue-row[aria-current="true"] { border-color: var(--bp-accent, #0f62d6); }
+.queue-row:disabled { opacity: 1; cursor: default; }
+.queue-chip { flex: 0 0 auto; padding: 2px 8px; border-radius: 999px; background: var(--bp-soft, #eef3f6); color: var(--bp-muted, #61717f); font-size: 12px; font-weight: 700; }
+.queue-chip[data-status="ready"] { background: var(--bp-blue-soft, #e7f0fd); color: var(--bp-blue, #0f62d6); }
+.queue-chip[data-status="sent"] { background: var(--bp-green-soft, #e4f5ec); color: var(--bp-green, #087b5e); }
+.queue-chip[data-status="no_phone"], .queue-chip[data-status="no_document"] { background: var(--bp-amber-soft, #fff4dc); color: var(--bp-amber, #925b08); }
+.queue-chip[data-status="error"] { background: var(--bp-red-soft, #fdecef); color: var(--bp-red, #b42339); }
+.queue-footnote { margin: 0; }
+
+/* Ads alert limits in client details */
+.ads-alerts-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.ads-alerts-form label { display: grid; gap: 4px; font-size: 13px; }
+.ads-alerts-form button { grid-column: 1 / -1; justify-self: start; }
+
+@media (max-width: 600px) {
+  .today-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .today-item .today-pill { grid-column: 1 / -1; justify-self: start; }
+  .today-item button { min-height: 44px; }
+  .queue-dialog { width: 100%; max-width: none; max-height: 92dvh; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  .queue-sheet { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .queue-types { width: 100%; grid-auto-columns: 1fr; }
+  .ads-alerts-form { grid-template-columns: 1fr; }
+  .ads-alerts-form button { width: 100%; min-height: 44px; }
+}

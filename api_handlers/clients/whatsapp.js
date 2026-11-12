@@ -16,7 +16,32 @@ module.exports = async function handler(req, res) {
     }
 
     const body = await readJsonBody(req);
+    // The send queue opens WhatsApp first, then confirms here; no message is rebuilt.
+    if (body.markSent) {
+      const clientCode = String(body.clientCode || "").trim().toUpperCase();
+      const type = String(body.type || "").trim().toLowerCase();
+      if (!/^[A-Z0-9-]{1,40}$/.test(clientCode) || !["invoice", "receipt", "report"].includes(type)) {
+        throw Object.assign(new Error("Client atau jenis WhatsApp tidak sah."), { statusCode: 400 });
+      }
+      const period = String(body.period || "").trim();
+      await recordActivity({
+        type: "client_whatsapp_opened",
+        title: `WhatsApp ${type}: ${String(body.clientName || clientCode).slice(0, 120)}`,
+        description: String(body.documentUrl || "").slice(0, 500),
+        entityType: "client",
+        entityId: clientCode,
+        metadata: { clientCode, type, period: /^\d{4}-\d{2}$/.test(period) ? period : "", documentUrl: String(body.documentUrl || "").slice(0, 500), via: "queue" },
+      });
+      res.statusCode = 200;
+      res.end(JSON.stringify({ ok: true, clientCode, type, period }));
+      return;
+    }
     const result = await buildClientWhatsappReminder(body);
+    if (body.preview) {
+      res.statusCode = 200;
+      res.end(JSON.stringify({ ok: true, clientCode: result.client.code, clientName: result.client.brandClient || result.client.name, type: result.type, period: result.period, message: result.message, documentUrl: result.documentUrl, whatsappUrl: result.whatsappUrl }));
+      return;
+    }
     await recordActivity({
       type: "client_whatsapp_opened",
       title: `WhatsApp ${result.type}: ${result.client.brandClient || result.client.name || result.client.code}`,

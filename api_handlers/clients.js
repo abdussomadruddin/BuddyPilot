@@ -1,4 +1,5 @@
 const { requireAuth } = require("../lib/auth");
+const { normalizeAlerts } = require("../lib/ads-alerts");
 const {
   createClientWithDriveFolders,
   getMergedClientsWithStatus,
@@ -69,6 +70,7 @@ function publicClient(client) {
     serviceRecoveredAt: client.serviceRecoveredAt || "",
     source: client.source || "config",
     adsReportConfig: normalizeAdsReportConfig(client.metadata?.adsReportConfig || {}),
+    adsAlerts: safeAlerts(client.metadata?.adsAlerts),
     telegramReportConfig: {
       recipients,
       connected: recipients.some((item) => item.connected),
@@ -76,6 +78,14 @@ function publicClient(client) {
       autoEnabled: recipients.some((item) => item.autoEnabled),
     },
   };
+}
+
+function safeAlerts(value) {
+  try {
+    return normalizeAlerts(value || {});
+  } catch {
+    return { maxCostPerResult: null, minRoas: null, maxDailySpend: null };
+  }
 }
 
 module.exports = async function handler(req, res) {

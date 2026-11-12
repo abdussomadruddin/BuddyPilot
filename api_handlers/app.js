@@ -4318,6 +4318,7 @@ function pageHtml() {
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
+  <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261112-1">
 </head>
 <body>
@@ -4379,6 +4380,12 @@ function pageHtml() {
             <button id="checkAllHealthButton" class="button-secondary operations-check-all" type="button">Check all systems</button>
           </div>
         </header>
+        <section id="todayTodo" class="workflow-card today-todo" aria-labelledby="todayTodoTitle">
+          <div class="workflow-card-head">
+            <div><h2 id="todayTodoTitle">Perlu buat hari ini</h2><p id="todayTodoMeta" class="note">Memuatkan...</p></div>
+          </div>
+          <ol id="todayTodoList" class="today-list"></ol>
+        </section>
         <section id="todaySkeleton" class="today-skeleton" aria-label="Memuatkan dashboard">
           <span></span><span></span><span></span>
         </section>
@@ -4759,6 +4766,7 @@ Review retargeting when the warm audience is ready</textarea>
           </div>
           <div class="actions">
             <button id="refreshClientsButton" class="secondary" type="button">Refresh Senarai</button>
+            <button id="openWhatsappQueueButton" type="button" data-open-whatsapp-queue="invoice">Giliran WhatsApp</button>
           </div>
           <div id="clientList" class="client-list"></div>
           <div id="clientResult" class="result"></div>
@@ -4924,6 +4932,17 @@ Review retargeting when the warm audience is ready</textarea>
                 <h3>Notes</h3>
                 <p id="clientDetailNotes" class="note">Tiada notes.</p>
               </section>
+              <section class="agency-notes-section ads-alerts-section" aria-labelledby="clientAdsAlertsTitle">
+                <h3 id="clientAdsAlertsTitle">Had amaran iklan</h3>
+                <p id="clientAdsAlertsNote" class="note">Disemak setiap pagi pada data semalam. Kosongkan medan untuk tiada had.</p>
+                <form id="clientAdsAlertsForm" class="ads-alerts-form">
+                  <label>Had kos per result (RM)<input id="clientAlertMaxCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Contoh: 20"></label>
+                  <label>ROAS minimum<input id="clientAlertMinRoas" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Contoh: 2"></label>
+                  <label>Had spend harian (RM)<input id="clientAlertMaxSpend" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Contoh: 300"></label>
+                  <button id="saveClientAdsAlertsButton" type="submit">Simpan had</button>
+                </form>
+                <div id="clientAdsAlertsResult" class="result" role="status"></div>
+              </section>
               <button id="backToAgencyClientsButton" class="secondary" type="button">Back to Agency Clients</button>
             </div>
             <div id="clientDetailError" class="result"></div>
@@ -5059,6 +5078,16 @@ Review retargeting when the warm audience is ready</textarea>
         </div>
 
         <div id="invoice-panel" class="subtab-panel active" data-subtab-panel="invoice-pilot">
+          <section id="invoicePayments" class="workflow-card invoice-payments" aria-labelledby="invoicePaymentsTitle">
+            <div class="workflow-card-head">
+              <div><h3 id="invoicePaymentsTitle">Status bayaran</h3><p class="note">Invoice 3 bulan terakhir. Lewat bila belum dibayar lebih 7 hari.</p></div>
+              <button id="refreshInvoicePaymentsButton" class="secondary" type="button">Refresh</button>
+            </div>
+            <div id="invoicePaymentsSummary" class="payment-summary"></div>
+            <div id="invoicePaymentsList" class="payment-list"></div>
+            <div id="invoicePaymentsResult" class="result" role="status"></div>
+          </section>
+
           <p>Generate invoice PDF semua client ads untuk bulan terpilih, review dahulu, kemudian upload terus ke Google Drive folder client.</p>
 
           <div class="toolbar">
@@ -5095,6 +5124,26 @@ Review retargeting when the warm audience is ready</textarea>
 
   <button id="menuBackdrop" class="menu-backdrop" type="button" aria-label="Tutup menu" hidden></button>
   <div id="appToast" class="app-toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="whatsappQueueDialog" class="queue-dialog" aria-labelledby="whatsappQueueTitle">
+    <div class="queue-sheet">
+      <header class="queue-head">
+        <div><h2 id="whatsappQueueTitle">Giliran WhatsApp</h2><p id="whatsappQueueProgress" class="note"></p></div>
+        <button id="closeWhatsappQueueButton" class="secondary" type="button" aria-label="Tutup giliran">Tutup</button>
+      </header>
+      <div class="queue-controls">
+        <div class="queue-types" role="tablist" aria-label="Jenis dokumen">
+          <button type="button" role="tab" data-queue-type="invoice">Invoice</button>
+          <button type="button" role="tab" data-queue-type="receipt">Resit</button>
+          <button type="button" role="tab" data-queue-type="report">Report</button>
+        </div>
+        <label id="whatsappQueuePeriodLabel">Bulan<input id="whatsappQueuePeriod" type="month"></label>
+      </div>
+      <section id="whatsappQueueCurrent" class="queue-current" aria-live="polite"></section>
+      <div id="whatsappQueueList" class="queue-list"></div>
+      <div id="whatsappQueueResult" class="result" role="status"></div>
+      <p class="note queue-footnote">BuddyPilot hanya buka WhatsApp dengan mesej siap ditulis. Mesej dihantar bila kau tekan hantar dalam WhatsApp.</p>
+    </div>
+  </dialog>
 
   <script>
     const invoicePeriod = document.getElementById("invoicePeriod");
@@ -5766,6 +5815,8 @@ Review retargeting when the warm audience is ready</textarea>
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 
     function activateTab(name) {
+      // Refresh on return to the dashboard; the first load happens at startup.
+      if (name === "dashboard" && typeof loadTodoList === "function" && todoLoadedAt) loadTodoList({ ifOlderThanMs: 60000 });
       const previous = document.querySelector(".tab-button.active")?.dataset.tabTarget || "dashboard";
       const previousIndex = NAV_ITEMS.indexOf(previous);
       const nextIndex = Math.max(0, NAV_ITEMS.indexOf(name));
@@ -7570,11 +7621,56 @@ Review retargeting when the warm audience is ready</textarea>
         agencyDetailItem("Drive folder", client.driveFolderId ? "Connected" : "Not connected"),
       ].join("");
       clientDetailNotes.textContent = client.notes || "Tiada notes.";
+      renderClientAdsAlerts(client);
       archiveAgencyClientButton.hidden = status === "archived";
       clientDetailLoading.hidden = true;
       clientDetailContent.hidden = false;
       setMessage(clientDetailError, "", "");
     }
+
+    const clientAdsAlertsForm = document.getElementById("clientAdsAlertsForm");
+    const clientAdsAlertsNote = document.getElementById("clientAdsAlertsNote");
+    const clientAdsAlertsResult = document.getElementById("clientAdsAlertsResult");
+    const clientAlertInputs = {
+      maxCostPerResult: document.getElementById("clientAlertMaxCost"),
+      minRoas: document.getElementById("clientAlertMinRoas"),
+      maxDailySpend: document.getElementById("clientAlertMaxSpend"),
+    };
+
+    function renderClientAdsAlerts(client) {
+      const alerts = client.adsAlerts || {};
+      for (const [key, input] of Object.entries(clientAlertInputs)) input.value = alerts[key] == null ? "" : String(alerts[key]);
+      const ads = client.adsReportConfig || {};
+      const linked = Boolean(ads.accountId);
+      const resultMetric = ads.resultMetric || "conversions";
+      clientAlertInputs.minRoas.closest("label").hidden = resultMetric !== "conversions";
+      clientAdsAlertsForm.querySelectorAll("input, button").forEach((node) => { node.disabled = !linked; });
+      clientAdsAlertsNote.textContent = linked
+        ? "Disemak setiap pagi pada data " + (ads.platform === "tiktok" ? "TikTok" : "Meta") + " semalam. Push notification dihantar bila had dilanggar. Kosongkan medan untuk tiada had."
+        : "Pautkan akaun iklan client dahulu sebelum menetapkan had.";
+      setMessage(clientAdsAlertsResult, "", "");
+    }
+
+    clientAdsAlertsForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const client = currentClients.find((item) => item.code === currentAgencyClientCode);
+      if (!client) return;
+      const alerts = Object.fromEntries(Object.entries(clientAlertInputs).map(([key, input]) => [key, input.closest("label").hidden ? "" : input.value.trim()]));
+      const button = document.getElementById("saveClientAdsAlertsButton");
+      button.disabled = true;
+      try {
+        const response = await fetch("/api/clients/ads-alerts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ clientCode: client.code, alerts }) });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Had amaran gagal disimpan.");
+        client.adsAlerts = json.alerts;
+        renderClientAdsAlerts(client);
+        setMessage(clientAdsAlertsResult, "ok", json.active ? "Had disimpan. Semakan pertama esok pagi." : "Semua had dikosongkan; tiada amaran untuk client ini.");
+      } catch (error) {
+        setMessage(clientAdsAlertsResult, "err", error.message);
+      } finally {
+        button.disabled = false;
+      }
+    });
 
     function openAgencyClientDetail(clientCode) {
       clientDetailContent.hidden = true;
@@ -9092,7 +9188,7 @@ Review retargeting when the warm audience is ready</textarea>
         });
       });
     });
-    refreshTodayButton.addEventListener("click", () => loadTodayDashboard({ force: true }));
+    refreshTodayButton.addEventListener("click", () => { loadTodayDashboard({ force: true }); loadTodoList(); });
     checkAllHealthButton.addEventListener("click", () => checkOperationsHealth("", checkAllHealthButton));
     todayContent.addEventListener("click", (event) => {
       const healthButton = event.target.closest("[data-health-check]");
@@ -9376,7 +9472,320 @@ Review retargeting when the warm audience is ready</textarea>
       reviewReceiptPdf(button.dataset.clientCode).catch(showReceiptError);
     });
     uploadReceiptsButton.addEventListener("click", uploadReceipts);
+    const invoicePaymentsList = document.getElementById("invoicePaymentsList");
+    const invoicePaymentsSummary = document.getElementById("invoicePaymentsSummary");
+    const invoicePaymentsResult = document.getElementById("invoicePaymentsResult");
+    const refreshInvoicePaymentsButton = document.getElementById("refreshInvoicePaymentsButton");
+    let currentInvoicePayments = { invoices: [], summary: {} };
+    let showSettledPayments = false;
+
+    function invoicePaymentLabel(item) {
+      if (item.status === "paid") return item.receiptNumber ? "Dibayar · resit siap" : "Dibayar · tiada resit";
+      if (item.status === "overdue") return "Lewat " + item.daysOutstanding + " hari";
+      return item.daysOutstanding ? "Belum bayar · " + item.daysOutstanding + " hari" : "Belum bayar";
+    }
+
+    function invoicePaymentRow(item) {
+      const code = escapeHtml(item.clientCode);
+      const number = escapeHtml(item.invoiceNumber);
+      let actions = "";
+      if (item.status !== "paid") {
+        actions = '<button class="secondary" type="button" data-payment-action="paid" data-invoice="' + number + '">Tanda dibayar</button>';
+      } else if (!item.receiptNumber) {
+        actions = '<button type="button" data-payment-action="receipt" data-client-code="' + code + '" data-period="' + escapeHtml(item.period) + '" data-client-name="' + escapeHtml(item.clientName) + '">Jana resit</button>'
+          + (item.markedPaid ? '<button class="link-button" type="button" data-payment-action="unpaid" data-invoice="' + number + '">Batal</button>' : "");
+      } else if (item.receiptUrl) {
+        actions = '<a class="link-button" href="' + escapeHtml(item.receiptUrl) + '" target="_blank" rel="noopener">Lihat resit</a>';
+      }
+      return '<div class="payment-row" data-status="' + escapeHtml(item.status) + '">'
+        + '<div class="payment-copy"><strong>' + escapeHtml(item.clientName) + '</strong>'
+        + '<span>' + number + ' · ' + escapeHtml(formatMoneyValue(item.total)) + '</span></div>'
+        + '<span class="payment-pill" data-status="' + escapeHtml(item.status) + '">' + escapeHtml(invoicePaymentLabel(item)) + '</span>'
+        + '<div class="payment-actions">' + actions + '</div></div>';
+    }
+
+    function renderInvoicePayments(data) {
+      currentInvoicePayments = data;
+      const summary = data.summary || {};
+      invoicePaymentsSummary.innerHTML = '<span><strong>' + (summary.unpaidCount || 0) + '</strong> belum bayar</span>'
+        + '<span><strong>' + (summary.overdueCount || 0) + '</strong> lewat</span>'
+        + '<span><strong>' + escapeHtml(formatMoneyValue(summary.unpaidTotal || 0)) + '</strong> tertunggak</span>';
+      const invoices = data.invoices || [];
+      if (!invoices.length) {
+        invoicePaymentsList.innerHTML = '<div class="payment-empty">Belum ada invoice di-upload dalam 3 bulan terakhir.</div>';
+        return;
+      }
+      const needsWork = invoices.filter((item) => item.status !== "paid" || !item.receiptNumber);
+      const settled = invoices.filter((item) => item.status === "paid" && item.receiptNumber);
+      invoicePaymentsList.innerHTML = (needsWork.length ? needsWork.map(invoicePaymentRow).join("") : '<div class="payment-empty">Semua invoice dah dibayar dan ada resit.</div>')
+        + (settled.length ? '<button class="link-button payment-toggle" type="button" data-payment-action="toggle-settled">' + (showSettledPayments ? "Sembunyi yang selesai" : "Tunjuk yang selesai (" + settled.length + ")") + '</button>' : "")
+        + (showSettledPayments ? settled.map(invoicePaymentRow).join("") : "");
+    }
+
+    async function loadInvoicePayments({ silent = false } = {}) {
+      refreshInvoicePaymentsButton.disabled = true;
+      try {
+        const response = await fetch("/api/invoices/payments", { cache: "no-store" });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Status bayaran gagal dimuatkan.");
+        renderInvoicePayments(json);
+        if (!silent) setMessage(invoicePaymentsResult, "", "");
+        return json;
+      } catch (error) {
+        setMessage(invoicePaymentsResult, "err", error.message);
+        return null;
+      } finally {
+        refreshInvoicePaymentsButton.disabled = false;
+      }
+    }
+
+    async function setInvoicePaymentStatus(invoiceNumber, paid) {
+      const response = await fetch("/api/invoices/payments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ invoiceNumber, paid }) });
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Status bayaran gagal disimpan.");
+      sessionStorage.removeItem(TODAY_CACHE_KEY);
+      showToast(paid ? invoiceNumber + " ditanda dibayar." : invoiceNumber + " ditanda belum bayar.");
+      await loadInvoicePayments({ silent: true });
+    }
+
+    async function uploadReceiptForPayment(clientCode, period, clientName) {
+      if (!window.confirm("Jana dan upload resit " + period + " untuk " + clientName + " ke Google Drive?")) return;
+      const response = await fetch("/api/receipts/upload", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ period, drafts: [{ clientCode, paid: true }] }) });
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Resit gagal di-upload.");
+      sessionStorage.removeItem(TODAY_CACHE_KEY);
+      showToast("Resit " + clientName + " di-upload ke Google Drive.");
+      await loadInvoicePayments({ silent: true });
+    }
+
+    invoicePaymentsList.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-payment-action]");
+      if (!button) return;
+      const action = button.dataset.paymentAction;
+      if (action === "toggle-settled") {
+        showSettledPayments = !showSettledPayments;
+        renderInvoicePayments(currentInvoicePayments);
+        return;
+      }
+      button.disabled = true;
+      try {
+        if (action === "paid" || action === "unpaid") await setInvoicePaymentStatus(button.dataset.invoice, action === "paid");
+        if (action === "receipt") await uploadReceiptForPayment(button.dataset.clientCode, button.dataset.period, button.dataset.clientName);
+      } catch (error) {
+        setMessage(invoicePaymentsResult, "err", error.message);
+      } finally {
+        button.disabled = false;
+      }
+    });
+    refreshInvoicePaymentsButton.addEventListener("click", () => loadInvoicePayments());
+    const whatsappQueueDialog = document.getElementById("whatsappQueueDialog");
+    const whatsappQueueCurrent = document.getElementById("whatsappQueueCurrent");
+    const whatsappQueueList = document.getElementById("whatsappQueueList");
+    const whatsappQueueProgress = document.getElementById("whatsappQueueProgress");
+    const whatsappQueueResult = document.getElementById("whatsappQueueResult");
+    const whatsappQueuePeriod = document.getElementById("whatsappQueuePeriod");
+    const whatsappQueuePeriodLabel = document.getElementById("whatsappQueuePeriodLabel");
+    const WHATSAPP_QUEUE_LABELS = { invoice: "invoice", receipt: "resit", report: "report" };
+    const WHATSAPP_STATUS_LABELS = { ready: "Sedia", sent: "Dah dihantar", no_phone: "Tiada telefon", no_document: "Dokumen belum siap", skipped: "Dilangkau", error: "Gagal" };
+    const whatsappQueue = { type: "invoice", period: "", items: [], currentCode: "", prepared: null, loading: false };
+
+    function whatsappQueueCurrentItem() {
+      return whatsappQueue.items.find((item) => item.clientCode === whatsappQueue.currentCode) || null;
+    }
+
+    function pickNextWhatsappItem() {
+      const next = whatsappQueue.items.find((item) => item.status === "ready");
+      whatsappQueue.currentCode = next ? next.clientCode : "";
+      whatsappQueue.prepared = null;
+      if (next) prepareWhatsappItem(next);
+    }
+
+    function renderWhatsappQueue() {
+      const type = whatsappQueue.type;
+      document.querySelectorAll("[data-queue-type]").forEach((button) => {
+        const active = button.dataset.queueType === type;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", String(active));
+      });
+      whatsappQueuePeriodLabel.hidden = type === "report";
+      const items = whatsappQueue.items;
+      const sent = items.filter((item) => item.status === "sent").length;
+      whatsappQueueProgress.textContent = whatsappQueue.loading ? "Memuatkan..." : sent + " daripada " + items.length + " client dah dihantar " + WHATSAPP_QUEUE_LABELS[type] + (type === "report" ? " minggu ini." : " bulan " + whatsappQueue.period + ".");
+      const current = whatsappQueueCurrentItem();
+      if (whatsappQueue.loading) {
+        whatsappQueueCurrent.innerHTML = '<div class="queue-empty">Memuatkan giliran...</div>';
+      } else if (!current) {
+        const blocked = items.filter((item) => item.status === "no_phone" || item.status === "no_document").length;
+        whatsappQueueCurrent.innerHTML = '<div class="queue-empty"><strong>Tiada lagi yang sedia dihantar.</strong>' + (blocked ? '<span>' + blocked + ' client perlukan nombor telefon atau dokumen dahulu.</span>' : "") + '</div>';
+      } else {
+        const prepared = whatsappQueue.prepared && whatsappQueue.prepared.clientCode === current.clientCode ? whatsappQueue.prepared : null;
+        whatsappQueueCurrent.innerHTML = '<div class="queue-card">'
+          + '<span class="queue-kicker">Seterusnya</span>'
+          + '<strong>' + escapeHtml(current.clientName) + '</strong>'
+          + '<span>' + escapeHtml(current.contactName || current.clientCode) + '</span>'
+          + (prepared && prepared.message ? '<p class="queue-message">' + escapeHtml(prepared.message) + '</p>' : '<p class="queue-message muted">Menyediakan mesej...</p>')
+          + '<div class="queue-actions">'
+          + '<button type="button" data-queue-action="open"' + (prepared ? "" : " disabled") + '>Buka WhatsApp</button>'
+          + '<button class="secondary" type="button" data-queue-action="skip">Langkau</button>'
+          + '</div></div>';
+      }
+      whatsappQueueList.innerHTML = items.map((item) => '<button class="queue-row" type="button" data-queue-client="' + escapeHtml(item.clientCode) + '"' + (item.status === "ready" || item.status === "skipped" ? "" : " disabled") + (item.clientCode === whatsappQueue.currentCode ? ' aria-current="true"' : "") + '>'
+        + '<span>' + escapeHtml(item.clientName) + '</span>'
+        + '<span class="queue-chip" data-status="' + escapeHtml(item.status) + '">' + escapeHtml(item.error || WHATSAPP_STATUS_LABELS[item.status] || item.status) + '</span>'
+        + '</button>').join("");
+    }
+
+    async function prepareWhatsappItem(item) {
+      try {
+        const response = await fetch("/api/clients/whatsapp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ clientCode: item.clientCode, type: whatsappQueue.type, period: whatsappQueue.period, preview: true }) });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Mesej WhatsApp gagal disediakan.");
+        if (whatsappQueue.currentCode !== item.clientCode) return;
+        whatsappQueue.prepared = { clientCode: item.clientCode, url: json.whatsappUrl, message: json.message, documentUrl: json.documentUrl || "" };
+      } catch (error) {
+        item.status = "error";
+        item.error = error.message;
+        if (whatsappQueue.currentCode === item.clientCode) {
+          setMessage(whatsappQueueResult, "err", item.clientName + ": " + error.message);
+          pickNextWhatsappItem();
+        }
+      }
+      renderWhatsappQueue();
+    }
+
+    async function loadWhatsappQueue() {
+      whatsappQueue.loading = true;
+      whatsappQueue.items = [];
+      whatsappQueue.currentCode = "";
+      renderWhatsappQueue();
+      try {
+        const query = "type=" + encodeURIComponent(whatsappQueue.type) + "&period=" + encodeURIComponent(whatsappQueue.period);
+        const response = await fetch("/api/clients/whatsapp-queue?" + query, { cache: "no-store" });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Giliran WhatsApp gagal dimuatkan.");
+        whatsappQueue.items = json.items || [];
+        whatsappQueue.loading = false;
+        setMessage(whatsappQueueResult, "", "");
+        pickNextWhatsappItem();
+      } catch (error) {
+        whatsappQueue.loading = false;
+        setMessage(whatsappQueueResult, "err", error.message);
+      }
+      renderWhatsappQueue();
+    }
+
+    function openWhatsappQueue(type = "invoice") {
+      whatsappQueue.type = WHATSAPP_QUEUE_LABELS[type] ? type : "invoice";
+      whatsappQueue.period = whatsappQueue.period || invoicePeriod.value || defaultInvoicePeriod();
+      whatsappQueuePeriod.value = whatsappQueue.period;
+      if (!whatsappQueueDialog.open) whatsappQueueDialog.showModal();
+      loadWhatsappQueue();
+    }
+
+    whatsappQueueCurrent.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-queue-action]");
+      const item = whatsappQueueCurrentItem();
+      if (!button || !item) return;
+      if (button.dataset.queueAction === "skip") {
+        item.status = "skipped";
+        pickNextWhatsappItem();
+        renderWhatsappQueue();
+        return;
+      }
+      const prepared = whatsappQueue.prepared;
+      if (!prepared || prepared.clientCode !== item.clientCode) return;
+      // Open straight from the tap so phones do not block it as a pop-up.
+      const opened = window.open(prepared.url, "_blank");
+      if (!opened) window.location.href = prepared.url;
+      item.status = "sent";
+      pickNextWhatsappItem();
+      renderWhatsappQueue();
+      try {
+        const response = await fetch("/api/clients/whatsapp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ markSent: true, clientCode: item.clientCode, clientName: item.clientName, type: whatsappQueue.type, period: whatsappQueue.period, documentUrl: prepared.documentUrl }) });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Status hantar gagal direkod.");
+        sessionStorage.removeItem(TODAY_CACHE_KEY);
+      } catch (error) {
+        setMessage(whatsappQueueResult, "err", item.clientName + ": WhatsApp dibuka tetapi status tidak direkod (" + error.message + ").");
+      }
+    });
+    whatsappQueueList.addEventListener("click", (event) => {
+      const row = event.target.closest("[data-queue-client]");
+      if (!row) return;
+      const item = whatsappQueue.items.find((entry) => entry.clientCode === row.dataset.queueClient);
+      if (!item || (item.status !== "ready" && item.status !== "skipped")) return;
+      item.status = "ready";
+      whatsappQueue.currentCode = item.clientCode;
+      whatsappQueue.prepared = null;
+      prepareWhatsappItem(item);
+      renderWhatsappQueue();
+    });
+    document.querySelectorAll("[data-queue-type]").forEach((button) => button.addEventListener("click", () => {
+      if (whatsappQueue.type === button.dataset.queueType) return;
+      whatsappQueue.type = button.dataset.queueType;
+      loadWhatsappQueue();
+    }));
+    whatsappQueuePeriod.addEventListener("change", () => {
+      if (!/^\\d{4}-\\d{2}$/.test(whatsappQueuePeriod.value)) return;
+      whatsappQueue.period = whatsappQueuePeriod.value;
+      loadWhatsappQueue();
+    });
+    document.getElementById("closeWhatsappQueueButton").addEventListener("click", () => whatsappQueueDialog.close());
+    whatsappQueueDialog.addEventListener("close", () => { if (typeof loadActivity === "function") loadActivity().catch(() => {}); });
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest("[data-open-whatsapp-queue]");
+      if (trigger) openWhatsappQueue(trigger.dataset.openWhatsappQueue);
+    });
+    const todayTodoList = document.getElementById("todayTodoList");
+    const todayTodoMeta = document.getElementById("todayTodoMeta");
+    // var, not let: activateTab can call loadTodoList while setup is still running.
+    var todoLoadedAt = 0;
+    var todoLoading = false;
+
+    function renderTodoList(data) {
+      const items = data.items || [];
+      todayTodoMeta.textContent = items.length
+        ? items.length + " perkara" + (data.summary?.urgent ? " · " + data.summary.urgent + " mendesak" : "") + (data.warnings?.length ? " · sebahagian data tidak dapat dimuatkan" : "")
+        : (data.warnings?.length ? "Sebahagian data tidak dapat dimuatkan; senarai mungkin tidak lengkap." : "Tiada kerja mendesak. Semua beres buat masa ini.");
+      todayTodoList.innerHTML = items.map((entry, index) => {
+        const action = entry.action || {};
+        return '<li class="today-item" data-tone="' + escapeHtml(entry.tone) + '">'
+          + '<span class="today-pill" data-tone="' + escapeHtml(entry.tone) + '">' + (entry.tone === "danger" ? "Mendesak" : entry.tone === "warning" ? "Hari ini" : "Bila sempat") + '</span>'
+          + '<div class="today-copy"><strong>' + escapeHtml(entry.title) + '</strong>' + (entry.detail ? '<span>' + escapeHtml(entry.detail) + '</span>' : "") + '</div>'
+          + (action.label ? '<button class="secondary" type="button" data-todo-index="' + index + '">' + escapeHtml(action.label) + '</button>' : "")
+          + '</li>';
+      }).join("");
+      todayTodoList.dataset.items = JSON.stringify(items.map((entry) => entry.action || {}));
+    }
+
+    async function loadTodoList({ ifOlderThanMs = 0 } = {}) {
+      if (todoLoading || (ifOlderThanMs && Date.now() - todoLoadedAt < ifOlderThanMs)) return;
+      todoLoading = true;
+      try {
+        const response = await fetch("/api/dashboard/todo", { cache: "no-store" });
+        const json = await readApiJson(response);
+        if (response.status === 401) return void (window.location.href = "/login");
+        if (!response.ok || !json.ok) throw new Error(json.error || "Senarai hari ini gagal dimuatkan.");
+        renderTodoList(json);
+        todoLoadedAt = Date.now();
+      } catch (error) {
+        todayTodoMeta.textContent = error.message;
+      } finally {
+        todoLoading = false;
+      }
+    }
+
+    todayTodoList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-todo-index]");
+      if (!button) return;
+      const actions = JSON.parse(todayTodoList.dataset.items || "[]");
+      const action = actions[Number(button.dataset.todoIndex)] || {};
+      if (action.type === "whatsapp") return openWhatsappQueue(action.queue);
+      if (action.type === "navigate") navigateToWork({ tab: action.tab, subtab: action.subtab, innerSubtab: action.innerSubtab });
+    });
     loadTodayDashboard();
+    loadTodoList();
+    loadInvoicePayments({ silent: true });
     loadClients();
     loadMetaConnection();
     loadTikTokConnection();

@@ -1,4 +1,5 @@
 const { runDailyAdsReports } = require("../../lib/telegram-reports");
+const { runAdsAlerts } = require("../../lib/ads-alerts");
 const { sendTikTokAuthorizationAlerts } = require("../../lib/push-notifications");
 const { checkOneService } = require("../../lib/operations-center");
 
@@ -17,9 +18,10 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    const [reportResult, tiktokResult] = await Promise.allSettled([
+    const [reportResult, tiktokResult, alertResult] = await Promise.allSettled([
       runDailyAdsReports(),
       sendTikTokAuthorizationAlerts().then(async (alerts) => ({ alerts, health: await checkOneService("tiktok") })),
+      runAdsAlerts(),
     ]);
     if (reportResult.status === "rejected") throw reportResult.reason;
     const result = reportResult.value;
@@ -30,6 +32,9 @@ module.exports = async function handler(req, res) {
       tiktokAuthorization: tiktokResult.status === "fulfilled"
         ? { ok: true, ...tiktokResult.value }
         : { ok: false, error: tiktokResult.reason?.message || String(tiktokResult.reason) },
+      adsAlerts: alertResult.status === "fulfilled"
+        ? { ok: true, ...alertResult.value }
+        : { ok: false, error: alertResult.reason?.message || String(alertResult.reason) },
     }));
   } catch (error) {
     res.statusCode = 500;
