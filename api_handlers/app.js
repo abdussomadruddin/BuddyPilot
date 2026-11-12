@@ -4484,7 +4484,7 @@ function pageHtml() {
         <div class="section-heading">
           <div>
             <h1>${uiIcon("chart")}Ads CMO</h1>
-            <p class="note">Daily profitability brief peribadi daripada Meta. Read-only — tiada perubahan dibuat pada Meta Ads.</p>
+            <p class="note">Daily profitability brief peribadi daripada Meta atau TikTok. Read-only — tiada perubahan dibuat pada akaun iklan.</p>
           </div>
           <span id="adsCmoStatus" class="ads-cmo-status">Belum dimuatkan</span>
         </div>
@@ -7045,7 +7045,7 @@ Review retargeting when the warm audience is ready</textarea>
       const primary = snapshot.primary || {};
       const secondary = snapshot.secondary || {};
       const captured = new Intl.DateTimeFormat("ms-MY", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(snapshot.capturedAt));
-      adsCmoLiveTimestamp.textContent = "Data hari ini ditarik daripada Meta pada " + captured + ". Tekan Live Data untuk refresh semula.";
+      adsCmoLiveTimestamp.textContent = "Data hari ini ditarik daripada " + ((selectedAdsCmoAccount()?.platform === "tiktok") ? "TikTok" : "Meta") + " pada " + captured + ". Tekan Live Data untuk refresh semula.";
       adsCmoLiveSpend.innerHTML = '<small>Total ads spent hari ini</small><strong>' + escapeHtml(formatAdsCmoValue(snapshot.spend, "money", currency)) + '</strong>';
       adsCmoLivePrimary.innerHTML = [
         adsCmoLiveMetric("Purchases", formatAdsCmoValue(primary.purchases, "number", currency), "CPP " + formatAdsCmoValue(primary.costPerPurchase, "money", currency)),
@@ -7176,7 +7176,13 @@ Review retargeting when the warm audience is ready</textarea>
         currentAdsCmoAccounts = json.accounts || [];
         const requestedAccount = new URLSearchParams(location.search).get("accountId");
         const defaultAccount = currentAdsCmoAccounts.find((item) => [item.accountId, item.accountName].some((value) => String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "") === "DD1"));
-        adsCmoAccount.innerHTML = currentAdsCmoAccounts.map((item) => '<option value="' + escapeHtml(item.accountId) + '">' + escapeHtml(item.accountName) + (item.autoReportEnabled ? " · Auto" : "") + '</option>').join("");
+        const adsCmoOption = (item) => '<option value="' + escapeHtml(item.accountId) + '">' + escapeHtml(item.accountName) + (item.autoReportEnabled ? " · Auto" : "") + '</option>';
+        const adsCmoGroups = [["meta", "Meta"], ["tiktok", "TikTok"]]
+          .map(([platform, label]) => [label, currentAdsCmoAccounts.filter((item) => (item.platform || "meta") === platform)])
+          .filter(([, items]) => items.length);
+        adsCmoAccount.innerHTML = adsCmoGroups.length > 1
+          ? adsCmoGroups.map(([label, items]) => '<optgroup label="' + label + '">' + items.map(adsCmoOption).join("") + '</optgroup>').join("")
+          : currentAdsCmoAccounts.map(adsCmoOption).join("");
         if (requestedAccount && currentAdsCmoAccounts.some((item) => item.accountId === requestedAccount)) adsCmoAccount.value = requestedAccount;
         else if (defaultAccount) adsCmoAccount.value = defaultAccount.accountId;
         adsCmoReportDate.value = new URLSearchParams(location.search).get("reportDate") || json.defaultReportDate;
