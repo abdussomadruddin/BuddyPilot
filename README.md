@@ -1,6 +1,6 @@
 # BuddyPilot
 
-BuddyPilot is a Vercel webapp for managing business workflows, creatives, reports, invoices, receipts, and paired-Mac social posting.
+BuddyPilot is a Vercel webapp for managing agency clients, ads reporting, invoices, receipts and the daily follow-up work around them.
 
 Copywriting is generated from the uploaded creative note plus the supplied salespage URL. The app fetches the salespage title, meta description, headings, and visible text snippets so it is not locked to one product.
 
