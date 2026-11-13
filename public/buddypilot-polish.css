@@ -1,0 +1,145 @@
+/*
+ * BuddyPilot polish layer, loaded last.
+ * - MacBook: a two-column dashboard, one content width for every tab, hover
+ *   feedback for a trackpad, visible keyboard focus.
+ * - iPhone: no zoom when a field is focused, quicker taps, press feedback.
+ * - Motion: short, transform/opacity-only animations. buddypilot-liquid.css
+ *   switches every animation off for prefers-reduced-motion.
+ */
+
+:root {
+  --bp-shadow-sm: 0 1px 2px rgba(20, 40, 60, .05), 0 1px 1px rgba(20, 40, 60, .03);
+  --bp-shadow-md: 0 10px 24px rgba(20, 40, 60, .08), 0 2px 6px rgba(20, 40, 60, .05);
+  --bp-out: cubic-bezier(.22, 1, .36, 1);
+  --bp-spring: cubic-bezier(.34, 1.36, .64, 1);
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+::selection { background: color-mix(in srgb, var(--bp-blue, #1464da) 22%, transparent); }
+
+/* Figures line up in columns. */
+.operations-summary strong, .payment-summary strong, .queue-card strong,
+.ads-cmo-kpis strong, .health-card-meta, .operations-recent-row time { font-variant-numeric: tabular-nums; }
+
+/* Keyboard focus is clear; mouse and touch clicks show no ring. */
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--bp-blue, #1464da);
+  outline-offset: 2px;
+}
+
+/* Interactive surfaces ease between states instead of snapping. */
+:where(.quick-card, .today-item, .operations-recent-row, .queue-row, .payment-row, .client-row, .health-card, .resume-work, details.advanced-panel > summary) {
+  transition: transform 180ms var(--bp-out), box-shadow 220ms var(--bp-out), background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+:where(button, .button, a.button) { touch-action: manipulation; }
+:where(button, .button, a.button):not(:disabled):active { transform: scale(.97); transition-duration: 80ms; }
+.topbar .topbar-tabs :where(button, a):active { transform: none; }
+
+/* ---------- MacBook / trackpad ---------- */
+@media (hover: hover) and (pointer: fine) {
+  html { scrollbar-width: thin; scrollbar-color: rgba(60, 80, 100, .3) transparent; }
+  :where(.quick-card, .today-item, .payment-row, .client-row, .resume-work):hover {
+    transform: translateY(-2px);
+    border-color: var(--bp-line-strong, #c4d2dc);
+    box-shadow: var(--bp-shadow-md);
+  }
+  .operations-recent-row:hover { background: var(--bp-soft, #edf3f6); }
+  .queue-row:not(:disabled):hover { border-color: var(--bp-line-strong, #c4d2dc); background: var(--bp-soft, #edf3f6); }
+  details.advanced-panel > summary:hover { background: var(--bp-soft, #edf3f6); }
+  .quick-card:hover .icon:last-child { transform: translateX(2px); }
+  .quick-card .icon:last-child { transition: transform 180ms var(--bp-out); }
+}
+
+@media (min-width: 601px) {
+  /* Client Pilot's module switch read as cramped chips on a laptop. */
+  #client-module-tabs { grid-template-columns: repeat(4, minmax(110px, 1fr)); width: max-content; }
+  #client-module-tabs .subtab-button { min-height: 40px; padding: 8px 18px; border-radius: 10px; font-size: 14px; }
+  .subtab-panel > .subtabs .subtab-button { min-height: 36px; padding: 7px 16px; }
+}
+
+@media (min-width: 1100px) {
+  /* Every tab uses the same reading width. */
+  #tab-adscmo, #tab-clientpilot { max-width: 1180px; margin-inline: auto; }
+
+  /* Dashboard: today's work on the left, system status and history on the right. */
+  .dashboard-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr);
+    column-gap: 24px;
+    align-items: start;
+    max-width: 1180px;
+    margin-inline: auto;
+  }
+  .dashboard-workspace > * { min-width: 0; }
+  .dashboard-workspace > .operations-header { grid-column: 1 / -1; grid-row: 1; }
+  .dashboard-workspace > #todayTodo { grid-column: 1; grid-row: 2 / span 2; }
+  .dashboard-workspace > .dashboard-layout { grid-column: 1; grid-row: 4; }
+  .dashboard-workspace > #todayContent { grid-column: 2; grid-row: 2; }
+  .dashboard-workspace > .operations-recent-section { grid-column: 2; grid-row: 3 / span 3; margin-top: 4px; }
+  .dashboard-workspace .operations-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-workspace .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* History stays beside the work instead of pushing the page long. */
+  .dashboard-workspace .operations-recent { max-height: 560px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+}
+
+/* ---------- iPhone ---------- */
+@media (max-width: 600px) {
+  /* iOS zooms into any field under 16px when it is focused. */
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
+  body { overscroll-behavior-x: none; }
+  /* Today list: the button sits beside both lines rather than under the badge. */
+  .today-item { row-gap: 6px; }
+  .today-item .today-pill { grid-column: 1; }
+  .today-item button { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+}
+
+/* ---------- Motion ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  /* Items rise in one after another when a view or list appears. `backwards`
+     leaves the resting style (and hover) untouched once the animation ends. */
+  :is(.today-list, .quick-grid, .operations-summary, .operations-recent, .payment-list,
+      .queue-list, .ads-cmo-kpis, .ads-cmo-product-grid, .health-grid, .operations-health-grid, .client-list) > * {
+    animation: bp-rise 420ms var(--bp-out) backwards;
+    animation-delay: calc(var(--bp-i, 0) * 40ms);
+  }
+  :is(.today-list, .quick-grid, .operations-summary, .operations-recent, .payment-list,
+      .queue-list, .ads-cmo-kpis, .ads-cmo-product-grid, .health-grid, .operations-health-grid, .client-list) > :nth-child(2) { --bp-i: 1; }
+  :is(.today-list, .quick-grid, .operations-summary, .operations-recent, .payment-list,
+      .queue-list, .ads-cmo-kpis, .ads-cmo-product-grid, .health-grid, .operations-health-grid, .client-list) > :nth-child(3) { --bp-i: 2; }
+  :is(.today-list, .quick-grid, .operations-summary, .operations-recent, .payment-list,
+      .queue-list, .ads-cmo-kpis, .ads-cmo-product-grid, .health-grid, .operations-health-grid, .client-list) > :nth-child(4) { --bp-i: 3; }
+  :is(.today-list, .quick-grid, .operations-summary, .operations-recent, .payment-list,
+      .queue-list, .ads-cmo-kpis, .ads-cmo-product-grid, .health-grid, .operations-health-grid, .client-list) > :nth-child(5) { --bp-i: 4; }
+  :is(.today-list, .quick-grid, .operations-summary, .operations-recent, .payment-list,
+      .queue-list, .ads-cmo-kpis, .ads-cmo-product-grid, .health-grid, .operations-health-grid, .client-list) > :nth-child(6) { --bp-i: 5; }
+  :is(.today-list, .quick-grid, .operations-summary, .operations-recent, .payment-list,
+      .queue-list, .ads-cmo-kpis, .ads-cmo-product-grid, .health-grid, .operations-health-grid, .client-list) > :nth-child(n + 7) { --bp-i: 6; }
+
+  /* Settings panels unfold instead of popping open. */
+  details.advanced-panel[open] > :not(summary) { animation: bp-unfold 280ms var(--bp-out) backwards; }
+  details.advanced-panel > summary svg:last-child, details.advanced-panel > summary::after { transition: transform 220ms var(--bp-out); }
+
+  /* WhatsApp queue: scales in on a Mac, slides up as a sheet on iPhone. */
+  .queue-dialog[open] { animation: bp-dialog-in 300ms var(--bp-out) both; }
+  .queue-dialog[open]::backdrop { animation: bp-fade 240ms ease both; }
+
+  /* Status messages and toasts arrive with a little life. */
+  .result:is(.ok, .err):not(:empty) { animation: bp-unfold 260ms var(--bp-out) backwards; }
+  .app-toast { animation: bp-toast-in 380ms var(--bp-spring) both; }
+
+  /* Badges that need action draw the eye once. */
+  .today-item[data-tone="danger"] .today-pill { animation: bp-attention 900ms var(--bp-out) 300ms 1 backwards; }
+}
+
+@media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
+  .queue-dialog[open] { animation-name: bp-sheet-up; animation-duration: 360ms; }
+}
+
+@keyframes bp-rise { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes bp-unfold { from { opacity: 0; transform: translate3d(0, -6px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes bp-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bp-dialog-in { from { opacity: 0; transform: translate3d(0, 12px, 0) scale(.97); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
+@keyframes bp-sheet-up { from { transform: translate3d(0, 100%, 0); } to { transform: translate3d(0, 0, 0); } }
+@keyframes bp-toast-in { from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.96); } to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } }
+@keyframes bp-attention { 0% { transform: scale(1); } 40% { transform: scale(1.08); } 100% { transform: scale(1); } }

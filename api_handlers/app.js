@@ -4320,6 +4320,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261112-1">
+  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261113-1">
 </head>
 <body>
   <main>
