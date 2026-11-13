@@ -4535,6 +4535,7 @@ function pageHtml() {
           <div class="ads-cmo-settings-content">
             <div class="ads-cmo-settings-grid">
               <label class="check-row"><input id="adsCmoAutoEnabled" type="checkbox"> Auto report setiap pagi</label>
+              <div><label id="adsCmoLinkedAccountLabel" for="adsCmoLinkedAccount">Gabung dengan akaun TikTok</label><select id="adsCmoLinkedAccount"><option value="">Tiada</option></select><p class="note">Report dan live view akaun ini akan gabung kedua-dua platform.</p></div>
               <div><label for="adsCmoProspectingKeywords">Prospecting keywords</label><input id="adsCmoProspectingKeywords" type="text"></div>
               <div><label for="adsCmoRetargetingKeywords">Retargeting keywords</label><input id="adsCmoRetargetingKeywords" type="text"></div>
             </div>
@@ -4606,11 +4607,16 @@ function pageHtml() {
               <p id="reportPhaseStatus" class="note" role="status"></p>
             </div>
             <div>
-              <label id="reportAdAccountLabel" for="reportAdAccount">Ads account</label>
-              <select id="reportAdAccount" name="accountId" required>
-                <option value="">Pilih client dahulu</option>
+              <label for="reportMetaAccount">Meta Ads account</label>
+              <select id="reportMetaAccount" name="metaAccountId">
+                <option value="">Tiada</option>
               </select>
-              <input id="reportPlatform" name="platform" type="hidden" value="meta">
+            </div>
+            <div>
+              <label for="reportTikTokAccount">TikTok advertiser</label>
+              <select id="reportTikTokAccount" name="tiktokAccountId">
+                <option value="">Tiada</option>
+              </select>
             </div>
             <div class="date-field">
               <label for="reportStartDate">Minggu bermula</label>
@@ -4851,22 +4857,24 @@ Review retargeting when the warm audience is ready</textarea>
               </div>
             </section>
             <section class="onboarding-step" data-onboarding-step="ads" hidden>
-              <div class="onboarding-step-heading"><span>2</span><div><h3>Akaun Ads</h3><p>Pilih platform dan akaun yang akan digunakan untuk report client.</p></div></div>
+              <div class="onboarding-step-heading"><span>2</span><div><h3>Akaun Ads</h3><p>Pilih akaun Meta Ads, TikTok Ads atau kedua-duanya untuk report client.</p></div></div>
               <div class="client-grid">
-              <div>
-                <label for="clientAdsPlatform">Ads platform</label>
-                <select id="clientAdsPlatform" name="platform">
-                  <option value="meta">Meta Ads</option>
-                  <option value="tiktok">TikTok Ads</option>
+              <div class="full">
+                <label for="clientMetaAccount">Meta Ads account</label>
+                <select id="clientMetaAccount" name="metaAccountId">
+                  <option value="">Tiada</option>
                 </select>
+                <input id="clientMetaAccountName" name="metaAccountName" type="hidden">
+                <input id="clientMetaCurrency" name="metaCurrency" type="hidden">
               </div>
               <div class="full">
-                <label id="clientAdsAccountLabel" for="clientAdsAccount">Default Meta Ads account</label>
-                <select id="clientAdsAccount" name="accountId">
-                  <option value="">Belum dipadankan</option>
+                <label for="clientTikTokAccount">TikTok advertiser</label>
+                <select id="clientTikTokAccount" name="tiktokAccountId">
+                  <option value="">Tiada</option>
                 </select>
-                <input id="clientAdsAccountName" name="accountName" type="hidden">
-                <input id="clientAdsCurrency" name="currency" type="hidden">
+                <input id="clientTikTokAccountName" name="tiktokAccountName" type="hidden">
+                <input id="clientTikTokCurrency" name="tiktokCurrency" type="hidden">
+                <p class="note">Pilih satu atau kedua-dua. Bila dua-dua dipilih, Weekly Report, report Telegram dan amaran iklan gabung Meta + TikTok.</p>
               </div>
               <div>
                 <label for="clientResultMetric">Default primary result</label>
@@ -5205,9 +5213,7 @@ Review retargeting when the warm audience is ready</textarea>
     const bankQrPreview = document.getElementById("bankQrPreview");
     const reportForm = document.getElementById("reportForm");
     const reportClient = document.getElementById("reportClient");
-    const reportAdAccount = document.getElementById("reportAdAccount");
-    const reportAdAccountLabel = document.getElementById("reportAdAccountLabel");
-    const reportPlatform = document.getElementById("reportPlatform");
+    const reportAccountSelects = { meta: document.getElementById("reportMetaAccount"), tiktok: document.getElementById("reportTikTokAccount") };
     const reportResultMetric = document.getElementById("reportResultMetric");
     const reportResultLabel = document.getElementById("reportResultLabel");
     const reportResultsLabel = document.getElementById("reportResultsLabel");
@@ -5221,11 +5227,11 @@ Review retargeting when the warm audience is ready</textarea>
     const previewReportButton = document.getElementById("previewReportButton");
     const uploadReportButton = document.getElementById("uploadReportButton");
     const reportResult = document.getElementById("reportResult");
-    const clientAdsAccount = document.getElementById("clientAdsAccount");
-    const clientAdsPlatform = document.getElementById("clientAdsPlatform");
-    const clientAdsAccountLabel = document.getElementById("clientAdsAccountLabel");
-    const clientAdsAccountName = document.getElementById("clientAdsAccountName");
-    const clientAdsCurrency = document.getElementById("clientAdsCurrency");
+    // One Meta ad account and one TikTok advertiser per client; either may be empty.
+    const clientAccountFields = {
+      meta: { select: document.getElementById("clientMetaAccount"), name: document.getElementById("clientMetaAccountName"), currency: document.getElementById("clientMetaCurrency") },
+      tiktok: { select: document.getElementById("clientTikTokAccount"), name: document.getElementById("clientTikTokAccountName"), currency: document.getElementById("clientTikTokCurrency") },
+    };
     const tiktokConnectionText = document.getElementById("tiktokConnectionText");
     const tiktokAuthorizationWarning = document.getElementById("tiktokAuthorizationWarning");
     const connectTikTokButton = document.getElementById("connectTikTokButton");
@@ -6775,31 +6781,28 @@ Review retargeting when the warm audience is ready</textarea>
     async function loadAdsReportDraft() {
       const client = selectedReportClient();
       if (!client) throw new Error("Pilih client dahulu.");
-      const platform = client.adsReportConfig?.platform === "tiktok" ? "tiktok" : "meta";
-      const accounts = platform === "tiktok" ? currentTikTokAccounts : currentMetaAccounts;
-      const savedConfig = client.adsReportConfig || {};
-      const selectedAccount = accounts.find((account) => account.id === reportAdAccount.value)
-        || (reportAdAccount.value && savedConfig.accountId === reportAdAccount.value ? {
-          id: savedConfig.accountId,
-          name: savedConfig.accountName || savedConfig.accountId,
-          currency: savedConfig.currency || "MYR",
-        } : null);
-      if (!selectedAccount) throw new Error(\`Pilih \${platform === "tiktok" ? "TikTok advertiser" : "Meta Ads account"} dahulu.\`);
+      const chosen = selectedReportAccounts();
+      if (!chosen.length) throw new Error("Pilih akaun Meta Ads atau TikTok advertiser dahulu.");
+      const meta = chosen.find((account) => account.platform === "meta");
+      const tiktok = chosen.find((account) => account.platform === "tiktok");
+      const platformText = reportPlatformLabel(chosen);
       setMessage(reportResult, "", "");
       loadAdsReportButton.disabled = true;
       previewReportButton.disabled = true;
       uploadReportButton.disabled = true;
-      loadAdsReportButton.textContent = \`Loading \${platform === "tiktok" ? "TikTok" : "Meta"}...\`;
+      loadAdsReportButton.textContent = "Loading " + platformText + "...";
       try {
         const response = await fetch("/api/reports/draft", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             clientCode: client.code,
-            platform,
-            accountId: selectedAccount.id,
-            accountName: selectedAccount.name,
-            currency: selectedAccount.currency,
+            metaAccountId: meta?.id || "",
+            metaAccountName: meta?.name || "",
+            metaCurrency: meta?.currency || "",
+            tiktokAccountId: tiktok?.id || "",
+            tiktokAccountName: tiktok?.name || "",
+            tiktokCurrency: tiktok?.currency || "",
             resultMetric: reportResultMetric.value,
             startDate: reportStartDate.value,
             endDate: reportEndDate.value,
@@ -6814,6 +6817,7 @@ Review retargeting when the warm audience is ready</textarea>
         reportStartDate.value = json.startDate || "";
         reportEndDate.value = json.endDate || "";
         applyReportDraft(json.draft || {});
+        if (json.draft?.reportTitle) document.getElementById("reportTitle").value = json.draft.reportTitle;
         updateReportFileName(true);
         renderReportBreakdown(json.analytics);
         const warnings = json.draft?.warnings || [];
@@ -6827,7 +6831,7 @@ Review retargeting when the warm audience is ready</textarea>
         loadAdsReportButton.disabled = false;
         previewReportButton.disabled = false;
         uploadReportButton.disabled = false;
-        loadAdsReportButton.textContent = \`Load \${platform === "tiktok" ? "TikTok" : "Meta"} Data\`;
+        loadAdsReportButton.textContent = "Load " + platformText + " Data";
       }
     }
 
@@ -6835,36 +6839,79 @@ Review retargeting when the warm audience is ready</textarea>
       return platform === "tiktok" ? currentTikTokAccounts : currentMetaAccounts;
     }
 
-    function populateAdsAccountOptions(selectedId = "", platform = clientAdsPlatform.value || "meta") {
-      const current = selectedId || clientAdsAccount.value;
+    // Saved accounts for a client, primary first; older clients have one account only.
+    function savedReportAccounts(config) {
+      config = config || {};
+      if (Array.isArray(config.accounts) && config.accounts.length) return config.accounts;
+      return config.accountId ? [{ platform: config.platform === "tiktok" ? "tiktok" : "meta", accountId: config.accountId, accountName: config.accountName, currency: config.currency }] : [];
+    }
+
+    function savedAccountFor(config, platform) {
+      return savedReportAccounts(config).find((account) => account.platform === platform) || null;
+    }
+
+    function fillAccountSelect(select, platform, selectedId) {
       const accounts = accountOptions(platform);
-      const options = accounts.map((account) => (
-        \`<option value="\${escapeHtml(account.id)}">\${escapeHtml(account.name)} (\${escapeHtml(account.id)})</option>\`
+      select.innerHTML = '<option value="">Tiada</option>' + accounts.map((account) => (
+        '<option value="' + escapeHtml(account.id) + '">' + escapeHtml(account.name) + ' (' + escapeHtml(account.id) + ')</option>'
       )).join("");
-      clientAdsAccount.innerHTML = '<option value="">Belum dipadankan</option>' + options;
-      clientAdsAccountLabel.textContent = platform === "tiktok" ? "Default TikTok advertiser" : "Default Meta Ads account";
-      if (current && !accounts.some((account) => account.id === current)) {
-        clientAdsAccount.insertAdjacentHTML("beforeend", \`<option value="\${escapeHtml(current)}">\${escapeHtml(current)} (saved)</option>\`);
+      if (selectedId && !accounts.some((account) => account.id === selectedId)) {
+        select.insertAdjacentHTML("beforeend", '<option value="' + escapeHtml(selectedId) + '">' + escapeHtml(selectedId) + ' (saved)</option>');
       }
-      clientAdsAccount.value = current;
-      const selected = accounts.find((account) => account.id === current);
-      if (selected) {
-        clientAdsAccountName.value = selected.name;
-        clientAdsCurrency.value = selected.currency || "MYR";
+      select.value = selectedId || "";
+    }
+
+    function syncClientAccountHidden(platform) {
+      const field = clientAccountFields[platform];
+      const selected = accountOptions(platform).find((account) => account.id === field.select.value);
+      if (!field.select.value) {
+        field.name.value = "";
+        field.currency.value = "";
+      } else if (selected) {
+        field.name.value = selected.name;
+        field.currency.value = selected.currency || "MYR";
       }
     }
 
-    function populateReportAccountOptions(platform, selectedId = "") {
-      const accounts = accountOptions(platform);
-      reportPlatform.value = platform;
-      reportAdAccountLabel.textContent = platform === "tiktok" ? "TikTok advertiser" : "Meta Ads account";
-      reportAdAccount.innerHTML = \`<option value="">Pilih \${platform === "tiktok" ? "TikTok advertiser" : "Meta Ads account"}</option>\` + accounts.map((account) => (
-        \`<option value="\${escapeHtml(account.id)}">\${escapeHtml(account.name)} (\${escapeHtml(account.id)})</option>\`
-      )).join("");
-      if (selectedId && !accounts.some((account) => account.id === selectedId)) {
-        reportAdAccount.insertAdjacentHTML("beforeend", \`<option value="\${escapeHtml(selectedId)}">\${escapeHtml(selectedId)} (saved)</option>\`);
+    // Refill the client form selects; with no platform given, both keep their value.
+    function populateAdsAccountOptions(selectedId, platform) {
+      for (const key of platform ? [platform] : ["meta", "tiktok"]) {
+        const field = clientAccountFields[key];
+        fillAccountSelect(field.select, key, selectedId === undefined || !platform ? field.select.value : selectedId);
+        syncClientAccountHidden(key);
       }
-      reportAdAccount.value = selectedId || accounts[0]?.id || "";
+    }
+
+    function populateReportAccountOptions(config) {
+      for (const platform of ["meta", "tiktok"]) {
+        const saved = savedAccountFor(config, platform);
+        fillAccountSelect(reportAccountSelects[platform], platform, saved?.accountId || "");
+      }
+    }
+
+    function selectedReportAccounts() {
+      const config = selectedReportClient()?.adsReportConfig || {};
+      return ["meta", "tiktok"].map((platform) => {
+        const id = reportAccountSelects[platform].value;
+        if (!id) return null;
+        const live = accountOptions(platform).find((account) => account.id === id);
+        const saved = savedAccountFor(config, platform);
+        return { platform, id, name: live?.name || (saved?.accountId === id ? saved.accountName : "") || id, currency: live?.currency || saved?.currency || "MYR" };
+      }).filter(Boolean);
+    }
+
+    function reportPlatformLabel(accounts) {
+      if (accounts.length > 1) return "Meta + TikTok";
+      return accounts[0]?.platform === "tiktok" ? "TikTok" : "Meta";
+    }
+
+    function updateLoadAdsReportLabel() {
+      loadAdsReportButton.textContent = "Load " + reportPlatformLabel(selectedReportAccounts()) + " Data";
+    }
+
+    function reportTitleFor(accounts) {
+      if (accounts.length > 1) return "META + TIKTOK ADS PERFORMANCE BRIEF";
+      return accounts[0]?.platform === "tiktok" ? "TIKTOK ADS PERFORMANCE BRIEF" : "META ADS PERFORMANCE BRIEF";
     }
 
     async function loadMetaAccounts() {
@@ -6955,7 +7002,7 @@ Review retargeting when the warm audience is ready</textarea>
             tiktokConnectionText.textContent += \` Advertiser list belum dapat dimuat: \${accountError?.message || accountError}\`;
           }
         }
-        if (clientAdsPlatform.value === "tiktok") populateAdsAccountOptions(clientAdsAccount.value, "tiktok");
+        populateAdsAccountOptions(undefined, "tiktok");
         applySelectedClientReportDefaults();
       } catch (error) {
         currentTikTokAccounts = [];
@@ -7017,9 +7064,23 @@ Review retargeting when the warm audience is ready</textarea>
       }).filter((rule) => rule.name && rule.campaignKeywords.length);
     }
 
+    // A Meta account can pair with one TikTok advertiser, and the other way round.
+    function populateAdsCmoLinkedAccount(account) {
+      const select = document.getElementById("adsCmoLinkedAccount");
+      const otherPlatform = (account.platform || "meta") === "tiktok" ? "meta" : "tiktok";
+      document.getElementById("adsCmoLinkedAccountLabel").textContent = "Gabung dengan akaun " + (otherPlatform === "tiktok" ? "TikTok" : "Meta");
+      const options = currentAdsCmoAccounts.filter((item) => (item.platform || "meta") === otherPlatform);
+      select.innerHTML = '<option value="">Tiada</option>' + options.map((item) => '<option value="' + escapeHtml(item.accountId) + '">' + escapeHtml(item.accountName) + '</option>').join("");
+      if (account.linkedAccountId && !options.some((item) => item.accountId === account.linkedAccountId)) {
+        select.insertAdjacentHTML("beforeend", '<option value="' + escapeHtml(account.linkedAccountId) + '">' + escapeHtml(account.linkedAccountName || account.linkedAccountId) + ' (saved)</option>');
+      }
+      select.value = account.linkedAccountId || "";
+    }
+
     function populateAdsCmoSettings() {
       const account = selectedAdsCmoAccount();
       if (!account) return;
+      populateAdsCmoLinkedAccount(account);
       adsCmoAutoEnabled.checked = Boolean(account.autoReportEnabled);
       adsCmoProspectingKeywords.value = (account.prospectingKeywords || []).join(", ");
       adsCmoRetargetingKeywords.value = (account.retargetingKeywords || []).join(", ");
@@ -7227,7 +7288,7 @@ Review retargeting when the warm audience is ready</textarea>
         currentAdsCmoAccounts = json.accounts || [];
         const requestedAccount = new URLSearchParams(location.search).get("accountId");
         const defaultAccount = currentAdsCmoAccounts.find((item) => [item.accountId, item.accountName].some((value) => String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "") === "DD1"));
-        const adsCmoOption = (item) => '<option value="' + escapeHtml(item.accountId) + '">' + escapeHtml(item.accountName) + (item.autoReportEnabled ? " · Auto" : "") + '</option>';
+        const adsCmoOption = (item) => '<option value="' + escapeHtml(item.accountId) + '">' + escapeHtml(item.accountName) + (item.linkedAccountId ? " + " + escapeHtml(item.linkedAccountName || item.linkedAccountId) : "") + (item.autoReportEnabled ? " · Auto" : "") + '</option>';
         const adsCmoGroups = [["meta", "Meta"], ["tiktok", "TikTok"]]
           .map(([platform, label]) => [label, currentAdsCmoAccounts.filter((item) => (item.platform || "meta") === platform)])
           .filter(([, items]) => items.length);
@@ -7251,7 +7312,7 @@ Review retargeting when the warm audience is ready</textarea>
       if (!account) return;
       const finishButton = setButtonBusy(adsCmoSaveSettingsButton, "Saving...");
       try {
-        const payload = { ...account, autoReportEnabled: adsCmoAutoEnabled.checked, prospectingKeywords: adsCmoProspectingKeywords.value.split(/[,\\n]/).map((item) => item.trim()).filter(Boolean), retargetingKeywords: adsCmoRetargetingKeywords.value.split(/[,\\n]/).map((item) => item.trim()).filter(Boolean), productRules: collectAdsCmoProductRules() };
+        const payload = { ...account, autoReportEnabled: adsCmoAutoEnabled.checked, prospectingKeywords: adsCmoProspectingKeywords.value.split(/[,\\n]/).map((item) => item.trim()).filter(Boolean), retargetingKeywords: adsCmoRetargetingKeywords.value.split(/[,\\n]/).map((item) => item.trim()).filter(Boolean), productRules: collectAdsCmoProductRules(), linkedAccountId: document.getElementById("adsCmoLinkedAccount").value };
         const response = await fetch("/api/personal-ads/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
         const json = await readApiJson(response);
         if (!response.ok || !json.ok) throw new Error(json.error || "Settings Ads CMO gagal disimpan.");
@@ -7365,14 +7426,12 @@ Review retargeting when the warm audience is ready</textarea>
       const config = selectedReportClient()?.adsReportConfig;
       document.getElementById("reportPhase").value = config?.phase || "SETUP PHASE";
       document.getElementById("reportPhaseStatus").textContent = "Phase client: " + (config?.phase || "SETUP PHASE");
-      const platform = config?.platform === "tiktok" ? "tiktok" : "meta";
       reportResultMetric.value = config?.resultMetric || "conversions";
       reportResultLabel.value = reportResultLabelFor(reportResultMetric.value);
       updateReportMetricLabels();
-      const mappedId = config?.accountId || "";
-      populateReportAccountOptions(platform, mappedId);
-      document.getElementById("reportTitle").value = platform === "tiktok" ? "TIKTOK ADS PERFORMANCE BRIEF" : "META ADS PERFORMANCE BRIEF";
-      loadAdsReportButton.textContent = \`Load \${platform === "tiktok" ? "TikTok" : "Meta"} Data\`;
+      populateReportAccountOptions(config);
+      document.getElementById("reportTitle").value = reportTitleFor(selectedReportAccounts());
+      updateLoadAdsReportLabel();
       renderReportBreakdown(null);
     }
 
@@ -7641,12 +7700,13 @@ Review retargeting when the warm audience is ready</textarea>
       const alerts = client.adsAlerts || {};
       for (const [key, input] of Object.entries(clientAlertInputs)) input.value = alerts[key] == null ? "" : String(alerts[key]);
       const ads = client.adsReportConfig || {};
-      const linked = Boolean(ads.accountId);
+      const linked = savedReportAccounts(ads).length > 0;
+      const linkedPlatforms = savedReportAccounts(ads).map((account) => account.platform === "tiktok" ? "TikTok" : "Meta").join(" + ");
       const resultMetric = ads.resultMetric || "conversions";
       clientAlertInputs.minRoas.closest("label").hidden = resultMetric !== "conversions";
       clientAdsAlertsForm.querySelectorAll("input, button").forEach((node) => { node.disabled = !linked; });
       clientAdsAlertsNote.textContent = linked
-        ? "Disemak setiap pagi pada data " + (ads.platform === "tiktok" ? "TikTok" : "Meta") + " semalam. Push notification dihantar bila had dilanggar. Kosongkan medan untuk tiada had."
+        ? "Disemak setiap pagi pada data " + linkedPlatforms + " semalam. Push notification dihantar bila had dilanggar. Kosongkan medan untuk tiada had."
         : "Pautkan akaun iklan client dahulu sebelum menetapkan had.";
       setMessage(clientAdsAlertsResult, "", "");
     }
@@ -7822,10 +7882,13 @@ Review retargeting when the warm audience is ready</textarea>
       clientForm.elements.notes.value = client.notes || "";
       clientForm.elements.billingAddress.value = client.billingAddress || "";
       const adsConfig = client.adsReportConfig || {};
-      clientForm.elements.platform.value = adsConfig.platform === "tiktok" ? "tiktok" : "meta";
-      populateAdsAccountOptions(adsConfig.accountId || "", clientForm.elements.platform.value);
-      clientForm.elements.accountName.value = adsConfig.accountName || "";
-      clientForm.elements.currency.value = adsConfig.currency || "MYR";
+      for (const platform of ["meta", "tiktok"]) {
+        const saved = savedAccountFor(adsConfig, platform);
+        const field = clientAccountFields[platform];
+        fillAccountSelect(field.select, platform, saved?.accountId || "");
+        field.name.value = saved?.accountName || "";
+        field.currency.value = saved ? (saved.currency || "MYR") : "";
+      }
       clientForm.elements.resultMetric.value = adsConfig.resultMetric || "conversions";
       clientForm.elements.prospectingKeywords.value = (adsConfig.prospectingKeywords || []).join(", ");
       clientForm.elements.retargetingKeywords.value = (adsConfig.retargetingKeywords || []).join(", ");
@@ -7906,10 +7969,8 @@ Review retargeting when the warm audience is ready</textarea>
       clientForm.elements.monthlyAdBudget.value = "0";
       clientForm.elements.startDate.value = localIsoDate(new Date());
       clientForm.querySelector("h2").textContent = "Add Agency Client";
-      clientAdsPlatform.value = "meta";
       populateAdsAccountOptions("", "meta");
-      clientAdsAccountName.value = "";
-      clientAdsCurrency.value = "";
+      populateAdsAccountOptions("", "tiktok");
       currentClientOnboarding = null;
       currentClientOnboardingStep = "details";
       showClientOnboardingStep("details");
@@ -9355,7 +9416,13 @@ Review retargeting when the warm audience is ready</textarea>
       updateReportFileName(true);
       renderReportBreakdown(null);
     });
-    reportAdAccount.addEventListener("change", () => renderReportBreakdown(null));
+    for (const select of Object.values(reportAccountSelects)) {
+      select.addEventListener("change", () => {
+        renderReportBreakdown(null);
+        document.getElementById("reportTitle").value = reportTitleFor(selectedReportAccounts());
+        updateLoadAdsReportLabel();
+      });
+    }
     reportResultMetric.addEventListener("change", () => {
       reportResultLabel.value = reportResultLabelFor(reportResultMetric.value);
       updateReportMetricLabels();
@@ -9367,16 +9434,13 @@ Review retargeting when the warm audience is ready</textarea>
     loadAdsReportButton.addEventListener("click", () => {
       loadAdsReportDraft().catch(showReportError);
     });
-    clientAdsPlatform.addEventListener("change", () => {
-      clientAdsAccountName.value = "";
-      clientAdsCurrency.value = "";
-      populateAdsAccountOptions("", clientAdsPlatform.value);
-    });
-    clientAdsAccount.addEventListener("change", () => {
-      const selected = accountOptions(clientAdsPlatform.value).find((account) => account.id === clientAdsAccount.value);
-      clientAdsAccountName.value = selected?.name || clientAdsAccount.value || "";
-      clientAdsCurrency.value = selected?.currency || "";
-    });
+    for (const platform of ["meta", "tiktok"]) {
+      clientAccountFields[platform].select.addEventListener("change", () => {
+        const field = clientAccountFields[platform];
+        syncClientAccountHidden(platform);
+        if (field.select.value && !field.name.value) field.name.value = field.select.value;
+      });
+    }
     disconnectTikTokButton.addEventListener("click", async () => {
       if (!window.confirm("Disconnect TikTok Ads daripada BuddyPilot?")) return;
       const response = await fetch("/api/tiktok/disconnect", { method: "POST" });
