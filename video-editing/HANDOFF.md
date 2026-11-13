@@ -1,0 +1,70 @@
+# Handoff: Honda City video edit (session summary, 7 Nov 2026)
+
+Read `video-editing/PLAYBOOK.md` first for the full rules and pipeline.
+
+## User preferences
+
+- Reply in casual Malay-English (Malaysian style, no Indonesian words). Address the user as "tuan".
+  Use emoji bullets and end every reply with a question.
+- The user wants: the **full A-roll** (every point kept; drop only duplicates and flubs), accurate cuts,
+  high pace (a visual change about every 2s), SFX, music by scene, and motion explainer graphics.
+- Finish the work without asking for approval of each step. Report when the final file is ready.
+
+## Source footage
+
+- Drive folder (shared, editor): https://drive.google.com/drive/folders/1USG2l0hx-iaPx0AyvkvDL55Yct1KD3X9
+  - `a-roll/IMG_0848.MOV`: the main take, 3:48, salesman (SAFRICH t-shirt) in a Honda showroom.
+    `IMG_0847.MOV` is a shorter take that was not used.
+  - `b-roll/IMG_0745–0754.MOV` (white/grey City, interior, wheel) and `IMG_8375–8381.MOV` (red City RS e:HEV).
+- Style reference: a real-estate TikTok reel (FPV drone, kinetic serif text, text behind the subject).
+
+## Deliverables made
+
+| File | Notes |
+|---|---|
+| `HONDA_CITY_FINAL.mp4` | 53s highlight cut (16 sentences), verified |
+| `HONDA_CITY_FULL_FINAL.mp4` | 2:59 full A-roll cut, 47 scenes, 1080x1920, -14.3 LUFS, 127MB |
+| `HONDA_CITY_FULL_1080p.mp4` / `_720p.mp4` | 44MB / 22MB compressed copies |
+| Google Drive | Full 1080p version uploaded: https://drive.google.com/file/d/1l-q0KZYVsG_d4NP2DcaoQ-qESxjHNBM2/view |
+
+The local files lived in the old session's scratchpad and are **not** carried over.
+To rebuild them, re-download the footage and run `pipeline/` (see the PLAYBOOK).
+
+## Verification done
+
+- Every scene was re-transcribed and compared to the source.
+- Clipped words fixed with overrides: "Honda bagi" (28.68), "kita bagi minyak" (181.47),
+  "Warranty" (161.62), "spec JPJ" (157.90), and the end of "value kereta" (31.54).
+- "boleh guna hingga 5 tahun" confirmed by isolated re-transcription (not "RM5,000").
+
+## Open items / cautions
+
+- The user must confirm all promo figures with the dealer before posting
+  (RM7k rebate, +RM2k trade-in, total RM9k, hatchback RM4k/RM6k, RM3k voucher, first buyer +RM3k,
+  8-year warranty, 10-year hybrid battery).
+- Security: the user exposed an OAuth Playground token in a screenshot. Remind them to remove
+  "OAuth 2.0 Playground" at myaccount.google.com/permissions.
+  A short-lived Drive token is saved as a network secret for www.googleapis.com on the Default environment.
+- Next ideas the user may want: 15–30s ad clips cut from the full version, a SAFRICH logo outro,
+  or a trending track added in TikTok.
+
+## Session 2 (7 Nov 2026): IMG_0851 full edit in kinetic-typography style
+
+- New A-roll: Drive file `IMG_0851.MOV` (id 1YigsNUk5854qGINy-NrMXOf2hdIWUcj5), 4:09, a Honda salesman in an HR-V polo
+  talking about warranty, hybrid battery and free gifts.
+- Style reference: the user's TikTok reel (talking head, white sans and red serif-italic kinetic words, 3D icon props,
+  full-screen white/red cards, blur and glitch transitions, moody grade).
+- Pipeline: `pipeline/v2_cut.py` (cut list, face-tracked zoompan punch-ins, grade, voice) and
+  `pipeline/v2_gen.py` + `v2_style.css` (kinetic text, cards, badges, counters, SFX and music mix).
+  Face tracking uses OpenCV 4 Haar cascades. OpenCV 5 dropped them, so install `opencv-python-headless<5`.
+- Gotcha: `scale` with `eval=frame` followed by `crop` does not follow per-frame size changes. Use `zoompan` with `on`.
+- Output: `HONDA_V2_FULL.mp4`, 3:41, 1080x1920, -13.7 LUFS (plus an 86MB copy). Sent to the user in chat.
+  Uploaded to Drive (md5 verified): https://drive.google.com/file/d/1F-N4S6MkxUwumyimqIM4W3AlV3aMNOMd/view
+- Dropped as duplicates: the repeated "general warranty 8 tahun" (words 309-314), the mid-video
+  "Tekan mata di bawah" (473-476) and the filler "Tamam" (586).
+- Figures to confirm with the dealer: 8-year warranty with unlimited mileage, 10-year hybrid battery warranty,
+  service vouchers RM600 / RM40 (RM40 is uncertain, maybe RM400), RM3,000 voucher this month, 5x free labour,
+  10 merchandise items, 2 umbrellas.
+- V3 (15:27 UTC): the user reported a yellow cast, so the grade was neutralised (mid-tone RGB is now about 73/69/66).
+  `HONDA_V3_FULL_1080p.mp4` (87MB) was sent in chat. Not yet on Drive: the token expired, so a new `ya29.` token is needed.
+  The Drive link above is still the older yellowish V2.
