@@ -5,6 +5,7 @@ const { listActivityByTypes, listOpenOperationsIncidents, supabaseRequest } = re
 const { tikTokConnectionStatus } = require("../../lib/tiktok-ads");
 const { composeTodo } = require("../../lib/today-todo");
 const { generateDueAgencyTasks } = require("../../lib/agency-operations");
+const { listPendingIntakes } = require("../../lib/onboarding-intake");
 
 async function settled(promise, fallback, warnings, label) {
   try {
@@ -28,7 +29,7 @@ module.exports = async function handler(req, res) {
     const today = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" });
     const fields = "invoice_number,period,client_code,client_name,invoice_date,total,currency,drive_file_url,metadata,created_at";
     const warnings = [];
-    const [clientResult, uploads, activities, incidents, tasks, tiktok] = await Promise.all([
+    const [clientResult, uploads, activities, incidents, tasks, tiktok, intakes] = await Promise.all([
       settled(getMergedClientsWithStatus(), { clients: [] }, warnings, "Pelanggan"),
       settled(supabaseRequest(`invoice_uploads?select=${fields}&period=gte.${earliestPeriod(now, 3)}&order=period.desc&limit=1000`), [], warnings, "Invoice"),
       settled(listActivityByTypes(["client_whatsapp_opened", "report_uploaded"], new Date(now.getTime() - 62 * 86400000).toISOString()), [], warnings, "Aktiviti"),
@@ -36,8 +37,9 @@ module.exports = async function handler(req, res) {
       // Create today's recurring tasks first, so they show up without opening Client Pilot.
       settled(generateDueAgencyTasks(), 0, warnings, "Tugasan berulang").then(() => settled(supabaseRequest(`agency_tasks?select=id,title,due_date,status,client_code&status=in.(todo,in_progress)&due_date=lte.${today}&order=due_date.asc&limit=200`), [], warnings, "Tugasan")),
       settled(tikTokConnectionStatus(), {}, warnings, "TikTok"),
+      settled(listPendingIntakes(), [], warnings, "Borang onboarding"),
     ]);
-    const todo = composeTodo({ clients: clientResult.clients || [], uploads: uploads || [], paymentRows: uploads || [], activities, incidents: incidents || [], tasks: tasks || [], tiktok, now });
+    const todo = composeTodo({ clients: clientResult.clients || [], uploads: uploads || [], paymentRows: uploads || [], activities, incidents: incidents || [], tasks: tasks || [], tiktok, intakes: intakes || [], now });
     res.end(JSON.stringify({ ok: true, ...todo, warnings }));
   } catch (error) {
     res.statusCode = error.statusCode || 500;

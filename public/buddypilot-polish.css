@@ -202,3 +202,25 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 .payment-pill[data-status="cancelled"] { background: var(--bp-soft, #edf3f6); color: var(--bp-muted, #61717f); }
 .payment-row[data-status="cancelled"] .payment-copy { opacity: .7; }
 .payment-row[data-status="cancelled"] .payment-copy span { text-decoration: line-through; }
+
+/* ---------- Onboarding form submissions (Add Client) ---------- */
+.intake-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.intake-buttons button { width: auto; margin: 0; }
+.intake-panel { margin: 0 0 18px; padding: 14px; border: 1px solid var(--bp-blue, #1464da); border-radius: 14px; background: var(--bp-blue-soft, #e5efff); }
+.intake-panel h4 { margin: 0 0 2px; font-size: 15px; }
+.intake-panel .note { margin: 0 0 10px; }
+.intake-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.intake-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border-radius: 12px; background: var(--bp-panel, #fff); }
+.intake-list li > div:first-child { display: grid; gap: 2px; min-width: 0; flex: 1 1 260px; overflow-wrap: anywhere; }
+.intake-list span { font-size: 13px; }
+.intake-list small { font-size: 12px; color: var(--bp-muted, #61717f); }
+.intake-actions { display: flex; gap: 8px; }
+.intake-actions button { width: auto; margin: 0; min-height: 40px; }
+@media (max-width: 600px) {
+  .onboarding-template-action { flex-direction: column; align-items: stretch; }
+  .intake-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+  .intake-buttons button { width: 100%; min-height: 46px; }
+  .intake-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .intake-actions button { width: 100%; min-height: 44px; }
+}
+@media (prefers-reduced-motion: no-preference) { .intake-list li { animation: bp-rise 360ms var(--bp-out) backwards; } }

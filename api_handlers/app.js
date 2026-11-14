@@ -4322,7 +4322,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261114-1">
-  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-5">
+  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-6">
 </head>
 <body>
   <main>
@@ -4810,8 +4810,13 @@ Review retargeting when the warm audience is ready</textarea>
               <div class="onboarding-step-heading"><span>1</span><div><h3>Client dan billing</h3><p>Simpan maklumat asas dahulu. Progress boleh disambung selepas refresh.</p></div></div>
               <div class="onboarding-template-action">
                 <p>Hantar template ini kepada client untuk kumpulkan semua maklumat onboarding.</p>
-                <button id="copyClientOnboardingTemplateButton" class="secondary" type="button">Copy Template WhatsApp</button>
+                <div class="intake-buttons"><button id="copyIntakeLinkButton" type="button">Copy link borang</button><button id="copyClientOnboardingTemplateButton" class="secondary" type="button">Copy Template WhatsApp</button></div>
               </div>
+              <section id="intakePanel" class="intake-panel" aria-labelledby="intakeTitle" hidden>
+                <h4 id="intakeTitle">Borang diterima</h4>
+                <p class="note">Client isi sendiri melalui link borang. Semak, kemudian guna untuk isi borang di bawah.</p>
+                <ul id="intakeList" class="intake-list"></ul>
+              </section>
               <div class="client-grid">
               <div>
                 <label for="clientBrand">Brand client</label>
@@ -9450,6 +9455,81 @@ Review retargeting when the warm audience is ready</textarea>
     });
     clientForm.addEventListener("submit", saveClient);
     copyClientOnboardingTemplateButton.addEventListener("click", copyClientOnboardingTemplate);
+
+    // ---- Onboarding form submitted by the client
+    const intakeState = { link: "", pending: [], loading: false };
+    const intakePanel = document.getElementById("intakePanel");
+    const intakeList = document.getElementById("intakeList");
+    const copyIntakeLinkButton = document.getElementById("copyIntakeLinkButton");
+    async function loadIntakes() {
+      if (intakeState.loading) return;
+      intakeState.loading = true;
+      try {
+        const response = await fetch("/api/clients/intake", { cache: "no-store" });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok) throw new Error(json.error || "Borang gagal dimuatkan.");
+        intakeState.link = json.link || "";
+        intakeState.pending = json.pending || [];
+        renderIntakes();
+      } catch (error) {
+        setMessage(clientResult, "err", error.message);
+      } finally {
+        intakeState.loading = false;
+      }
+    }
+    function renderIntakes() {
+      intakePanel.hidden = !intakeState.pending.length;
+      intakeList.innerHTML = intakeState.pending.map((entry) => '<li>'
+        + '<div><strong>' + escapeHtml(entry.brandClient) + '</strong><span>' + escapeHtml(entry.contactName) + ' · ' + escapeHtml(entry.phone) + ' · ' + escapeHtml(entry.email) + '</span>'
+        + '<small>' + escapeHtml(new Date(entry.submittedAt).toLocaleString("en-MY", { dateStyle: "medium", timeStyle: "short" })) + (entry.companyName ? ' · ' + escapeHtml(entry.companyName) : "") + (entry.monthlyRetainer ? ' · RM ' + escapeHtml(entry.monthlyRetainer) : "") + '</small></div>'
+        + '<div class="intake-actions"><button type="button" data-intake-use="' + escapeHtml(entry.id) + '">Guna data ini</button><button class="secondary" type="button" data-intake-dismiss="' + escapeHtml(entry.id) + '">Buang</button></div></li>').join("");
+    }
+    async function reviewIntakeEntry(id, action) {
+      const response = await fetch("/api/clients/intake", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, action }) });
+      const json = await readApiJson(response);
+      if (!response.ok || !json.ok) throw new Error(json.error || "Gagal dikemas kini.");
+      intakeState.pending = intakeState.pending.filter((entry) => entry.id !== id);
+      renderIntakes();
+      sessionStorage.removeItem(TODAY_CACHE_KEY);
+    }
+    intakeList.addEventListener("click", async (event) => {
+      const use = event.target.closest("[data-intake-use]");
+      const dismiss = event.target.closest("[data-intake-dismiss]");
+      try {
+        if (use) {
+          const entry = intakeState.pending.find((item) => item.id === use.dataset.intakeUse);
+          if (!entry) return;
+          for (const key of ["brandClient", "contactName", "email", "phone", "companyName", "registrationNumber", "billingAddress", "monthlyRetainer", "notes"]) {
+            const field = clientForm.elements[key];
+            if (field && entry[key]) field.value = entry[key];
+          }
+          await reviewIntakeEntry(entry.id, "used");
+          setMessage(clientResult, "ok", "Data " + entry.brandClient + " dimasukkan ke borang. Semak, lengkapkan service type dan simpan untuk mula onboarding.");
+          clientForm.elements.brandClient.focus();
+        } else if (dismiss) {
+          if (!window.confirm("Buang borang ini? Client tidak akan dicipta.")) return;
+          await reviewIntakeEntry(dismiss.dataset.intakeDismiss, "dismissed");
+        }
+      } catch (error) {
+        setMessage(clientResult, "err", error.message);
+      }
+    });
+    copyIntakeLinkButton.addEventListener("click", async () => {
+      if (!intakeState.link) await loadIntakes();
+      if (!intakeState.link) return setMessage(clientResult, "err", "Link borang belum tersedia.");
+      try {
+        await navigator.clipboard.writeText(intakeState.link);
+        setMessage(clientResult, "ok", "Link borang dicopy. Hantar kepada client: " + intakeState.link);
+      } catch {
+        window.prompt("Copy link borang ini:", intakeState.link);
+      }
+    });
+    // Load only when Add Client is open, not at startup.
+    const clientAddPanel = document.getElementById("client-add-panel");
+    const loadIntakesIfOpen = () => { if (clientAddPanel.classList.contains("active") && document.getElementById("tab-clientpilot").classList.contains("active")) loadIntakes(); };
+    new MutationObserver(loadIntakesIfOpen).observe(clientAddPanel, { attributes: true, attributeFilter: ["class"] });
+    new MutationObserver(loadIntakesIfOpen).observe(document.getElementById("tab-clientpilot"), { attributes: true, attributeFilter: ["class"] });
+    loadIntakesIfOpen();
     clientOnboardingBackButton.addEventListener("click", () => {
       const index = CLIENT_ONBOARDING_STEPS.indexOf(currentClientOnboardingStep);
       if (index > 0) showClientOnboardingStep(CLIENT_ONBOARDING_STEPS[index - 1]);

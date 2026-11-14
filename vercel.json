@@ -9,6 +9,10 @@
       "dest": "/api/app?route=login-page"
     },
     {
+      "src": "/daftar",
+      "dest": "/api/app?route=onboarding-form"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/app?route=$1"
     },
