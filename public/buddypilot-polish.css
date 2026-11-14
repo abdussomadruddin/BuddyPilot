@@ -72,11 +72,9 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
     margin-inline: auto;
   }
   .dashboard-workspace > * { min-width: 0; }
-  .dashboard-workspace > .operations-header { grid-column: 1 / -1; grid-row: 1; }
-  .dashboard-workspace > #todayTodo { grid-column: 1; grid-row: 2 / span 2; }
-  .dashboard-workspace > .dashboard-layout { grid-column: 1; grid-row: 4; }
-  .dashboard-workspace > #todayContent { grid-column: 2; grid-row: 2; }
-  .dashboard-workspace > .operations-recent-section { grid-column: 2; grid-row: 3 / span 3; margin-top: 4px; }
+  /* Two independent columns, so a tall right side never leaves a gap on the left. */
+  .dashboard-workspace > .operations-header { grid-column: 1 / -1; }
+  .dashboard-workspace .operations-recent-section { margin-top: 4px; }
   .dashboard-workspace .operations-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-workspace .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* History stays beside the work instead of pushing the page long. */

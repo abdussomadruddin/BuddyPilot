@@ -4322,7 +4322,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261114-1">
-  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-4">
+  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-5">
 </head>
 <body>
   <main>
@@ -4384,45 +4384,12 @@ function pageHtml() {
             <button id="checkAllHealthButton" class="button-secondary operations-check-all" type="button">Check all systems</button>
           </div>
         </header>
+        <div class="dashboard-main">
         <section id="todayTodo" class="workflow-card today-todo" aria-labelledby="todayTodoTitle">
           <div class="workflow-card-head">
             <div><h2 id="todayTodoTitle">Perlu buat hari ini</h2><p id="todayTodoMeta" class="note">Memuatkan...</p></div>
           </div>
           <ol id="todayTodoList" class="today-list"></ol>
-        </section>
-        <section id="todaySkeleton" class="today-skeleton" aria-label="Memuatkan dashboard">
-          <span></span><span></span><span></span>
-        </section>
-        <section id="todayContent" hidden>
-          <section id="operationsOverall" class="operations-overall" data-status="operational">
-            <span class="operations-overall-dot" aria-hidden="true"></span>
-            <div>
-              <strong id="operationsOverallTitle">All systems operational</strong>
-              <small id="operationsOverallDetail">Last checked just now</small>
-            </div>
-          </section>
-          <div class="operations-summary" aria-label="Operations summary">
-            <div data-ui-tone="blue">${uiIcon("refresh")}<strong id="todayRunning">0</strong><span>Running</span></div>
-            <div data-ui-tone="rose">${uiIcon("message")}<strong id="operationsFailed">0</strong><span>Failed</span></div>
-            <div data-ui-tone="amber">${uiIcon("sparkles")}<strong id="todayAttention">0</strong><span>Attention</span></div>
-            <div data-ui-tone="green">${uiIcon("settings")}<strong id="operationsHealthy">0</strong><span>Healthy</span></div>
-          </div>
-          <section id="operationsAttentionSection" class="operations-section" hidden>
-            <div class="dashboard-section-header"><h2>${uiIcon("message", "tone-amber")}Needs attention</h2><span id="operationsAttentionCount" class="operations-count"></span><button type="button" id="dismissAllIncidentsButton">Archive All</button></div>
-            <div id="operationsIncidents" class="operations-list"></div>
-          </section>
-          <section id="operationsActiveSection" class="operations-section" hidden>
-            <div class="dashboard-section-header"><h2>${uiIcon("refresh")}Active operations</h2><span class="dashboard-section-kicker">Current progress</span></div>
-            <div id="operationsActiveList" class="operations-list"></div>
-          </section>
-          <section class="operations-section">
-            <div class="dashboard-section-header"><h2>${uiIcon("settings", "tone-green")}System health</h2><span class="dashboard-section-kicker">Passive monitor</span></div>
-            <div id="operationsHealth" class="operations-health-grid"></div>
-          </section>
-          <button id="resumeWorkButton" class="resume-work" type="button" hidden>
-            <span><small>Sambung kerja</small><strong id="resumeWorkTitle">Kembali ke kerja terakhir</strong></span>
-            <svg class="icon" aria-hidden="true"><use href="/icons.svg#arrow-right"></use></svg>
-          </button>
         </section>
         <div class="dashboard-layout">
           <section id="monthlySummary" class="monthly-summary" aria-labelledby="monthlySummaryTitle" hidden>
@@ -4464,11 +4431,48 @@ function pageHtml() {
           </section>
 
         </div>
+        </div>
+        <div class="dashboard-side">
+        <section id="todaySkeleton" class="today-skeleton" aria-label="Memuatkan dashboard">
+          <span></span><span></span><span></span>
+        </section>
+        <section id="todayContent" hidden>
+          <section id="operationsOverall" class="operations-overall" data-status="operational">
+            <span class="operations-overall-dot" aria-hidden="true"></span>
+            <div>
+              <strong id="operationsOverallTitle">All systems operational</strong>
+              <small id="operationsOverallDetail">Last checked just now</small>
+            </div>
+          </section>
+          <div class="operations-summary" aria-label="Operations summary">
+            <div data-ui-tone="blue">${uiIcon("refresh")}<strong id="todayRunning">0</strong><span>Running</span></div>
+            <div data-ui-tone="rose">${uiIcon("message")}<strong id="operationsFailed">0</strong><span>Failed</span></div>
+            <div data-ui-tone="amber">${uiIcon("sparkles")}<strong id="todayAttention">0</strong><span>Attention</span></div>
+            <div data-ui-tone="green">${uiIcon("settings")}<strong id="operationsHealthy">0</strong><span>Healthy</span></div>
+          </div>
+          <section id="operationsAttentionSection" class="operations-section" hidden>
+            <div class="dashboard-section-header"><h2>${uiIcon("message", "tone-amber")}Needs attention</h2><span id="operationsAttentionCount" class="operations-count"></span><button type="button" id="dismissAllIncidentsButton">Archive All</button></div>
+            <div id="operationsIncidents" class="operations-list"></div>
+          </section>
+          <section id="operationsActiveSection" class="operations-section" hidden>
+            <div class="dashboard-section-header"><h2>${uiIcon("refresh")}Active operations</h2><span class="dashboard-section-kicker">Current progress</span></div>
+            <div id="operationsActiveList" class="operations-list"></div>
+          </section>
+          <section class="operations-section">
+            <div class="dashboard-section-header"><h2>${uiIcon("settings", "tone-green")}System health</h2><span class="dashboard-section-kicker">Passive monitor</span></div>
+            <div id="operationsHealth" class="operations-health-grid"></div>
+          </section>
+          <button id="resumeWorkButton" class="resume-work" type="button" hidden>
+            <span><small>Sambung kerja</small><strong id="resumeWorkTitle">Kembali ke kerja terakhir</strong></span>
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#arrow-right"></use></svg>
+          </button>
+        </section>
         <section class="operations-section operations-recent-section">
           <div class="dashboard-section-header"><h2>${uiIcon("file-text")}Recent operations</h2><span class="dashboard-section-kicker">Last 30 days</span></div>
           <div id="operationsRecent" class="operations-recent"></div>
           <button id="operationsRecentMore" class="operations-recent-more secondary" type="button" hidden></button>
         </section>
+        </div>
       </section>
     </section>
 
