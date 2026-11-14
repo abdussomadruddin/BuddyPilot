@@ -4359,9 +4359,10 @@ function pageHtml() {
             <form id="aiKeyForm" style="display:grid;gap:12px;min-width:0">
               <h3>AI API Key</h3>
               <label for="aiKeyProvider">Provider</label>
-              <select id="aiKeyProvider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option></select>
+              <select id="aiKeyProvider"><option value="gemini">Google Gemini (Free tier)</option><option value="openrouter">OpenRouter (Free models)</option></select>
               <label for="aiKeyModel">Model</label>
-              <input id="aiKeyModel" type="text" maxlength="100" value="gemini-3.8-flash" autocapitalize="off" spellcheck="false">
+              <select id="aiKeyModel"><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-3.6-flash">Gemini 3.6 Flash</option></select>
+              <label id="aiFreeTierLabel"><input id="aiFreeTierConfirmed" type="checkbox"> Projek Gemini saya ialah Free tier, tanpa billing aktif.</label>
               <p id="aiKeyStatus" class="note" role="status">Belum dimuatkan</p>
               <label for="aiKeyValue">API key baharu</label>
               <input id="aiKeyValue" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="512" placeholder="Kosongkan untuk kekalkan key tersimpan" style="width:100%;min-width:0;box-sizing:border-box">

@@ -2,6 +2,24 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { generateText, verifyModel, publicAiConfig } = require("../lib/storytelling-ai");
 
+test("OpenRouter routes only to free models with zero price ceilings and no fallback", async () => {
+  let request;
+  const env = { STORYTELLING_AI_PROVIDER: "openrouter", STORYTELLING_AI_MODEL: "google/gemma-4-31b-it:free", OPENROUTER_API_KEY: "fixture-key" };
+  const deps = { fetch: async (url, init) => {
+    request = { url, body: JSON.parse(init.body) };
+    return Response.json({ choices: [{ finish_reason: "stop", message: { content: "Cerita lengkap." } }] });
+  } };
+  assert.equal((await generateText({ prompt: "Topik" }, { env, deps })).provider, "openrouter");
+  assert.equal(request.url, "https://openrouter.ai/api/v1/chat/completions");
+  assert.deepEqual(request.body.provider, { allow_fallbacks: false, max_price: { prompt: 0, completion: 0 } });
+  await assert.rejects(generateText({ prompt: "Topik" }, { env: { ...env, STORYTELLING_AI_MODEL: "paid-model" }, deps }), (error) => error.code === "free_only");
+  const settings = require("../lib/ai-key-settings");
+  assert.throws(() => settings.assertFreeModel("gemini", "gemini-3.8-flash", false));
+  assert.throws(() => settings.assertFreeModel("gemini", "gemini-4-carbon", true));
+  assert.throws(() => settings.assertFreeModel("openai", "gpt-4.1-mini", true));
+  assert.doesNotThrow(() => settings.assertFreeModel("gemini", "gemini-3.8-flash", true));
+});
+
 test("each generation reads the selected provider and encrypted key resolver freshly", async () => {
   let selected = "openai";
   const calls = [];

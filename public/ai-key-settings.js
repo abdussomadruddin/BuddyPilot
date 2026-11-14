@@ -4,6 +4,14 @@
   const provider = document.getElementById("aiKeyProvider");
   const key = document.getElementById("aiKeyValue");
   const model = document.getElementById("aiKeyModel");
+  const freeConfirmed = document.getElementById("aiFreeTierConfirmed");
+  const modelOptions = { gemini: [["gemini-3.8-flash", "Gemini 3.8 Flash"], ["gemini-3.6-flash", "Gemini 3.6 Flash"]], openrouter: [["google/gemma-4-31b-it:free", "Gemma 4 31B (free)"]] };
+  function renderModels() {
+    model.replaceChildren(...(modelOptions[provider.value] || []).map(([value, text]) => new Option(text, value)));
+    if (provider.value === activeSettings.provider && [...model.options].some((item) => item.value === activeSettings.model)) model.value = activeSettings.model;
+    document.getElementById("aiFreeTierLabel").hidden = provider.value !== "gemini";
+    freeConfirmed.checked = provider.value === activeSettings.provider && activeSettings.geminiFreeTierConfirmed === true;
+  }
   const status = document.getElementById("aiKeyStatus");
   const result = document.getElementById("aiKeyResult");
   const test = document.getElementById("aiKeyTest");
@@ -32,7 +40,7 @@
       statuses = body.providers;
       activeSettings = body.settings || activeSettings;
       provider.value = activeSettings.provider;
-      model.value = activeSettings.model;
+      renderModels();
       renderStatus();
     } catch (error) {
       if (version === generation) status.textContent = error.message;
@@ -40,6 +48,7 @@
   }
   async function run(action) {
     if (loading) return;
+    if (action === "save" && provider.value === "gemini" && !freeConfirmed.checked) { result.textContent = "Sahkan projek Gemini menggunakan Free tier dahulu."; return; }
     if (action === "save" && !key.value.trim() && !statuses.find((item) => item.provider === provider.value)?.configured) { result.textContent = "Masukkan key baharu dahulu."; key.focus(); return; }
     loading = true;
     generation += 1;
@@ -47,19 +56,19 @@
     result.textContent = action === "save" ? "Menyimpan..." : "Menguji sambungan...";
     const selected = provider.value;
     try {
-      const body = await request({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, provider: selected, model: model.value.trim(), apiKey: key.value.trim() }) });
+      const body = await request({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, provider: selected, model: model.value.trim(), apiKey: key.value.trim(), geminiFreeTierConfirmed: freeConfirmed.checked }) });
       if (action === "save") {
         key.value = "";
         statuses = statuses.filter((item) => item.provider !== selected).concat(body.result);
         renderStatus();
-        activeSettings = { provider: selected, model: body.result.model || model.value.trim() };
+        activeSettings = { provider: selected, model: body.result.model || model.value.trim(), geminiFreeTierConfirmed: selected === "gemini" && freeConfirmed.checked };
         result.textContent = "Disimpan. Post Pilot kini menggunakan provider dan model ini.";
         window.dispatchEvent(new CustomEvent("buddypilot-ai-settings-saved", { detail: { ...activeSettings, keyConfigured: true } }));
       } else result.textContent = body.result.message;
     } catch (error) { result.textContent = error.message; }
     finally { loading = false; provider.disabled = model.disabled = key.disabled = test.disabled = save.disabled = false; }
   }
-  provider.addEventListener("change", () => { key.value = ""; model.value = provider.value === activeSettings.provider ? activeSettings.model : { gemini: "gemini-3.8-flash", openai: "gpt-4.1-mini", deepseek: "deepseek-chat" }[provider.value]; result.textContent = ""; renderStatus(); });
+  provider.addEventListener("change", () => { key.value = ""; renderModels(); result.textContent = ""; renderStatus(); });
   form.addEventListener("submit", (event) => { event.preventDefault(); run("save"); });
   test.addEventListener("click", () => run("test"));
   document.querySelector('[data-menu-section="menuAISettings"]').addEventListener("click", load);

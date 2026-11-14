@@ -335,7 +335,7 @@
   // ---------- settings ----------
   function renderSettings() {
     const config = state.config;
-    $("stSettingsInfo").innerHTML = "<dt>Provider</dt><dd>" + esc({gemini:"Google Gemini",openai:"OpenAI",deepseek:"DeepSeek"}[config.provider] || config.provider) + "</dd><dt>Model</dt><dd>" + esc(config.model) + "</dd><dt>API key</dt><dd>" + (config.keyConfigured ? "Ditetapkan pada server" : "Belum ditetapkan: Tetapan > AI API Key") + "</dd><dt>Had BuddyPilot</dt><dd>" + config.limits.hourly + " permintaan AI sejam, " + config.limits.daily + " sehari</dd>";
+    $("stSettingsInfo").innerHTML = "<dt>Provider</dt><dd>" + esc({gemini:"Google Gemini",openrouter:"OpenRouter",openai:"OpenAI",deepseek:"DeepSeek"}[config.provider] || config.provider) + "</dd><dt>Model</dt><dd>" + esc(config.model) + "</dd><dt>API key</dt><dd>" + (config.keyConfigured ? "Ditetapkan pada server" : "Belum ditetapkan: Tetapan > AI API Key") + "</dd><dt>Had BuddyPilot</dt><dd>" + config.limits.hourly + " permintaan AI sejam, " + config.limits.daily + " sehari</dd>";
     $("stDataNotice").textContent = config.dataNotice;
   }
 

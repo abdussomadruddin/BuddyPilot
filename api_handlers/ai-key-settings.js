@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
   try {
     requireAuth(req);
     if (req.method === "GET") {
-      const statuses = await Promise.all(["gemini", "openai", "deepseek"].map(settings.getStatus));
+      const statuses = await Promise.all(["gemini", "openrouter"].map(settings.getStatus));
       res.statusCode = 200;
       return res.end(JSON.stringify({ ok: true, providers: statuses, settings: await settings.getGenerationSettings() }));
     }
@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
     const body = await readJsonBody(req);
     if (!["save", "test"].includes(body.action)) throw new Error("Tindakan tidak sah.");
     const result = body.action === "save"
-      ? await settings.saveGenerationSettings(body.provider, body.model, body.apiKey)
+      ? await settings.saveGenerationSettings(body.provider, body.model, body.apiKey, body.geminiFreeTierConfirmed === true)
       : await settings.testConnection(body.provider, body.apiKey, body.model);
     res.statusCode = 200;
     res.end(JSON.stringify({ ok: true, result }));

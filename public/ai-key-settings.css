@@ -7,3 +7,6 @@
 #menuAISettings input, #menuAISettings select { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
 .topbar .topbar-menu-list #aiKeyForm button { width: auto; min-height: 44px; flex-direction: row; padding: 10px 14px; border-radius: 8px; }
 #aiKeyResult, #aiKeyStatus { overflow-wrap: anywhere; }
+#menuAISettings input[type="checkbox"] { width: 20px; min-width: 20px; height: 20px; }
+#aiFreeTierLabel { display: flex; gap: 8px; align-items: flex-start; }
+#aiFreeTierLabel[hidden] { display: none; }

@@ -8,6 +8,7 @@ and staff roles. Any signed-in holder of the app password is an administrator.
 
 1. Apply `supabase/migrations/20261114000200_ai_provider_credentials.sql`.
    The existing Facebook Storytelling migration must also be applied.
+   Then apply `20261114000300_openrouter_free_models.sql`.
 2. Ensure the server has a stable secret of at least 32 characters. The order
    is `AI_SETTINGS_ENCRYPTION_KEY`, `META_TOKEN_ENCRYPTION_KEY`, then
    `TIKTOK_TOKEN_ENCRYPTION_KEY`. Prefer the dedicated variable for new installs.
@@ -26,9 +27,15 @@ Connection tests read model metadata; they do not generate content, verify
 billing balance, publish posts, or send messages. Post Pilot's current Facebook
 Storytelling workflow reads the saved provider, model and key on every AI call.
 Google Gemini remains the default until an administrator saves another choice.
-OpenAI and DeepSeek use their official Chat Completions APIs. Writing DNA,
-draft/revision/feedback storage and request quotas remain unchanged. No provider
-or model fallback occurs on errors; paid usage requires an explicit selection.
+The menu offers Gemini Free tier and OpenRouter free models only. OpenRouter
+defaults to `google/gemma-4-31b-it:free`, enforces the `:free` suffix, zero input
+and output price ceilings, and disables provider fallback. Gemini defaults to
+`gemini-3.8-flash`; saving requires the administrator to confirm their project
+has Free tier without billing. The app cannot independently inspect Google's
+billing tier, so this must also be verified in AI Studio. No billing is enabled.
+Writing DNA, draft/revision/feedback storage and request quotas are unchanged.
+Existing OpenAI/DeepSeek adapters remain for compatibility, but free-only saved
+configuration cannot select them. No model or provider changes on quota errors.
 There is no auto-posting in the current Storytelling workflow.
 
 ## Manual QA
@@ -38,6 +45,8 @@ There is no auto-posting in the current Storytelling workflow.
 - Save a valid key: the password input clears and status changes to App.
 - Test with the input empty: the server should use the stored credential.
 - Switch provider: the unsaved input clears, with independent provider status.
+- Gemini Save must refuse without Free tier confirmation; OpenRouter must
+  refuse a paid model before sending any generation request.
 - Close settings: unsaved key text is cleared.
 - Unauthenticated requests must return 401; cross-site writes must return 403.
 - Confirm Post Pilot displays the selected provider/model after Save & Use.
