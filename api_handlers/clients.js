@@ -152,18 +152,32 @@ module.exports = async function handler(req, res) {
       const body = await readJsonBody(req);
       const saved = await setClientServiceStatus({ ...body, status: body.status || "paused" });
       const isPaused = saved.client.serviceStatus === "paused";
+      // The status change stands even if the invoice update fails; the screen says so.
+      let billing;
+      try {
+        const payments = require("../lib/invoice-payments");
+        billing = isPaused
+          ? await payments.cancelStopMonthInvoices({ clientCode: saved.client.code })
+          : await payments.restoreStopMonthInvoices({ clientCode: saved.client.code });
+      } catch (error) {
+        billing = { error: error?.message || String(error) };
+      }
+      const cancelledNote = billing.cancelled?.length ? ` Invoice dibatalkan: ${billing.cancelled.map((item) => item.invoiceNumber).join(", ")}.` : "";
+      const restoredNote = billing.restored?.length ? ` Invoice dipulihkan: ${billing.restored.join(", ")}.` : "";
       await recordActivity({
         type: isPaused ? "client_service_stopped" : "client_service_recovered",
         title: `${isPaused ? "Service dihentikan" : "Service disambung"}: ${saved.client.brandClient || saved.client.name || saved.client.code}`,
         description: isPaused
-          ? "Client disimpan untuk recover akan datang dan dikeluarkan dari invoice/receipt aktif."
-          : "Client aktif semula untuk invoice/receipt akan datang.",
+          ? `Client dikeluarkan dari invoice, resit, report, reminder dan automasi.${cancelledNote}`
+          : `Client aktif semula untuk invoice/receipt akan datang.${restoredNote}`,
         entityType: "client",
         entityId: saved.client.code,
+        metadata: { clientCode: saved.client.code, billing },
       });
       res.statusCode = 200;
       res.end(JSON.stringify({
         ok: true,
+        billing,
         client: publicClient(saved.client),
         registryFile: saved.registryFile,
         database: saved.database,

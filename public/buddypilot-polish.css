@@ -199,3 +199,8 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
   .topbar .topbar-tabs .tab-button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .topbar .topbar-tabs .nav-liquid-indicator { top: 0; left: 4px; width: calc((100% - 8px) / 4); height: 52px; border-radius: 999px; }
 }
+
+/* An invoice cancelled because the service was stopped. */
+.payment-pill[data-status="cancelled"] { background: var(--bp-soft, #edf3f6); color: var(--bp-muted, #61717f); }
+.payment-row[data-status="cancelled"] .payment-copy { opacity: .7; }
+.payment-row[data-status="cancelled"] .payment-copy span { text-decoration: line-through; }

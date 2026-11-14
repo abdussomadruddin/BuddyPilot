@@ -25,7 +25,7 @@ test("payment status: marked paid or receipted counts as paid; unpaid past seven
   assert.equal(byNumber["INV-202610-DELTA"].receiptNumber, "REC-202610-DELTA");
   assert.equal(result.invoices.length, 4, "receipts are not listed as invoices");
   assert.deepEqual(result.invoices.map((item) => item.status), ["overdue", "unpaid", "paid", "paid"]);
-  assert.deepEqual(result.summary, { unpaidCount: 2, overdueCount: 1, unpaidTotal: 2300, paidWithoutReceipt: 1 });
+  assert.deepEqual(result.summary, { unpaidCount: 2, overdueCount: 1, unpaidTotal: 2300, paidWithoutReceipt: 1, cancelledCount: 0 });
 });
 
 test("the payment window counts back whole months in Kuala Lumpur time", () => {

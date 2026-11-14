@@ -4322,7 +4322,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261114-1">
-  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-3">
+  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-4">
 </head>
 <body>
   <main>
@@ -8160,8 +8160,10 @@ Review retargeting when the warm audience is ready</textarea>
     async function setClientService(clientCode, nextStatus, triggerButton) {
       const client = currentClients.find((item) => item.code === clientCode);
       const label = client?.brandClient || client?.name || clientCode;
-      const action = nextStatus === "active" ? "recover service" : "stop service";
-      if (!window.confirm(\`\${action} untuk \${label}? Folder Google Drive tidak akan dipadam.\`)) return;
+      const question = nextStatus === "active"
+        ? "Recover service untuk " + label + "? Invoice bulan ini yang dibatalkan semasa stop akan dipulihkan."
+        : "Stop service untuk " + label + "? Invoice bulan ini yang belum dibayar akan dibatalkan, dan invoice, resit, report, reminder serta automasi untuk client ini berhenti. Folder Google Drive tidak dipadam.";
+      if (!window.confirm(question)) return;
 
       const finishButton = setButtonBusy(triggerButton, "Updating...");
       setMessage(clientResult, "", "");
@@ -8188,9 +8190,17 @@ Review retargeting when the warm audience is ready</textarea>
         receiptList.innerHTML = "";
         invoiceList.className = "invoice-list";
         receiptList.className = "invoice-list";
-        setMessage(clientResult, "ok", nextStatus === "active"
-          ? \`Service disambung semula: \${label}. Client akan muncul semula dalam invoice/receipt.\`
-          : \`Service dihentikan: \${label}. Client disimpan untuk recover akan datang dan tidak masuk invoice/receipt.\`);
+        const billing = json.billing || {};
+        const billingNote = billing.error ? " Status invoice tidak dapat dikemas kini: " + billing.error
+          : billing.cancelled?.length ? " Invoice dibatalkan: " + billing.cancelled.map((item) => item.invoiceNumber).join(", ") + "."
+          : billing.restored?.length ? " Invoice dipulihkan: " + billing.restored.join(", ") + "."
+          : billing.kept?.length ? " Invoice bulan ini dah dibayar, jadi tidak dibatalkan." : "";
+        sessionStorage.removeItem(TODAY_CACHE_KEY);
+        if (typeof loadTodoList === "function") loadTodoList();
+        if (typeof loadMonthlySummary === "function") loadMonthlySummary();
+        setMessage(clientResult, billing.error ? "err" : "ok", (nextStatus === "active"
+          ? "Service disambung semula: " + label + ". Client akan muncul semula dalam invoice/receipt."
+          : "Service dihentikan: " + label + ". Invoice, resit, report, reminder dan automasi untuk client ini berhenti.") + billingNote);
       } catch (error) {
         finishButton();
         showClientError(error);
@@ -9702,6 +9712,7 @@ Review retargeting when the warm audience is ready</textarea>
 
     function invoicePaymentLabel(item) {
       if (item.status === "paid") return item.receiptNumber ? "Dibayar · resit siap" : "Dibayar · tiada resit";
+      if (item.status === "cancelled") return "Dibatalkan · service dihentikan";
       if (item.status === "overdue") return "Lewat " + item.daysOutstanding + " hari";
       return item.daysOutstanding ? "Belum bayar · " + item.daysOutstanding + " hari" : "Belum bayar";
     }
@@ -9710,7 +9721,9 @@ Review retargeting when the warm audience is ready</textarea>
       const code = escapeHtml(item.clientCode);
       const number = escapeHtml(item.invoiceNumber);
       let actions = "";
-      if (item.status !== "paid") {
+      if (item.status === "cancelled") {
+        actions = '<button class="link-button" type="button" data-payment-action="unpaid" data-invoice="' + number + '">Pulihkan</button>';
+      } else if (item.status !== "paid") {
         actions = '<button class="secondary" type="button" data-payment-action="paid" data-invoice="' + number + '">Tanda dibayar</button>';
       } else if (!item.receiptNumber) {
         actions = '<button type="button" data-payment-action="receipt" data-client-code="' + code + '" data-period="' + escapeHtml(item.period) + '" data-client-name="' + escapeHtml(item.clientName) + '">Jana resit</button>'
@@ -9736,8 +9749,8 @@ Review retargeting when the warm audience is ready</textarea>
         invoicePaymentsList.innerHTML = '<div class="payment-empty">Belum ada invoice di-upload dalam 3 bulan terakhir.</div>';
         return;
       }
-      const needsWork = invoices.filter((item) => item.status !== "paid" || !item.receiptNumber);
-      const settled = invoices.filter((item) => item.status === "paid" && item.receiptNumber);
+      const needsWork = invoices.filter((item) => item.status !== "cancelled" && (item.status !== "paid" || !item.receiptNumber));
+      const settled = invoices.filter((item) => item.status === "cancelled" || (item.status === "paid" && item.receiptNumber));
       invoicePaymentsList.innerHTML = (needsWork.length ? needsWork.map(invoicePaymentRow).join("") : '<div class="payment-empty">Semua invoice dah dibayar dan ada resit.</div>')
         + (settled.length ? '<button class="link-button payment-toggle" type="button" data-payment-action="toggle-settled">' + (showSettledPayments ? "Sembunyi yang selesai" : "Tunjuk yang selesai (" + settled.length + ")") + '</button>' : "")
         + (showSettledPayments ? settled.map(invoicePaymentRow).join("") : "");
