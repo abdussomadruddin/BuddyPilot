@@ -15,9 +15,14 @@
 
   // ---------- transport ----------
   async function request(method, body, query = "") {
-    const response = await fetch("/api/storytelling" + query, { method, cache: "no-store", headers: body ? { "content-type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
+    let response;
+    try {
+      response = await fetch("/api/storytelling" + query, { method, cache: "no-store", headers: body ? { "content-type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
+    } catch {
+      throw Object.assign(new Error("Sambungan terputus sebelum AI siap. Pastikan skrin kekal di BuddyPilot dan cuba semula."), { code: "network" });
+    }
     let json = {};
-    try { json = await response.json(); } catch { json = {}; }
+    try { json = JSON.parse((await response.text()).trim() || "{}"); } catch { json = {}; }
     if (response.status === 401) { window.location.href = "/login"; throw new Error("Sesi tamat. Log masuk semula."); }
     if (!response.ok || !json.ok) throw Object.assign(new Error(json.error || "Permintaan gagal (" + response.status + ")."), { code: json.code || "" });
     return json;
@@ -48,7 +53,7 @@
   async function runAi(statusNode, label, work) {
     if (state.busy) return null;
     setBusy(true, label);
-    setStatus(statusNode, "info", label + " Ini boleh ambil 10 hingga 40 saat.");
+    setStatus(statusNode, "info", label + " Biasanya 20 hingga 60 saat; bila AI sibuk boleh sampai 3 minit. Kekalkan skrin ini.");
     try {
       const result = await work();
       setStatus(statusNode, "", "");

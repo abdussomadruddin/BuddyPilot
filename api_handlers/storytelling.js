@@ -101,18 +101,46 @@ async function dispatch(store, { method = "GET", url = "/", body = {}, options =
   return action(store, body, options);
 }
 
+// AI calls can take minutes. Phones drop a request that sends nothing for that
+// long ("Load failed"), so after a few quiet seconds the response starts and a
+// space is sent every 8s; JSON ignores leading whitespace. The real outcome,
+// including errors, is then in the JSON body ("ok") instead of the status code.
+function startKeepAlive(res) {
+  const state = { started: false, timer: null };
+  state.timer = setTimeout(function tick() {
+    if (!state.started) {
+      state.started = true;
+      res.statusCode = 200;
+      res.setHeader("x-accel-buffering", "no");
+    }
+    res.write(" ");
+    state.timer = setTimeout(tick, 8000);
+  }, 4000);
+  return state;
+}
+
+function finish(res, keepAlive, status, body) {
+  if (keepAlive) clearTimeout(keepAlive.timer);
+  if (keepAlive?.started) return res.end(JSON.stringify({ ...body, status }));
+  return send(res, status, body);
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
   res.setHeader("cache-control", "no-store");
+  let keepAlive = null;
   try {
     requireAuth(req);
     const body = req.method === "POST" ? await readJsonBody(req) : {};
     const options = req.method === "GET" ? { config: await publicAiConfig() } : {};
-    return send(res, 200, { ok: true, ...await dispatch(story.createStore(), { method: req.method, url: req.url || "/", body, options }) });
+    keepAlive = startKeepAlive(res);
+    const result = await dispatch(story.createStore(), { method: req.method, url: req.url || "/", body, options });
+    return finish(res, keepAlive, 200, { ok: true, ...result });
   } catch (error) {
     // Only the error text is logged: never writing samples, drafts or keys.
     if (!error.statusCode || error.statusCode >= 500) console.error("storytelling_error", { code: error.code || "", message: String(error?.message || error).slice(0, 200) });
-    return send(res, error.statusCode || 500, { ok: false, code: error.code || "", error: error?.message || String(error) });
+    return finish(res, keepAlive, error.statusCode || 500, { ok: false, code: error.code || "", error: error?.message || String(error) });
   }
 };
 module.exports.dispatch = dispatch;
+module.exports._test = { startKeepAlive, finish };

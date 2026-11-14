@@ -304,3 +304,34 @@ test("busy gemini-3.8-flash falls back once to free gemini-3.6-flash with the sa
   await assert.rejects(generateText({ prompt: "P" }, { env: fallbackEnv, deps: { fetch: quota.fetchImpl, sleep: async () => {} } }), (error) => error.code === "quota");
   assert.equal(quota.requests.length, 1, "exhausted quota never tries another model");
 });
+
+test("gemini-3 posts ask for low thinking, and retry without it when the model refuses the setting", async () => {
+  const thinkEnv = { GEMINI_API_KEY: "test-key", STORYTELLING_AI_PROVIDER: "gemini", STORYTELLING_AI_MODEL: "gemini-3.8-flash" };
+  const ok = { status: 200, body: { candidates: [{ content: { parts: [{ text: "Siap." }] }, finishReason: "STOP" }] } };
+  const plain = fakeFetch([ok]);
+  await generateText({ prompt: "P" }, { env: thinkEnv, deps: { fetch: plain.fetchImpl, sleep: async () => {} } });
+  assert.deepEqual(JSON.parse(plain.requests[0].init.body).generationConfig.thinkingConfig, { thinkingLevel: "low" });
+
+  const refuses = fakeFetch([{ status: 400, body: { error: { message: "Unknown field thinking_level" } } }, ok]);
+  const result = await generateText({ prompt: "P" }, { env: thinkEnv, deps: { fetch: refuses.fetchImpl, sleep: async () => {} } });
+  assert.equal(result.text, "Siap.");
+  assert.equal(JSON.parse(refuses.requests[1].init.body).generationConfig.thinkingConfig, undefined);
+});
+
+test("slow AI requests send keep-alive spaces and still end in valid JSON", async () => {
+  const { startKeepAlive, finish } = require("../api_handlers/storytelling")._test;
+  const chunks = [];
+  const res = { statusCode: 0, headers: {}, setHeader(k, v) { this.headers[k] = v; }, write(c) { chunks.push(c); }, end(c) { chunks.push(c); this.ended = true; } };
+  const keepAlive = startKeepAlive(res);
+  await new Promise((done) => setTimeout(done, 4300));
+  finish(res, keepAlive, 503, { ok: false, code: "unavailable", error: "Sibuk" });
+  const body = JSON.parse(chunks.join("").trim());
+  assert.ok(chunks[0] === " ", "a space was sent while waiting");
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(body, { ok: false, code: "unavailable", error: "Sibuk", status: 503 });
+
+  const quick = { statusCode: 0, setHeader() {}, write() { throw new Error("no write for quick answers"); }, end(c) { this.body = c; } };
+  finish(quick, startKeepAlive(quick), 200, { ok: true });
+  assert.equal(quick.statusCode, 200);
+  assert.equal(quick.body, JSON.stringify({ ok: true }));
+});
