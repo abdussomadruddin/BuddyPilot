@@ -262,7 +262,13 @@ test("rate limits back off and retry; an exhausted quota stops with a clear mess
 
   const down = fakeFetch([{ status: 503, body: {} }]);
   await assert.rejects(generateText({ prompt: "P" }, { env, deps: { fetch: down.fetchImpl, sleep } }), (error) => error.code === "unavailable");
-  assert.equal(down.requests.length, 3, "two retries, then give up");
+  assert.equal(down.requests.length, 6, "two retries, then the free fallback model with two retries, then give up");
+  assert.ok(down.requests.slice(3).every((request) => String(request.url || request[0] || JSON.stringify(request)).includes("gemini-flash-lite-latest")), "fallback is the free lite model");
+
+  const busy = fakeFetch([{ status: 503, body: {} }, { status: 503, body: {} }, { status: 503, body: {} }, { status: 200, body: okBody }]);
+  const rescued = await generateText({ prompt: "P" }, { env, deps: { fetch: busy.fetchImpl, sleep } });
+  assert.equal(rescued.text, "Teks siap.");
+  assert.equal(rescued.model, "gemini-flash-lite-latest");
 });
 
 test("incomplete, blocked and missing-model answers are reported, not passed on", async () => {

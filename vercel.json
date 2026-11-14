@@ -26,7 +26,7 @@
   ],
   "functions": {
     "api/app.js": {
-      "maxDuration": 60
+      "maxDuration": 300
     }
   },
   "crons": [
