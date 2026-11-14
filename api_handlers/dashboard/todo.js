@@ -4,6 +4,7 @@ const { earliestPeriod } = require("../../lib/invoice-payments");
 const { listActivityByTypes, listOpenOperationsIncidents, supabaseRequest } = require("../../lib/supabase-db");
 const { tikTokConnectionStatus } = require("../../lib/tiktok-ads");
 const { composeTodo } = require("../../lib/today-todo");
+const { generateDueAgencyTasks } = require("../../lib/agency-operations");
 
 async function settled(promise, fallback, warnings, label) {
   try {
@@ -32,7 +33,8 @@ module.exports = async function handler(req, res) {
       settled(supabaseRequest(`invoice_uploads?select=${fields}&period=gte.${earliestPeriod(now, 3)}&order=period.desc&limit=1000`), [], warnings, "Invoice"),
       settled(listActivityByTypes(["client_whatsapp_opened", "report_uploaded"], new Date(now.getTime() - 62 * 86400000).toISOString()), [], warnings, "Aktiviti"),
       settled(listOpenOperationsIncidents(100), [], warnings, "Amaran"),
-      settled(supabaseRequest(`agency_tasks?select=id,title,due_date,status,client_code&status=in.(todo,in_progress)&due_date=lte.${today}&order=due_date.asc&limit=200`), [], warnings, "Tugasan"),
+      // Create today's recurring tasks first, so they show up without opening Client Pilot.
+      settled(generateDueAgencyTasks(), 0, warnings, "Tugasan berulang").then(() => settled(supabaseRequest(`agency_tasks?select=id,title,due_date,status,client_code&status=in.(todo,in_progress)&due_date=lte.${today}&order=due_date.asc&limit=200`), [], warnings, "Tugasan")),
       settled(tikTokConnectionStatus(), {}, warnings, "TikTok"),
     ]);
     const todo = composeTodo({ clients: clientResult.clients || [], uploads: uploads || [], paymentRows: uploads || [], activities, incidents: incidents || [], tasks: tasks || [], tiktok, now });

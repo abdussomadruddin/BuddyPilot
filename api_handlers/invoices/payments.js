@@ -1,6 +1,6 @@
 const { requireAuth } = require("../../lib/auth");
 const { readJsonBody } = require("../../lib/http-body");
-const { listInvoicePayments, setInvoicePayment } = require("../../lib/invoice-payments");
+const { ensureReceiptForPayment, listInvoicePayments, setInvoicePayment } = require("../../lib/invoice-payments");
 
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
@@ -15,7 +15,8 @@ module.exports = async function handler(req, res) {
     if (req.method === "POST") {
       const body = await readJsonBody(req);
       const result = await setInvoicePayment({ invoiceNumber: body.invoiceNumber, paid: body.paid !== false });
-      res.end(JSON.stringify({ ok: true, ...result }));
+      const receipt = body.paid !== false && body.receipt !== false ? await ensureReceiptForPayment(result) : null;
+      res.end(JSON.stringify({ ok: true, ...result, receipt }));
       return;
     }
     res.statusCode = 405;

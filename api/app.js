@@ -9,6 +9,7 @@ const routes = {
   "clients/onboarding": () => require("../api_handlers/clients/onboarding"),
   "dashboard/today": () => require("../api_handlers/dashboard/today"),
   "dashboard/todo": () => require("../api_handlers/dashboard/todo"),
+  "dashboard/monthly-summary": () => require("../api_handlers/dashboard/monthly-summary"),
   "operations/overview": () => require("../api_handlers/operations/overview"),
   "operations/health-check": () => require("../api_handlers/operations/health-check"),
   "operations/dismiss": () => require("../api_handlers/operations/dismiss"),

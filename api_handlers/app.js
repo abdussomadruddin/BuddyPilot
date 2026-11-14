@@ -4320,7 +4320,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261112-1">
-  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261113-1">
+  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-1">
 </head>
 <body>
   <main>
@@ -4422,6 +4422,15 @@ function pageHtml() {
           </button>
         </section>
         <div class="dashboard-layout">
+          <section id="monthlySummary" class="monthly-summary" aria-labelledby="monthlySummaryTitle" hidden>
+            <div class="dashboard-section-header">
+              <h2 id="monthlySummaryTitle">${uiIcon("chart", "tone-green")}Ringkasan bulanan</h2>
+              <span id="monthlySummaryPeriod" class="dashboard-section-kicker"></span>
+            </div>
+            <div id="monthlySummaryFigures" class="monthly-figures"></div>
+            <div id="monthlySummaryMonths" class="monthly-months" aria-label="Kutipan enam bulan"></div>
+            <div id="monthlySummaryLate" class="monthly-late"></div>
+          </section>
           <section class="dashboard-actions" aria-labelledby="quickActionsHeading">
             <div class="dashboard-section-header">
               <h2 id="quickActionsHeading">${uiIcon("sparkles", "tone-amber")}Quick actions</h2>
@@ -9251,7 +9260,7 @@ Review retargeting when the warm audience is ready</textarea>
         });
       });
     });
-    refreshTodayButton.addEventListener("click", () => { loadTodayDashboard({ force: true }); loadTodoList(); });
+    refreshTodayButton.addEventListener("click", () => { loadTodayDashboard({ force: true }); loadTodoList(); if (typeof loadMonthlySummary === "function") loadMonthlySummary(); });
     checkAllHealthButton.addEventListener("click", () => checkOperationsHealth("", checkAllHealthButton));
     todayContent.addEventListener("click", (event) => {
       const healthButton = event.target.closest("[data-health-check]");
@@ -9610,7 +9619,13 @@ Review retargeting when the warm audience is ready</textarea>
       const json = await readApiJson(response);
       if (!response.ok || !json.ok) throw new Error(json.error || "Status bayaran gagal disimpan.");
       sessionStorage.removeItem(TODAY_CACHE_KEY);
-      showToast(paid ? invoiceNumber + " ditanda dibayar." : invoiceNumber + " ditanda belum bayar.");
+      const receipt = json.receipt || {};
+      showToast(!paid ? invoiceNumber + " ditanda belum bayar."
+        : receipt.status === "created" ? invoiceNumber + " ditanda dibayar. Resit dijana dan sedia dihantar."
+        : receipt.status === "failed" ? invoiceNumber + " ditanda dibayar, tetapi resit gagal dijana: " + receipt.error
+        : receipt.status === "skipped" ? invoiceNumber + " ditanda dibayar. " + receipt.reason
+        : invoiceNumber + " ditanda dibayar.");
+      if (typeof loadMonthlySummary === "function") loadMonthlySummary();
       await loadInvoicePayments({ silent: true });
     }
 
@@ -9852,6 +9867,37 @@ Review retargeting when the warm audience is ready</textarea>
     });
     loadTodayDashboard();
     loadTodoList();
+
+    function summaryMoney(value) {
+      return "RM " + (Number(value) || 0).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    async function loadMonthlySummary() {
+      const section = document.getElementById("monthlySummary");
+      try {
+        const response = await fetch("/api/dashboard/monthly-summary", { cache: "no-store" });
+        const json = await readApiJson(response);
+        if (!response.ok || !json.ok || !json.current) return;
+        const current = json.current;
+        const peak = Math.max(1, ...json.months.map((month) => month.invoiced));
+        document.getElementById("monthlySummaryPeriod").textContent = current.period;
+        document.getElementById("monthlySummaryFigures").innerHTML =
+          '<div><small>Dikutip bulan ini</small><strong>' + summaryMoney(current.collected) + '</strong><span>' + current.paidCount + ' daripada ' + current.invoiceCount + ' invoice</span></div>'
+          + '<div data-tone="' + (current.outstanding > 0 ? "warn" : "ok") + '"><small>Belum dibayar bulan ini</small><strong>' + summaryMoney(current.outstanding) + '</strong><span>Diinvois ' + summaryMoney(current.invoiced) + '</span></div>'
+          + '<div data-tone="' + (json.totalOutstanding > 0 ? "warn" : "ok") + '"><small>Jumlah tertunggak</small><strong>' + summaryMoney(json.totalOutstanding) + '</strong><span>' + json.months.length + ' bulan terakhir</span></div>';
+        document.getElementById("monthlySummaryMonths").innerHTML = json.months.map((month) =>
+          '<div class="monthly-month" title="' + escapeHtml(month.period + ": dikutip " + summaryMoney(month.collected) + ", belum dibayar " + summaryMoney(month.outstanding)) + '">'
+          + '<span class="monthly-bar"><i style="height:' + Math.round((month.collected / peak) * 100) + '%"></i><b style="height:' + Math.round((month.outstanding / peak) * 100) + '%"></b></span>'
+          + '<small>' + escapeHtml(month.period.slice(5)) + '</small></div>').join("");
+        document.getElementById("monthlySummaryLate").innerHTML = json.lateClients.length
+          ? '<h3>Client yang perlu dipantau</h3><ul>' + json.lateClients.slice(0, 5).map((entry) =>
+            '<li><strong>' + escapeHtml(entry.clientName) + '</strong><span>' + (entry.lateCount ? entry.lateCount + ' kali lewat (lebih ' + json.overdueDays + ' hari)' : "Belum bayar") + (entry.outstanding > 0 ? ' · tertunggak ' + summaryMoney(entry.outstanding) : "") + '</span></li>').join("") + '</ul>'
+          : '<p class="note">Tiada client lewat bayar dalam ' + json.months.length + ' bulan terakhir.</p>';
+        section.hidden = false;
+      } catch {
+        section.hidden = true;
+      }
+    }
+    loadMonthlySummary();
     loadInvoicePayments({ silent: true });
     loadClients();
     loadMetaConnection();
