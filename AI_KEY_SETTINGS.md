@@ -35,7 +35,12 @@ has Free tier without billing. The app cannot independently inspect Google's
 billing tier, so this must also be verified in AI Studio. No billing is enabled.
 Writing DNA, draft/revision/feedback storage and request quotas are unchanged.
 Existing OpenAI/DeepSeek adapters remain for compatibility, but free-only saved
-configuration cannot select them. No model or provider changes on quota errors.
+configuration cannot select them. With OpenRouter selected, transient network,
+quota, unavailable-model and provider errors use Gemini as backup only when its
+saved Free tier confirmation and key are present. Authentication, safety/empty
+output and input errors do not trigger fallback. The original prompt and Writing
+DNA are preserved. Backup never switches back to OpenRouter or to a paid model.
+Selecting OpenRouter preserves the existing Gemini Free tier confirmation.
 There is no auto-posting in the current Storytelling workflow.
 
 ## Manual QA

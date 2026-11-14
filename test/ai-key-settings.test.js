@@ -6,6 +6,24 @@ const crypto = require("node:crypto");
 const settings = require("../lib/ai-key-settings");
 const handler = require("../api_handlers/ai-key-settings");
 
+test("selecting OpenRouter retains saved Gemini free-tier confirmation", async () => {
+  const oldFetch = global.fetch;
+  const oldEnv = { ...process.env };
+  process.env.SUPABASE_URL = "https://fixture.invalid";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "fixture-service";
+  process.env.OPENROUTER_API_KEY = "fixture-openrouter-key";
+  let written;
+  global.fetch = async (url, options) => {
+    if (options.method === "POST") { written = JSON.parse(options.body)[0]; return new Response(null, { status: 204 }); }
+    return Response.json([]);
+  };
+  try {
+    await settings.saveGenerationSettings("openrouter", "google/gemma-4-31b-it:free", "");
+    assert.equal(written.provider, "openrouter");
+    assert.equal(Object.hasOwn(written, "gemini_free_tier_confirmed"), false);
+  } finally { global.fetch = oldFetch; process.env = oldEnv; }
+});
+
 test("AI key encryption authenticates provider and never stores plaintext", () => {
   const previous = process.env.AI_SETTINGS_ENCRYPTION_KEY;
   process.env.AI_SETTINGS_ENCRYPTION_KEY = "fixture-encryption-secret-32-characters";

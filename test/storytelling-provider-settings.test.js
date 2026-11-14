@@ -2,6 +2,76 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { generateText, verifyModel, publicAiConfig } = require("../lib/storytelling-ai");
 
+test("OpenRouter failures use confirmed free Gemini backup with identical input", async () => {
+  for (const status of [429, 404, 500]) {
+    const calls = [];
+    const deps = {
+      keySettings: {
+        getGenerationSettings: async () => ({ provider: "openrouter", model: "google/gemma-4-31b-it:free", freeOnly: true, geminiFreeTierConfirmed: true }),
+        resolveKey: async (provider) => `fixture-${provider}`,
+      },
+      fetch: async (url, init) => {
+        calls.push({ url, body: JSON.parse(init.body) });
+        if (url.includes("openrouter.ai")) return new Response(null, { status });
+        return Response.json({ candidates: [{ content: { parts: [{ text: "Cerita backup" }] }, finishReason: "STOP" }] });
+      },
+    };
+    const result = await generateText({ system: "Writing DNA", prompt: "Cerita penuh", json: true, maxOutputTokens: 1200 }, { env: {}, deps });
+    assert.equal(result.provider, "gemini");
+    assert.equal(result.fallbackFrom, "openrouter");
+    assert.equal(calls.length, 2);
+    assert.match(calls[1].url, /gemini-3\.8-flash:generateContent$/);
+    assert.equal(calls[1].body.contents[0].parts[0].text, "Cerita penuh");
+    assert.equal(calls[1].body.systemInstruction.parts[0].text, "Writing DNA");
+    assert.equal(calls[1].body.generationConfig.responseMimeType, "application/json");
+  }
+});
+
+test("backup fails closed without confirmation/key and never bypasses auth or safety failures", async () => {
+  for (const [confirmed, key, status] of [[false, "fixture", 429], [true, "", 429], [true, "fixture", 400], [true, "fixture", 422], [true, "fixture", 401], [true, "fixture", 403], [true, "fixture", 200]]) {
+    let calls = 0;
+    const deps = {
+      keySettings: {
+        getGenerationSettings: async () => ({ provider: "openrouter", model: "google/gemma-4-31b-it:free", freeOnly: true, geminiFreeTierConfirmed: confirmed }),
+        resolveKey: async (p) => p === "gemini" ? key : "fixture-primary",
+      },
+      fetch: async () => { calls++; return status === 200 ? Response.json({ choices: [{ finish_reason: "content_filter", message: { content: "" } }] }) : new Response(null, { status }); },
+    };
+    await assert.rejects(generateText({ prompt: "P" }, { env: {}, deps }));
+    assert.equal(calls, 1);
+  }
+});
+
+test("successful OpenRouter requests never read the backup key", async () => {
+  const deps = {
+    keySettings: {
+      getGenerationSettings: async () => ({ provider: "openrouter", model: "google/gemma-4-31b-it:free", freeOnly: true, geminiFreeTierConfirmed: true }),
+      resolveKey: async (p) => { assert.equal(p, "openrouter"); return "fixture"; },
+    },
+    fetch: async () => Response.json({ choices: [{ finish_reason: "stop", message: { content: "Done" } }] }),
+  };
+  assert.equal((await generateText({ prompt: "P" }, { env: {}, deps })).provider, "openrouter");
+});
+
+test("network fallback is bounded and Gemini failure never loops back or exposes keys", async () => {
+  const calls = [];
+  const deps = {
+    keySettings: {
+      getGenerationSettings: async () => ({ provider: "openrouter", model: "google/gemma-4-31b-it:free", freeOnly: true, geminiFreeTierConfirmed: true }),
+      resolveKey: async () => "fixture-secret-never-expose",
+    },
+    sleep: async () => { assert.fail("Backup must not retry"); },
+    fetch: async (url, init) => {
+      calls.push(url);
+      assert.ok(init.signal);
+      if (url.includes("openrouter.ai")) throw new Error("fixture-secret-never-expose");
+      return Response.json({ error: { message: "fixture-secret-never-expose" } }, { status: 503 });
+    },
+  };
+  await assert.rejects(generateText({ prompt: "P" }, { env: {}, deps }), (error) => error.code === "unavailable" && !error.message.includes("fixture-secret"));
+  assert.equal(calls.length, 2);
+});
+
 test("OpenRouter routes only to free models with zero price ceilings and no fallback", async () => {
   let request;
   const env = { STORYTELLING_AI_PROVIDER: "openrouter", STORYTELLING_AI_MODEL: "google/gemma-4-31b-it:free", OPENROUTER_API_KEY: "fixture-key" };
