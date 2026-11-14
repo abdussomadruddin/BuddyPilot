@@ -12,8 +12,8 @@ function pageHtml() {
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
-  <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261114-1">
-  <script src="/buddypilot-storytelling.js?v=20261114-1" defer></script>
+  <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261114-2">
+  <script src="/buddypilot-storytelling.js?v=20261114-2" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -4322,7 +4322,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261114-1">
-  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-1">
+  <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-2">
 </head>
 <body>
   <main>
@@ -4978,10 +4978,10 @@ Review retargeting when the warm audience is ready</textarea>
       </header>
       <div id="stNotice" class="st-notice" role="status" hidden></div>
       <div class="st-tabs" role="tablist" aria-label="Post Pilot">
-        <button type="button" role="tab" data-st-view="write">Facebook Storytelling</button>
-        <button type="button" role="tab" data-st-view="dna">My Writing DNA</button>
+        <button type="button" role="tab" data-st-view="write" aria-label="Facebook Storytelling"><span class="st-long">Facebook Storytelling</span><span class="st-short">Tulis</span></button>
+        <button type="button" role="tab" data-st-view="dna" aria-label="My Writing DNA"><span class="st-long">My Writing DNA</span><span class="st-short">DNA</span></button>
         <button type="button" role="tab" data-st-view="drafts">Draf</button>
-        <button type="button" role="tab" data-st-view="settings">AI Settings</button>
+        <button type="button" role="tab" data-st-view="settings" aria-label="AI Settings"><span class="st-long">AI Settings</span><span class="st-short">AI</span></button>
       </div>
 
       <div class="st-write" data-st-panel="write">
@@ -5018,9 +5018,11 @@ Review retargeting when the warm audience is ready</textarea>
             <div class="st-meter"><b id="stCount">0 aksara</b><span id="stTarget"></span><span id="stReading"></span><em id="stSaveState"></em></div>
           </div>
           <textarea id="stEditor" rows="18" maxlength="12000" placeholder="Post yang dijana akan muncul di sini. Kau boleh sunting terus."></textarea>
-          <div class="st-actions">
+          <div class="st-actions st-actions-main">
             <button id="stCopy" type="button" data-st-needs-text>Salin</button>
             <button id="stSave" type="button" class="secondary" data-st-needs-text>Simpan draf</button>
+          </div>
+          <div class="st-actions st-actions-more">
             <button id="stApprove" type="button" class="secondary" data-st-needs-text>Tanda Approved</button>
             <button id="stRegenerate" type="button" class="secondary" data-st-ai>Regenerate</button>
             <button id="stUndo" type="button" class="secondary" disabled>Undo</button>
@@ -5297,7 +5299,7 @@ Review retargeting when the warm audience is ready</textarea>
           <button type="button" role="tab" data-queue-type="invoice">Invoice</button>
           <button type="button" role="tab" data-queue-type="receipt">Resit</button>
           <button type="button" role="tab" data-queue-type="report">Report</button>
-          <button type="button" role="tab" data-queue-type="reminder">Reminder bayaran</button>
+          <button type="button" role="tab" data-queue-type="reminder" aria-label="Reminder bayaran">Reminder<span class="queue-long"> bayaran</span></button>
         </div>
         <label id="whatsappQueuePeriodLabel">Bulan<input id="whatsappQueuePeriod" type="month"></label>
       </div>

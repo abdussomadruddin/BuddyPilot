@@ -156,6 +156,12 @@
     editor.value = text;
     updateMeter();
     remember();
+    // A brief highlight shows the text changed, since a rewrite may touch one paragraph only.
+    if (text) {
+      editor.classList.remove("st-fresh");
+      void editor.offsetWidth;
+      editor.classList.add("st-fresh");
+    }
   }
 
   function renderLocalReview(review, warnings = []) {

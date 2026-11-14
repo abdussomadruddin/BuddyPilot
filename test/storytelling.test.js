@@ -36,8 +36,8 @@ test("the feature is wired into BuddyPilot's navigation and router", () => {
   const page = fs.readFileSync(path.join(__dirname, "../api_handlers/app.js"), "utf8");
   const router = fs.readFileSync(path.join(__dirname, "../api/app.js"), "utf8");
   assert.match(page, /data-tab-target="postpilot"/);
-  assert.match(page, /id="tab-postpilot"[\s\S]*data-st-view="write">Facebook Storytelling</);
-  assert.match(page, /data-st-view="dna">My Writing DNA</);
+  assert.match(page, /id="tab-postpilot"[\s\S]*data-st-view="write" aria-label="Facebook Storytelling"/);
+  assert.match(page, /data-st-view="dna" aria-label="My Writing DNA"/);
   assert.match(router, /storytelling: \(\) => require\("\.\.\/api_handlers\/storytelling"\)/);
 });
 
