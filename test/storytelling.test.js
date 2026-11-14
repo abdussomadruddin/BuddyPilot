@@ -262,7 +262,7 @@ test("rate limits back off and retry; an exhausted quota stops with a clear mess
 
   const down = fakeFetch([{ status: 503, body: {} }]);
   await assert.rejects(generateText({ prompt: "P" }, { env, deps: { fetch: down.fetchImpl, sleep } }), (error) => error.code === "unavailable");
-  assert.equal(down.requests.length, 3, "two retries, then give up");
+  assert.equal(down.requests.length, 4, "two retries, then one try on the free sibling Gemini model");
 });
 
 test("incomplete, blocked and missing-model answers are reported, not passed on", async () => {
@@ -289,4 +289,18 @@ test("no secret or key name reaches the browser files", () => {
   const config = story.publicConfig();
   assert.deepEqual(Object.keys(config).filter((key) => /key/i.test(key)), ["keyConfigured"]);
   assert.match(config.dataNotice, /Google Gemini/);
+});
+
+test("busy gemini-3.8-flash falls back once to free gemini-3.6-flash with the same key", async () => {
+  const fallbackEnv = { GEMINI_API_KEY: "test-key", STORYTELLING_AI_PROVIDER: "gemini", STORYTELLING_AI_MODEL: "gemini-3.8-flash" };
+  const responses = [{ status: 503, body: {} }, { status: 503, body: {} }, { status: 503, body: {} }, { status: 200, body: { candidates: [{ content: { parts: [{ text: "Dari sandaran." }] }, finishReason: "STOP" }] } }];
+  const busy = fakeFetch(responses);
+  const result = await generateText({ prompt: "P" }, { env: fallbackEnv, deps: { fetch: busy.fetchImpl, sleep: async () => {} } });
+  assert.equal(result.text, "Dari sandaran.");
+  assert.equal(result.model, "gemini-3.6-flash");
+  assert.match(String(busy.requests.at(-1).url), /gemini-3\.6-flash/);
+
+  const quota = fakeFetch([{ status: 429, body: { error: { message: "limit: 0, PerDay" } } }]);
+  await assert.rejects(generateText({ prompt: "P" }, { env: fallbackEnv, deps: { fetch: quota.fetchImpl, sleep: async () => {} } }), (error) => error.code === "quota");
+  assert.equal(quota.requests.length, 1, "exhausted quota never tries another model");
 });
