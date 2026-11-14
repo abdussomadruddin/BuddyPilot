@@ -196,3 +196,9 @@
 @keyframes st-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
 @keyframes st-flash { from { box-shadow: 0 0 0 3px rgba(20, 100, 218, .32); } to { box-shadow: 0 0 0 3px rgba(20, 100, 218, 0); } }
 @keyframes st-breathe { from { opacity: .75; } to { opacity: .45; } }
+
+/* Long unbroken text (a file path, a model name) must wrap inside its box. */
+.st-notice, .st-status, .st-review, .st-quality, .st-list, .st-settings dd { overflow-wrap: anywhere; }
+/* A tapped tab keeps :hover on touch screens; only the active tab is highlighted. */
+.st-tabs button:not(.active), .st-tabs button:not(.active):hover, .st-tabs button:not(.active):focus { background: transparent !important; color: var(--bp-muted, #61717f) !important; box-shadow: none !important; }
+.st-tabs button.active, .st-tabs button.active:hover, .st-tabs button.active:focus { background: var(--bp-panel, #fff) !important; color: var(--bp-ink, #18232d) !important; box-shadow: 0 1px 3px rgba(20, 40, 60, .12) !important; }

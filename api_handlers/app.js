@@ -12,7 +12,7 @@ function pageHtml() {
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
-  <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261114-2">
+  <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261114-3">
   <script src="/buddypilot-storytelling.js?v=20261114-2" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
