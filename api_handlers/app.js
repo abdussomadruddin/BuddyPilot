@@ -9481,7 +9481,7 @@ Review retargeting when the warm audience is ready</textarea>
       intakePanel.hidden = !intakeState.pending.length;
       intakeList.innerHTML = intakeState.pending.map((entry) => '<li>'
         + '<div><strong>' + escapeHtml(entry.brandClient) + '</strong><span>' + escapeHtml(entry.contactName) + ' · ' + escapeHtml(entry.phone) + ' · ' + escapeHtml(entry.email) + '</span>'
-        + '<small>' + escapeHtml(new Date(entry.submittedAt).toLocaleString("en-MY", { dateStyle: "medium", timeStyle: "short" })) + (entry.companyName ? ' · ' + escapeHtml(entry.companyName) : "") + (entry.monthlyRetainer ? ' · RM ' + escapeHtml(entry.monthlyRetainer) : "") + '</small></div>'
+        + '<small>' + escapeHtml(new Date(entry.submittedAt).toLocaleString("en-MY", { dateStyle: "medium", timeStyle: "short" })) + (entry.companyName ? ' · ' + escapeHtml(entry.companyName) : "") + '</small></div>'
         + '<div class="intake-actions"><button type="button" data-intake-use="' + escapeHtml(entry.id) + '">Guna data ini</button><button class="secondary" type="button" data-intake-dismiss="' + escapeHtml(entry.id) + '">Buang</button></div></li>').join("");
     }
     async function reviewIntakeEntry(id, action) {
@@ -9499,12 +9499,12 @@ Review retargeting when the warm audience is ready</textarea>
         if (use) {
           const entry = intakeState.pending.find((item) => item.id === use.dataset.intakeUse);
           if (!entry) return;
-          for (const key of ["brandClient", "contactName", "email", "phone", "companyName", "registrationNumber", "billingAddress", "monthlyRetainer", "notes"]) {
+          for (const key of ["brandClient", "contactName", "email", "phone", "companyName", "registrationNumber", "billingAddress", "notes"]) {
             const field = clientForm.elements[key];
             if (field && entry[key]) field.value = entry[key];
           }
           await reviewIntakeEntry(entry.id, "used");
-          setMessage(clientResult, "ok", "Data " + entry.brandClient + " dimasukkan ke borang. Semak, lengkapkan service type dan simpan untuk mula onboarding.");
+          setMessage(clientResult, "ok", "Data " + entry.brandClient + " dimasukkan ke borang. Isi harga servis dan service type, kemudian simpan untuk mula onboarding.");
           clientForm.elements.brandClient.focus();
         } else if (dismiss) {
           if (!window.confirm("Buang borang ini? Client tidak akan dicipta.")) return;
