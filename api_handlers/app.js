@@ -5144,6 +5144,7 @@ Review retargeting when the warm audience is ready</textarea>
           <button type="button" role="tab" data-queue-type="invoice">Invoice</button>
           <button type="button" role="tab" data-queue-type="receipt">Resit</button>
           <button type="button" role="tab" data-queue-type="report">Report</button>
+          <button type="button" role="tab" data-queue-type="reminder">Reminder bayaran</button>
         </div>
         <label id="whatsappQueuePeriodLabel">Bulan<input id="whatsappQueuePeriod" type="month"></label>
       </div>
@@ -9650,7 +9651,8 @@ Review retargeting when the warm audience is ready</textarea>
     const whatsappQueueResult = document.getElementById("whatsappQueueResult");
     const whatsappQueuePeriod = document.getElementById("whatsappQueuePeriod");
     const whatsappQueuePeriodLabel = document.getElementById("whatsappQueuePeriodLabel");
-    const WHATSAPP_QUEUE_LABELS = { invoice: "invoice", receipt: "resit", report: "report" };
+    const WHATSAPP_QUEUE_LABELS = { invoice: "invoice", receipt: "resit", report: "report", reminder: "reminder bayaran" };
+    const REMINDER_TIER_LABELS = { 1: "Peringatan mesra", 2: "Lewat bayar", 3: "Peringatan akhir" };
     const WHATSAPP_STATUS_LABELS = { ready: "Sedia", sent: "Dah dihantar", no_phone: "Tiada telefon", no_document: "Dokumen belum siap", skipped: "Dilangkau", error: "Gagal" };
     const whatsappQueue = { type: "invoice", period: "", items: [], currentCode: "", prepared: null, loading: false };
 
@@ -9672,10 +9674,10 @@ Review retargeting when the warm audience is ready</textarea>
         button.classList.toggle("active", active);
         button.setAttribute("aria-selected", String(active));
       });
-      whatsappQueuePeriodLabel.hidden = type === "report";
+      whatsappQueuePeriodLabel.hidden = type === "report" || type === "reminder";
       const items = whatsappQueue.items;
       const sent = items.filter((item) => item.status === "sent").length;
-      whatsappQueueProgress.textContent = whatsappQueue.loading ? "Memuatkan..." : sent + " daripada " + items.length + " client dah dihantar " + WHATSAPP_QUEUE_LABELS[type] + (type === "report" ? " minggu ini." : " bulan " + whatsappQueue.period + ".");
+      whatsappQueueProgress.textContent = whatsappQueue.loading ? "Memuatkan..." : sent + " daripada " + items.length + " client dah dihantar " + WHATSAPP_QUEUE_LABELS[type] + (type === "report" ? " minggu ini." : type === "reminder" ? "." : " bulan " + whatsappQueue.period + ".");
       const current = whatsappQueueCurrentItem();
       if (whatsappQueue.loading) {
         whatsappQueueCurrent.innerHTML = '<div class="queue-empty">Memuatkan giliran...</div>';
@@ -9685,7 +9687,7 @@ Review retargeting when the warm audience is ready</textarea>
       } else {
         const prepared = whatsappQueue.prepared && whatsappQueue.prepared.clientCode === current.clientCode ? whatsappQueue.prepared : null;
         whatsappQueueCurrent.innerHTML = '<div class="queue-card">'
-          + '<span class="queue-kicker">Seterusnya</span>'
+          + '<span class="queue-kicker">Seterusnya' + (current.tier ? " · " + escapeHtml(REMINDER_TIER_LABELS[current.tier] || "") + " · " + current.daysOutstanding + " hari" : "") + '</span>'
           + '<strong>' + escapeHtml(current.clientName) + '</strong>'
           + '<span>' + escapeHtml(current.contactName || current.clientCode) + '</span>'
           + (prepared && prepared.message ? '<p class="queue-message">' + escapeHtml(prepared.message) + '</p>' : '<p class="queue-message muted">Menyediakan mesej...</p>')
@@ -9702,7 +9704,7 @@ Review retargeting when the warm audience is ready</textarea>
 
     async function prepareWhatsappItem(item) {
       try {
-        const response = await fetch("/api/clients/whatsapp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ clientCode: item.clientCode, type: whatsappQueue.type, period: whatsappQueue.period, preview: true }) });
+        const response = await fetch("/api/clients/whatsapp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ clientCode: item.clientCode, type: whatsappQueue.type, period: item.period || whatsappQueue.period, preview: true }) });
         const json = await readApiJson(response);
         if (!response.ok || !json.ok) throw new Error(json.error || "Mesej WhatsApp gagal disediakan.");
         if (whatsappQueue.currentCode !== item.clientCode) return;
@@ -9766,7 +9768,7 @@ Review retargeting when the warm audience is ready</textarea>
       pickNextWhatsappItem();
       renderWhatsappQueue();
       try {
-        const response = await fetch("/api/clients/whatsapp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ markSent: true, clientCode: item.clientCode, clientName: item.clientName, type: whatsappQueue.type, period: whatsappQueue.period, documentUrl: prepared.documentUrl }) });
+        const response = await fetch("/api/clients/whatsapp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ markSent: true, clientCode: item.clientCode, clientName: item.clientName, type: whatsappQueue.type, period: item.period || whatsappQueue.period, tier: item.tier, documentUrl: prepared.documentUrl }) });
         const json = await readApiJson(response);
         if (!response.ok || !json.ok) throw new Error(json.error || "Status hantar gagal direkod.");
         sessionStorage.removeItem(TODAY_CACHE_KEY);

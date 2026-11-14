@@ -50,7 +50,7 @@ test("report queue looks at the last seven days of uploads and sends", () => {
 });
 
 test("unknown types are refused and report queues skip the invoice lookup", async () => {
-  assert.throws(() => composeQueue({ clients, type: "custom", period: "2026-11" }), /Invoice, Resit atau Report/);
+  assert.throws(() => composeQueue({ clients, type: "custom", period: "2026-11" }), /Invoice, Resit, Report atau Reminder/);
   let uploadsRead = false;
   await buildWhatsappQueue({
     type: "report",

@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
     if (body.markSent) {
       const clientCode = String(body.clientCode || "").trim().toUpperCase();
       const type = String(body.type || "").trim().toLowerCase();
-      if (!/^[A-Z0-9-]{1,40}$/.test(clientCode) || !["invoice", "receipt", "report"].includes(type)) {
+      if (!/^[A-Z0-9-]{1,40}$/.test(clientCode) || !["invoice", "receipt", "report", "reminder"].includes(type)) {
         throw Object.assign(new Error("Client atau jenis WhatsApp tidak sah."), { statusCode: 400 });
       }
       const period = String(body.period || "").trim();
@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
         description: String(body.documentUrl || "").slice(0, 500),
         entityType: "client",
         entityId: clientCode,
-        metadata: { clientCode, type, period: /^\d{4}-\d{2}$/.test(period) ? period : "", documentUrl: String(body.documentUrl || "").slice(0, 500), via: "queue" },
+        metadata: { clientCode, type, period: /^\d{4}-\d{2}$/.test(period) ? period : "", documentUrl: String(body.documentUrl || "").slice(0, 500), via: "queue", ...(type === "reminder" ? { tier: Math.min(3, Math.max(1, Number(body.tier) || 1)) } : {}) },
       });
       res.statusCode = 200;
       res.end(JSON.stringify({ ok: true, clientCode, type, period }));
