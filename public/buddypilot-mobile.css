@@ -8,10 +8,6 @@
 .operations-recent-more,
 .client-telegram-toggle { display: none; }
 
-/* Three main tabs since Post Pilot was removed; the base styles assume four. */
-.topbar .topbar-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.topbar .topbar-tabs .nav-liquid-indicator { width: calc((100% - 10px) / 3); }
-
 /* Login is the one screen styled at every width: redesign.css resets main. */
 .login-page { min-height: 100dvh; }
 .login-page main {

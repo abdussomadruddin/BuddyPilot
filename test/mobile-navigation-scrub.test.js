@@ -18,7 +18,7 @@ test("mobile navigation supports hold, finger-follow scrub, and release activati
   assert.match(appSource, /bp-liquid-release/);
   assert.match(appSource, /height: 64px/);
   assert.match(appSource, /grid-template-columns: repeat\(4,/);
-  assert.match(appSource, /const NAV_ITEMS = \["dashboard", "adscmo", "clientpilot"\]/);
+  assert.match(appSource, /const NAV_ITEMS = \["dashboard", "adscmo", "clientpilot", "postpilot"\]/);
   assert.match(appSource, /border-radius: 22px/);
   assert.match(appSource, /scale\(1\.04,1\.08\)/);
   assert.match(appSource, /opacity: 0; transform: translate3d/);

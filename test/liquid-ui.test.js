@@ -47,13 +47,14 @@ test("motion has an accessible off switch and no new continuous animation or API
   assert.doesNotMatch(css, /\binfinite\b|@import|url\(https?:/);
 });
 
-test("mobile layer loads last, fits the three main tabs and keeps text readable", () => {
+test("mobile layer loads last, fits the four main tabs and keeps text readable", () => {
   const mobileCss = fs.readFileSync(require.resolve("../public/buddypilot-mobile.css"), "utf8");
   const source = fs.readFileSync(require.resolve("../api_handlers/app.js"), "utf8");
   assert.ok(source.indexOf("buddypilot-mobile.css") > source.indexOf("buddypilot-liquid.css"));
-  assert.equal((source.match(/class="tab-button[^"]*" type="button" data-tab-target=/g) || []).length, 3);
-  assert.match(mobileCss, /\.topbar \.topbar-tabs \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(mobileCss, /\.nav-liquid-indicator \{[^}]*width: calc\(\(100% - 10px\) \/ 3\)/);
+  assert.equal((source.match(/class="tab-button[^"]*" type="button" data-tab-target=/g) || []).length, 4);
+  // The base styles lay out four tabs; the mobile layer must not narrow them to three.
+  assert.match(source, /\.topbar \.topbar-tabs \{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.doesNotMatch(mobileCss, /repeat\(3, minmax/);
   assert.doesNotMatch(mobileCss, /threads|postpilot/i);
   assert.doesNotMatch(mobileCss, /font-size: (?:[0-9]|1[01])px/);
 });

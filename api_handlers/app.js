@@ -12,6 +12,8 @@ function pageHtml() {
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
+  <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261114-1">
+  <script src="/buddypilot-storytelling.js?v=20261114-1" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -4319,7 +4321,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
-  <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261112-1">
+  <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261114-1">
   <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-1">
 </head>
 <body>
@@ -4335,6 +4337,7 @@ function pageHtml() {
         <button class="tab-button active" type="button" data-tab-target="dashboard"><svg class="icon" aria-hidden="true"><use href="/icons.svg#layout-dashboard"></use></svg><span>Dashboard</span></button>
         <button class="tab-button" type="button" data-tab-target="adscmo"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart"></use></svg><span>Ads CMO</span></button>
         <button class="tab-button" type="button" data-tab-target="clientpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Client Pilot</span></button>
+        <button class="tab-button" type="button" data-tab-target="postpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#file-text"></use></svg><span>Post Pilot</span></button>
       </nav>
       <details class="topbar-menu">
         <summary aria-label="Buka tetapan" title="Tetapan" aria-controls="appSettingsMenu"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Tetapan</span></summary>
@@ -4968,6 +4971,147 @@ Review retargeting when the warm audience is ready</textarea>
         </div>
       </section>
     </section>
+    <section id="tab-postpilot" class="tab-panel" data-tab-panel="postpilot">
+      <header class="st-head">
+        <h1>Post Pilot</h1>
+        <p class="note">Facebook Storytelling: satu topik jadi post panjang dalam suara kau sendiri. Tiada apa-apa dipost ke Facebook secara automatik.</p>
+      </header>
+      <div id="stNotice" class="st-notice" role="status" hidden></div>
+      <div class="st-tabs" role="tablist" aria-label="Post Pilot">
+        <button type="button" role="tab" data-st-view="write">Facebook Storytelling</button>
+        <button type="button" role="tab" data-st-view="dna">My Writing DNA</button>
+        <button type="button" role="tab" data-st-view="drafts">Draf</button>
+        <button type="button" role="tab" data-st-view="settings">AI Settings</button>
+      </div>
+
+      <div class="st-write" data-st-panel="write">
+        <section class="workflow-card st-form" aria-labelledby="stFormTitle">
+          <h2 id="stFormTitle">Topik</h2>
+          <label for="stTopic">Topik post</label>
+          <textarea id="stTopic" rows="2" maxlength="300" placeholder="Contoh: Meta Ads Andromeda 2.0"></textarea>
+          <details class="st-optional">
+            <summary>Konteks tambahan (pilihan)</summary>
+            <label for="stCtx-opinion">Pendapat atau hujah utama</label><textarea id="stCtx-opinion" rows="2" maxlength="1500"></textarea>
+            <label for="stCtx-experience">Pengalaman peribadi (yang benar)</label><textarea id="stCtx-experience" rows="2" maxlength="1500" placeholder="Kosongkan jika tiada; AI tidak akan mereka pengalaman."></textarea>
+            <label for="stCtx-facts">Fakta atau bukti sokongan</label><textarea id="stCtx-facts" rows="2" maxlength="1500"></textarea>
+            <label for="stCtx-audience">Audiens sasaran</label><input id="stCtx-audience" type="text" maxlength="300">
+            <label for="stCtx-tone">Nada emosi</label><input id="stCtx-tone" type="text" maxlength="300">
+            <label for="stCtx-takeaway">Takeaway utama</label><input id="stCtx-takeaway" type="text" maxlength="500">
+            <label for="stCtx-cta">Call to action</label><input id="stCtx-cta" type="text" maxlength="300" placeholder="Default: ajak pembaca share">
+          </details>
+          <label for="stStyle">Gaya penulisan</label>
+          <select id="stStyle"></select>
+          <label for="stLength">Panjang</label>
+          <div class="st-inline"><select id="stLength"></select><input id="stLengthCustom" type="number" min="500" max="8000" step="100" placeholder="Aksara" aria-label="Panjang custom" hidden></div>
+          <label for="stIntensity">Intensiti <b id="stIntensityValue">8</b>/10</label>
+          <input id="stIntensity" type="range" min="1" max="10" value="8">
+          <p class="st-scale"><span>Tenang</span><span>Tajam</span><span>Kontroversi</span></p>
+          <label for="stVoice">Kekuatan suara peribadi <b id="stVoiceValue">10</b>/10</label>
+          <input id="stVoice" type="range" min="1" max="10" value="10">
+          <button id="stGenerate" type="button" data-st-ai>Generate</button>
+          <div id="stWriteStatus" class="st-status" role="status"></div>
+        </section>
+
+        <section id="stEditorCard" class="workflow-card st-editor" aria-labelledby="stEditorTitle">
+          <div class="st-editor-head">
+            <h2 id="stEditorTitle">Post</h2>
+            <div class="st-meter"><b id="stCount">0 aksara</b><span id="stTarget"></span><span id="stReading"></span><em id="stSaveState"></em></div>
+          </div>
+          <textarea id="stEditor" rows="18" maxlength="12000" placeholder="Post yang dijana akan muncul di sini. Kau boleh sunting terus."></textarea>
+          <div class="st-actions">
+            <button id="stCopy" type="button" data-st-needs-text>Salin</button>
+            <button id="stSave" type="button" class="secondary" data-st-needs-text>Simpan draf</button>
+            <button id="stApprove" type="button" class="secondary" data-st-needs-text>Tanda Approved</button>
+            <button id="stRegenerate" type="button" class="secondary" data-st-ai>Regenerate</button>
+            <button id="stUndo" type="button" class="secondary" disabled>Undo</button>
+            <button id="stPreviewToggle" type="button" class="secondary">Preview Facebook</button>
+            <button id="stNew" type="button" class="secondary">Baru</button>
+          </div>
+          <div id="stEditStatus" class="st-status" role="status"></div>
+          <div class="st-group">
+            <h3>Sunting dengan AI</h3>
+            <div id="stRewrites" class="st-chips"></div>
+            <button id="stQualityButton" type="button" class="secondary" data-st-ai data-st-needs-text>Semak kualiti</button>
+          </div>
+          <div id="stLocalReview" class="st-review"></div>
+          <div id="stQuality" class="st-quality"></div>
+          <div id="stPreview" class="st-preview" hidden>
+            <div class="st-preview-head"><span class="st-avatar" aria-hidden="true"></span><div><strong>Nama anda</strong><small>Baru sahaja · Public</small></div></div>
+            <div id="stPreviewBody" class="st-preview-body"></div>
+            <div class="st-preview-foot"><span>Like</span><span>Comment</span><span>Share</span></div>
+          </div>
+          <details id="stRevisions" class="st-optional" hidden>
+            <summary>Versi terdahulu draf ini</summary>
+            <ul id="stRevisionList" class="st-list"></ul>
+          </details>
+          <div class="st-group">
+            <h3>Maklum balas untuk draf ini</h3>
+            <div id="stFeedbackTags" class="st-chips"></div>
+            <div class="st-inline"><input id="stFeedbackNote" type="text" maxlength="1000" placeholder="Nota tambahan (pilihan)" aria-label="Nota maklum balas"><button id="stFeedbackSend" type="button" class="secondary">Hantar</button></div>
+            <div id="stFeedbackStatus" class="st-status" role="status"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="st-columns" data-st-panel="dna" hidden>
+        <section class="workflow-card">
+          <h2>Writing DNA Profile</h2>
+          <p id="stDnaMeta" class="note"></p>
+          <label for="stDnaName">Nama profil</label>
+          <input id="stDnaName" type="text" maxlength="120">
+          <div id="stDnaFields" class="st-dna-fields"></div>
+          <label for="stDnaRules">Peraturan wajib (satu sebaris)</label>
+          <textarea id="stDnaRules" rows="8"></textarea>
+          <div class="st-actions">
+            <button id="stDnaSave" type="button">Simpan DNA</button>
+            <button id="stDnaAnalyze" type="button" class="secondary" data-st-ai>Analisis contoh post</button>
+            <button id="stDnaLearn" type="button" class="secondary" data-st-ai>Belajar daripada maklum balas</button>
+            <button id="stDnaReset" type="button" class="secondary">Preset asal</button>
+          </div>
+          <div id="stDnaStatus" class="st-status" role="status"></div>
+          <h3>Sejarah versi</h3>
+          <ul id="stDnaVersions" class="st-list"></ul>
+        </section>
+        <section class="workflow-card">
+          <h2>Contoh post saya</h2>
+          <p id="stSampleMeta" class="note"></p>
+          <label for="stSampleText">Tampal satu post Facebook sebenar</label>
+          <textarea id="stSampleText" rows="6" maxlength="12000"></textarea>
+          <label for="stSampleCategory">Kategori atau topik (pilihan)</label>
+          <input id="stSampleCategory" type="text" maxlength="60" placeholder="Contoh: Meta Ads, opinion, cerita bisnes">
+          <div class="st-actions"><button id="stSampleSave" type="button">Tambah contoh</button><button id="stSampleCancel" type="button" class="secondary" hidden>Batal</button></div>
+          <details class="st-optional">
+            <summary>Import pukal (TXT atau Markdown)</summary>
+            <p class="note">Asingkan setiap post dengan satu baris --- atau dua baris kosong.</p>
+            <input id="stImportFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown" aria-label="Fail TXT atau Markdown">
+            <textarea id="stImportText" rows="6" placeholder="Atau tampal semua post di sini" aria-label="Teks untuk diimport"></textarea>
+            <button id="stImport" type="button" class="secondary">Import</button>
+          </details>
+          <div id="stSampleStatus" class="st-status" role="status"></div>
+          <ul id="stSampleList" class="st-list st-samples"></ul>
+        </section>
+      </div>
+
+      <section class="workflow-card" data-st-panel="drafts" hidden>
+        <h2>Draf</h2>
+        <div class="st-inline">
+          <input id="stDraftSearch" type="search" placeholder="Cari topik atau kandungan" aria-label="Cari draf">
+          <select id="stDraftFilter" aria-label="Tapis status"><option value="">Semua status</option><option value="draft">Draft</option><option value="approved">Approved</option><option value="published">Published</option></select>
+        </div>
+        <div id="stDraftStatus" class="st-status" role="status"></div>
+        <ul id="stDraftList" class="st-list st-drafts"></ul>
+      </section>
+
+      <section class="workflow-card" data-st-panel="settings" hidden>
+        <h2>AI Settings</h2>
+        <dl id="stSettingsInfo" class="st-settings"></dl>
+        <button id="stVerify" type="button" class="secondary">Semak akses model</button>
+        <div id="stSettingsStatus" class="st-status" role="status"></div>
+        <h3>Pengendalian data</h3>
+        <p id="stDataNotice" class="note"></p>
+        <p class="note">Model ditukar melalui environment variable GEMINI_MODEL pada server. BuddyPilot tidak mengaktifkan billing dan tidak bertukar ke model berbayar bila kuota habis.</p>
+      </section>
+    </section>
 
     <section id="tab-invoicepilot" class="tab-panel" data-tab-panel="invoicepilot">
       <section class="card">
@@ -5333,8 +5477,8 @@ Review retargeting when the warm audience is ready</textarea>
     const LAST_REPORT_CLIENT_KEY = "buddypilot-last-report-client-v1";
     const TODAY_CACHE_KEY = "buddypilot-operations-cache-v1";
     const OPERATIONS_CACHE_MS = 5 * 60 * 1000;
-    const NAV_ITEMS = ["dashboard", "adscmo", "clientpilot"];
-    const NAV_TITLES = { dashboard: "Hari Ini", adscmo: "Ads CMO", clientpilot: "Client Pilot" };
+    const NAV_ITEMS = ["dashboard", "adscmo", "clientpilot", "postpilot"];
+    const NAV_TITLES = { dashboard: "Hari Ini", adscmo: "Ads CMO", clientpilot: "Client Pilot", postpilot: "Post Pilot" };
     let currentPreview = null;
     let seenVariations = [];
     let preparedCreativeFile = null;

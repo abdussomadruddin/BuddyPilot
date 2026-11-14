@@ -12,7 +12,7 @@ test("Client, Report, Invoice and Receipt are direct Client Pilot modules", () =
   assert.doesNotMatch(source, /aria-label="Invoice Pilot tabs"/);
   assert.doesNotMatch(source, /data-tab-target="reportpilot"/);
   assert.doesNotMatch(source, /data-tab-target="invoicepilot"/);
-  assert.match(source, /const NAV_ITEMS = \["dashboard", "adscmo", "clientpilot"\]/);
+  assert.match(source, /const NAV_ITEMS = \["dashboard", "adscmo", "clientpilot", "postpilot"\]/);
   assert.match(source, /data-tab-target="adscmo"[\s\S]*?<span>Ads CMO<\/span>/);
   assert.doesNotMatch(source, /data-tab-target="copypilot"/);
   assert.match(source, /savedMainTab === "copypilot"[\s\S]*savedMainTab = "dashboard"/);

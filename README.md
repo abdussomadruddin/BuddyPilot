@@ -223,3 +223,12 @@ Server-only per-client leases prevent concurrent duplicate runs; existing Drive
 files are preserved. Failed clients are recorded in Operations Center and can
 be retried manually in Report Pilot. Vercel Hobby may invoke within the scheduled
 hour. The old Codex weekly report automation must be removed after activation.
+
+## Post Pilot: Facebook Storytelling
+
+Turns one topic into a long-form Facebook post in the owner's own voice. It never posts to Facebook.
+
+- Setup: run `supabase/migrations/20261114000100_facebook_storytelling.sql` (Supabase SQL Editor), then set `GEMINI_API_KEY` on the server.
+- Optional: `GEMINI_MODEL` (default `gemini-3.8-flash`).
+- Code: `lib/storytelling.js` (Writing DNA, prompts, checks, storage), `lib/storytelling-ai.js` (provider), `api_handlers/storytelling.js`, `public/buddypilot-storytelling.js`.
+- The app caps AI requests at 20 an hour and 120 a day, and stops with a message when the Gemini free quota runs out; it never switches to a paid model.
