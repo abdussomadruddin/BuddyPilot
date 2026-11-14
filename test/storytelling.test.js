@@ -216,6 +216,9 @@ test("a missing table is reported as setup, and the page still loads with the pr
   assert.match(boot.setupMessage, /20261114000100_facebook_storytelling\.sql/);
   assert.equal(boot.dna.profile.name, "Abdussomad — Facebook Personal Storytelling");
   await assert.rejects(post(store, "sample.save", { content: SAMPLE }), (error) => error.code === "setup_required");
+  // supabase-db.js reports a missing table in its own words.
+  const reworded = story.createStore(async () => { throw new Error("Supabase table belum setup. Run SQL dalam supabase/schema.sql dahulu."); });
+  assert.equal((await get(reworded, "?view=bootstrap")).setupRequired, true);
 });
 
 // ---------- provider ----------
