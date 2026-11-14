@@ -2,7 +2,7 @@
 // The AI key stays on the server; nothing here publishes to Facebook.
 const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/http-body");
-const { verifyModel } = require("../lib/storytelling-ai");
+const { verifyModel, publicAiConfig } = require("../lib/storytelling-ai");
 const story = require("../lib/storytelling");
 
 function send(res, status, body) {
@@ -10,8 +10,8 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-async function bootstrap(store) {
-  const config = story.publicConfig();
+async function bootstrap(store, options = {}) {
+  const config = story.publicConfig(options.config);
   try {
     const [dna, versions, samples, drafts] = await Promise.all([
       story.activeDna(store),
@@ -86,7 +86,7 @@ async function dispatch(store, { method = "GET", url = "/", body = {}, options =
   if (method === "GET") {
     const parsed = new URL(url, "http://localhost");
     const view = parsed.searchParams.get("view") || "bootstrap";
-    if (view === "bootstrap") return bootstrap(store);
+    if (view === "bootstrap") return bootstrap(store, options);
     if (view === "drafts") return { drafts: await story.listDrafts(store, { q: parsed.searchParams.get("q") || "", status: parsed.searchParams.get("status") || "" }) };
     if (view === "draft") {
       const id = parsed.searchParams.get("id");
@@ -107,7 +107,8 @@ module.exports = async function handler(req, res) {
   try {
     requireAuth(req);
     const body = req.method === "POST" ? await readJsonBody(req) : {};
-    return send(res, 200, { ok: true, ...await dispatch(story.createStore(), { method: req.method, url: req.url || "/", body }) });
+    const options = req.method === "GET" ? { config: await publicAiConfig() } : {};
+    return send(res, 200, { ok: true, ...await dispatch(story.createStore(), { method: req.method, url: req.url || "/", body, options }) });
   } catch (error) {
     // Only the error text is logged: never writing samples, drafts or keys.
     if (!error.statusCode || error.statusCode >= 500) console.error("storytelling_error", { code: error.code || "", message: String(error?.message || error).slice(0, 200) });

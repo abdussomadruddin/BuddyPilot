@@ -8,12 +8,13 @@ function pageHtml() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BuddyPilot</title>
+  <script src="/ai-key-settings.js?v=1" defer></script>
   <link rel="stylesheet" href="/action-feedback.css?v=1">
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
   <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261114-3">
-  <script src="/buddypilot-storytelling.js?v=20261114-2" defer></script>
+  <script src="/buddypilot-storytelling.js?v=20261114-keys" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -4320,6 +4321,7 @@ function pageHtml() {
   </style>
   <link rel="stylesheet" href="/buddypilot-redesign.css?v=20260801-2">
   <link rel="stylesheet" href="/buddypilot-liquid.css?v=20261005-5">
+  <link rel="stylesheet" href="/ai-key-settings.css?v=1">
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261114-1">
   <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-6">
@@ -4352,6 +4354,21 @@ function pageHtml() {
           <div id="menuMetaSettings" class="menu-settings-panel" hidden></div>
           <button type="button" data-menu-section="menuTikTokSettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#send"></use></svg><span>TikTok Ads</span></button>
           <div id="menuTikTokSettings" class="menu-settings-panel" hidden></div>
+          <button type="button" data-menu-section="menuAISettings"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>AI API Key</span></button>
+          <div id="menuAISettings" class="menu-settings-panel" hidden>
+            <form id="aiKeyForm" style="display:grid;gap:12px;min-width:0">
+              <h3>AI API Key</h3>
+              <label for="aiKeyProvider">Provider</label>
+              <select id="aiKeyProvider"><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option></select>
+              <label for="aiKeyModel">Model</label>
+              <input id="aiKeyModel" type="text" maxlength="100" value="gemini-3.8-flash" autocapitalize="off" spellcheck="false">
+              <p id="aiKeyStatus" class="note" role="status">Belum dimuatkan</p>
+              <label for="aiKeyValue">API key baharu</label>
+              <input id="aiKeyValue" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="512" placeholder="Kosongkan untuk kekalkan key tersimpan" style="width:100%;min-width:0;box-sizing:border-box">
+              <div class="inline-actions"><button id="aiKeyTest" type="button" class="secondary">Test Connection</button><button id="aiKeySave" type="submit">Save &amp; Use</button></div>
+              <p id="aiKeyResult" class="note" role="status" aria-live="polite"></p>
+            </form>
+          </div>
           <form method="post" action="/api/logout">
             <button class="logout-option" type="submit"><svg class="icon" aria-hidden="true"><use href="/icons.svg#log-out"></use></svg><span>Logout</span></button>
           </form>
@@ -5117,10 +5134,11 @@ Review retargeting when the warm audience is ready</textarea>
         <h2>AI Settings</h2>
         <dl id="stSettingsInfo" class="st-settings"></dl>
         <button id="stVerify" type="button" class="secondary">Semak akses model</button>
+        <button type="button" class="secondary" data-open-ai-keys>Urus AI API Key</button>
         <div id="stSettingsStatus" class="st-status" role="status"></div>
         <h3>Pengendalian data</h3>
         <p id="stDataNotice" class="note"></p>
-        <p class="note">Model ditukar melalui environment variable GEMINI_MODEL pada server. BuddyPilot tidak mengaktifkan billing dan tidak bertukar ke model berbayar bila kuota habis.</p>
+        <p class="note">Penggunaan API tertakluk pada caj dan kuota provider yang dipilih. Tiada pertukaran provider atau model secara automatik.</p>
       </section>
     </section>
 

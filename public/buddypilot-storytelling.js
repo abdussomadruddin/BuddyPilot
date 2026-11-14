@@ -335,9 +335,16 @@
   // ---------- settings ----------
   function renderSettings() {
     const config = state.config;
-    $("stSettingsInfo").innerHTML = "<dt>Provider</dt><dd>Google Gemini</dd><dt>Model</dt><dd>" + esc(config.model) + "</dd><dt>API key</dt><dd>" + (config.keyConfigured ? "Ditetapkan pada server" : "Belum ditetapkan (GEMINI_API_KEY)") + "</dd><dt>Had BuddyPilot</dt><dd>" + config.limits.hourly + " permintaan AI sejam, " + config.limits.daily + " sehari</dd>";
+    $("stSettingsInfo").innerHTML = "<dt>Provider</dt><dd>" + esc({gemini:"Google Gemini",openai:"OpenAI",deepseek:"DeepSeek"}[config.provider] || config.provider) + "</dd><dt>Model</dt><dd>" + esc(config.model) + "</dd><dt>API key</dt><dd>" + (config.keyConfigured ? "Ditetapkan pada server" : "Belum ditetapkan: Tetapan > AI API Key") + "</dd><dt>Had BuddyPilot</dt><dd>" + config.limits.hourly + " permintaan AI sejam, " + config.limits.daily + " sehari</dd>";
     $("stDataNotice").textContent = config.dataNotice;
   }
+
+  window.addEventListener("buddypilot-ai-settings-saved", (event) => {
+    if (!state.config) return;
+    Object.assign(state.config, event.detail);
+    state.config.dataNotice = "Topik, konteks, Writing DNA dan contoh post yang dipilih dihantar kepada provider AI yang dipilih. Penggunaan API tertakluk pada caj dan polisi provider. Jangan masukkan maklumat sulit client.";
+    renderSettings();
+  });
 
   // ---------- load ----------
   async function load() {
@@ -353,7 +360,7 @@
       $("stFeedbackTags").innerHTML = json.config.feedbackTags.map((tag) => '<button type="button" class="st-chip" data-st-tag="' + esc(tag.id) + '">' + esc(tag.label) + "</button>").join("");
       const notices = [];
       if (json.setupRequired) notices.push(json.setupMessage);
-      if (!json.config.keyConfigured) notices.push("GEMINI_API_KEY belum ditetapkan pada server, jadi penjanaan belum boleh dijalankan.");
+      if (!json.config.keyConfigured) notices.push("API key belum ditetapkan. Buka Tetapan > AI API Key sebelum menjana post.");
       $("stNotice").hidden = !notices.length;
       $("stNotice").textContent = notices.join(" ");
       try {

@@ -1,0 +1,9 @@
+.topbar-menu-list > [data-menu-section="menuAISettings"] { grid-column: 2; grid-row: 4; }
+.topbar-menu-list > form { grid-column: 1 / -1; grid-row: 5; }
+.topbar .topbar-menu-list > form button { min-height: 48px; flex-direction: row; }
+.topbar-menu-list .menu-settings-panel { grid-row: 6; }
+.topbar-menu-list .automation-schedules { grid-row: 7; }
+.topbar-menu-list #aiKeyForm { grid-column: auto; grid-row: auto; }
+#menuAISettings input, #menuAISettings select { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.topbar .topbar-menu-list #aiKeyForm button { width: auto; min-height: 44px; flex-direction: row; padding: 10px 14px; border-radius: 8px; }
+#aiKeyResult, #aiKeyStatus { overflow-wrap: anywhere; }

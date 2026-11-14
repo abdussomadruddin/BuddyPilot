@@ -228,7 +228,7 @@ hour. The old Codex weekly report automation must be removed after activation.
 
 Turns one topic into a long-form Facebook post in the owner's own voice. It never posts to Facebook.
 
-- Setup: run `supabase/migrations/20261114000100_facebook_storytelling.sql` (Supabase SQL Editor), then set `GEMINI_API_KEY` on the server.
+- Setup: apply `supabase/migrations/20261114000100_facebook_storytelling.sql` and `supabase/migrations/20261114000200_ai_provider_credentials.sql`. Set a stable encryption secret on the server (see `AI_KEY_SETTINGS.md`), then open **Tetapan > AI API Key** to save a provider, model and key. Existing `GEMINI_API_KEY` remains the default fallback when no app key has been saved.
 - Optional: `GEMINI_MODEL` (default `gemini-3.8-flash`).
 - Code: `lib/storytelling.js` (Writing DNA, prompts, checks, storage), `lib/storytelling-ai.js` (provider), `api_handlers/storytelling.js`, `public/buddypilot-storytelling.js`.
-- The app caps AI requests at 20 an hour and 120 a day, and stops with a message when the Gemini free quota runs out; it never switches to a paid model.
+- The app caps AI requests at 20 an hour and 120 a day. Gemini, OpenAI and DeepSeek are supported; choosing OpenAI/DeepSeek may incur provider charges. It never changes provider or model automatically when quota runs out.
