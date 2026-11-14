@@ -188,3 +188,14 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
   .monthly-late li { animation: bp-rise 380ms var(--bp-out) backwards; animation-delay: 220ms; }
 }
 @keyframes bp-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* ---------- Compact bottom bar on iPhone: icons only ---------- */
+@media (max-width: 600px) {
+  body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .topbar .topbar-tabs { width: min(300px, calc(100% - 48px)); height: 54px; padding: 4px; border-radius: 999px; }
+  .topbar .topbar-tabs .tab-button { min-height: 46px; padding: 0; border-radius: 999px; }
+  .topbar .topbar-tabs .tab-button .icon { width: 25px; height: 25px; }
+  /* The label stays for screen readers; only the icon shows. */
+  .topbar .topbar-tabs .tab-button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .topbar .topbar-tabs .nav-liquid-indicator { top: 0; left: 4px; width: calc((100% - 8px) / 4); height: 52px; border-radius: 999px; }
+}
