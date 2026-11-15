@@ -234,45 +234,19 @@
   }
 
   // ---------- settings ----------
-  function accountState(item) {
-    if (!item?.configured) return item?.error ? "· " + item.error : "· belum disambung";
-    return "· disambung" + (item.source === "environment" ? " (server)" : "") + (item.expiresAt ? " · token sah hingga " + new Date(item.expiresAt).toLocaleDateString("en-MY", { dateStyle: "medium" }) : "");
-  }
-
-  function renderSocial(social) {
-    state.social = social;
-    $("stThreadsState").textContent = accountState(social.threads);
-    if (!$("stThreadsId").value) $("stThreadsId").value = social.threads.accountId || "";
-  }
-
   function renderLearning(learning) {
     const counts = Object.entries(learning.posts).map(([id, count]) => count + " di " + (PLATFORMS[id] || id)).join(", ");
-    $("stLearning").textContent = (learning.total ? "AI sedang jejak " + learning.total + " post (" + counts + "). " : "Belum ada post dijejak. Sambung akaun di bawah; AI akan ambil post lama dan angka engagement sendiri setiap hari. ")
+    $("stLearning").textContent = (learning.total ? "AI sedang jejak " + learning.total + " post (" + counts + "). " : "Belum ada post dijejak. ")
       + (learning.last ? "Kali terakhir belajar: " + when(learning.last.at) + ". " + learning.last.note : "Belum pernah belajar daripada engagement.");
   }
 
   async function loadSettings() {
     try {
       const [social, learning] = await Promise.all([request("GET", null, "", "/api/settings/social"), request("GET", null, "?view=learning")]);
-      renderSocial(social.social);
+      state.social = social.social;
       renderLearning(learning.learning);
     } catch (error) {
-      setStatus($("stSocialStatus"), "err", error.message);
-    }
-  }
-
-  async function saveAccount(event, provider, idField, tokenField, label) {
-    event.preventDefault();
-    const token = $(tokenField).value.trim();
-    if (!token) { setStatus($("stSocialStatus"), "err", "Tampal token " + label + " dahulu."); $(tokenField).focus(); return; }
-    setStatus($("stSocialStatus"), "info", "Menguji sambungan " + label + "...");
-    try {
-      const json = await request("POST", { action: "save", provider, accountId: $(idField).value.trim(), token }, "", "/api/settings/social");
-      $(tokenField).value = "";
-      renderSocial(json.social);
-      setStatus($("stSocialStatus"), "ok", json.message);
-    } catch (error) {
-      setStatus($("stSocialStatus"), "err", error.message);
+      setStatus($("stLearnStatus"), "err", error.message);
     }
   }
 
@@ -330,14 +304,11 @@
   async function sendToMac(platform) {
     const content = editor.value.trim();
     if (state.busy || !content) return;
-    if (platform === "facebook" && state.current.image) {
-      return setStatus($("stPublishStatus"), "err", "Auto-post Facebook personal buat masa ini untuk teks sahaja. Gambar disokong untuk Threads.");
-    }
     setBusy(true);
     setStatus($("stPublishStatus"), "info", "Menghantar draf ke Mac...");
     try {
       const job = await macRequest({ action: "enqueue", platform, content, autoPost: true,
-        ...(platform === "threads" && state.current.image ? { image: state.current.image } : {}) });
+        ...(state.current.image ? { image: state.current.image } : {}) });
       macJobId = job.id;
       window.dispatchEvent(new Event("buddypilot-post-queued"));
       $("stMacStatusCheck").hidden = false;
@@ -392,15 +363,45 @@
   editor.addEventListener("input", () => { render(); clearTimeout(typing); typing = setTimeout(remember, 600); });
   $("stBrief").addEventListener("input", () => { clearTimeout(typing); typing = setTimeout(remember, 600); });
 
-  $("stThreadsForm").addEventListener("submit", (event) => saveAccount(event, "threads", "stThreadsId", "stThreadsToken", "Threads"));
+  function scanChrome() {
+    return new Promise((resolve, reject) => {
+      const id = crypto.randomUUID();
+      const event = "buddypilot-learn-result";
+      const finish = () => {
+        clearTimeout(timer);
+        window.removeEventListener(event, receive);
+      };
+      const receive = ({ detail }) => {
+        if (detail?.id !== id) return;
+        finish();
+        if (detail.result?.error || !Array.isArray(detail.result?.posts)) {
+          reject(new Error(detail.result?.error || "Extension Chrome tidak dapat dihubungi."));
+        } else resolve(detail.result);
+      };
+      const timer = setTimeout(() => {
+        finish();
+        reject(new Error("Semakan tamat masa. Buka BuddyPilot di Chrome yang ada extension Post Pilot dan cuba lagi."));
+      }, 85000);
+      window.addEventListener(event, receive);
+      window.dispatchEvent(new CustomEvent("buddypilot-learn-request", { detail: id }));
+    });
+  }
+
   $("stLearnNow").addEventListener("click", async () => {
-    const json = await runAi($("stLearnStatus"), "AI sedang belajar...", () => post("learn.run"));
+    const status = $("stLearnStatus");
+    const json = await runAi(status, "Chrome sedang membaca post 30 hari terakhir...", async () => {
+      const scan = await scanChrome();
+      if (!scan.posts.length) throw new Error(scan.notes?.join(" ") || "Tiada post dalam 30 hari dapat dibaca.");
+      setStatus(status, "info", "AI sedang belajar daripada post yang dibaca...");
+      return { ...await post("learn.chrome", { posts: scan.posts }), notes: scan.notes };
+    });
     if (!json) return;
     renderLearning(json.learning);
     const cycle = json.cycle;
-    setStatus($("stLearnStatus"), cycle.learned ? "ok" : "info", cycle.learned
-      ? "Siap. " + (cycle.changes?.join(" ") || "Gaya dikemas kini daripada " + cycle.posts + " post.")
-      : [cycle.reason, ...(cycle.notes || [])].filter(Boolean).join(" ") || "Tiada perubahan.");
+    const counts = "30 hari: " + json.counts.personal + " Facebook personal, " + json.counts.threads + " Threads.";
+    setStatus(status, cycle.learned ? "ok" : "info", [counts, cycle.learned
+      ? (cycle.changes?.join(" ") || "Gaya dikemas kini daripada " + cycle.posts + " post.")
+      : cycle.reason, ...(json.notes || [])].filter(Boolean).join(" "));
   });
 
   window.addEventListener("buddypilot-ai-settings-saved", (event) => {

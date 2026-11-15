@@ -42,6 +42,26 @@ const post = (store, action, body = {}, options = {}) => dispatch(store, { metho
 const get = (store, query) => dispatch(store, { method: "GET", url: `/api/storytelling${query}` });
 const SAMPLE = "Ini post sebenar saya pasal Meta Ads. Ramai yang salah faham pasal budget dan creative, sebab itu result tak pernah stabil walaupun dah tukar macam-macam.";
 
+test("Chrome learning uses recent posts from both profiles and deduplicates imports", async () => {
+  const store = createMemoryStore();
+  const now = () => new Date("2026-11-16T00:00:00Z");
+  const ai = async () => ({ text: JSON.stringify({ engagement: "Perenggan pendek dan contoh praktikal." }), model: "fixture" });
+  const posts = ["personal", "threads"].flatMap((platform) => Array.from({ length: 3 }, (_, index) => ({
+    platform,
+    url: platform === "personal" ? `https://www.facebook.com/owner/posts/${index}` : `https://www.threads.com/@owner/post/${index}`,
+    text: SAMPLE + " " + index,
+    postedAt: "2026-11-10T00:00:00Z",
+    reactions: index + 1,
+  })));
+  posts.push({ ...posts[0] }, { ...posts[0], url: "https://www.facebook.com/owner/posts/older", postedAt: "2026-10-01T00:00:00Z" });
+  const options = { learning: { now, ai } };
+  const first = await post(store, "learn.chrome", { posts }, options);
+  assert.deepEqual(first.counts, { personal: 3, threads: 3 });
+  assert.equal(first.cycle.posts, 6);
+  const second = await post(store, "learn.chrome", { posts }, options);
+  assert.equal(second.learning.total, 6);
+});
+
 test("the feature is wired into BuddyPilot's navigation and router", () => {
   const page = fs.readFileSync(path.join(__dirname, "../api_handlers/app.js"), "utf8");
   const router = fs.readFileSync(path.join(__dirname, "../api/app.js"), "utf8");

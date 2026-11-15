@@ -95,6 +95,17 @@ test("photo and Facebook autojobs require compatible extension capabilities", as
     return options ? [{ id }] : [row];
   });
   assert.equal(fb.job.platform, "facebook");
+  await dispatch({ action: "enqueue", platform: "facebook", autoPost: true, content: "Teks", image }, put);
+  assert.equal(row.status, "queued_auto_facebook_image");
+  await dispatch({ action: "claim", autoFacebook: true, autoOnly: true }, async (path) => {
+    assert.doesNotMatch(path, /queued_auto_facebook_image/);
+    return [];
+  });
+  const facebookPhoto = await dispatch({ action: "claim", autoFacebook: true, facebookImages: true, autoOnly: true }, async (path, options) => {
+    assert.match(path, /queued_auto_facebook_image/);
+    return options ? [{ id }] : [row];
+  });
+  assert.equal(facebookPhoto.job.image, image);
 });
 
 test("autopost jobs are distinct from manual jobs and can finish with uncertain status", async () => {

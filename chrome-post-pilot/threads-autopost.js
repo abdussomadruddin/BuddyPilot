@@ -26,18 +26,24 @@ async function publishThreadsInChrome(parts, username, photo = null) {
     }
     return null;
   };
-  const accounts = (dialog) => find(dialog, 'a[href],span').filter((node) =>
+  const accounts = (dialog) => find(dialog, 'a[href],span,img[alt]').filter((node) =>
     !node.closest('[contenteditable]') && (
       (node.matches("a[href]") && new URL(node.href).origin === location.origin && new URL(node.href).pathname.replace(/\/$/, "").toLowerCase() === "/@" + username) ||
-      (!node.children.length && label(node).replace(/^@/, "").toLowerCase() === username)
+      (node.matches("span") && flatten(node.textContent).replace(/^@/, "").toLowerCase() === username) ||
+      (node.matches("img[alt]") && node.getAttribute("alt").toLowerCase() === username + "'s profile picture")
     ));
   if (dialogs().length) return "failed:composer";
   const open = await wait(() => control(document, /^new thread$/i) || control(document, /^start a thread$/i) || control(document, /^what.s new[?.]?$/i));
   if (!open || dialogs().length) return "failed:composer";
   open.click();
-  const composer = await wait(() => only(dialogs()));
-  if (!composer) return "failed:composer";
-  if (!await wait(() => only(dialogs()) === composer && accounts(composer).length)) return "failed:profile";
+  let sawComposer = false;
+  const composer = await wait(() => {
+    const dialog = only(dialogs());
+    if (!dialog) return null;
+    sawComposer = true;
+    return accounts(dialog).length && editors(dialog).length ? dialog : null;
+  });
+  if (!composer) return sawComposer ? "failed:profile" : "failed:composer";
 
   const previews = () => find(composer, "img[src]").filter((node) => /^(blob:|data:image\/)/i.test(node.src));
   const originalPreviews = photo ? new Set(previews().map((node) => node.src)) : null;
@@ -100,7 +106,7 @@ async function publishThreadsInChrome(parts, username, photo = null) {
     if (!fields) return index ? "failed:thread_part" : "failed:composer";
     if (!fields.slice(0, index).every((field, i) => matches(field, parts[i])) || flatten(fields[index].innerText)) return "failed:text";
     fields[index].focus();
-    document.execCommand("insertText", false, parts[index]);
+    if (!/[\r\n]/.test(parts[index])) document.execCommand("insertText", false, parts[index]);
     const textReady = () => {
       const current = editors(composer);
       return only(dialogs()) === composer && current.length === index + 1 && matches(current[index], parts[index]);

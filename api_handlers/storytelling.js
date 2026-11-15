@@ -87,6 +87,12 @@ const ACTIONS = {
   "personal.queue": async (store, body) => publishing.queuePersonal(store, body),
   "image.upload": async (store, body, options) => require("../lib/storytelling-image").saveImage(body, options.image),
   "learn.run": async (store, body, options) => ({ cycle: await learning.runCycle(store, { force: true }, options.learning), learning: await learning.learningStatus(store) }),
+  "learn.chrome": async (store, body, options) => {
+    const settings = options.learning || learning.defaultOptions();
+    const scan = await publishing.syncChromeLearning(store, body.posts, settings.now());
+    const cycle = await learning.learnFromEngagement(store, { force: true, publicationIds: scan.ids }, settings);
+    return { cycle, counts: scan.counts, learning: await learning.learningStatus(store) };
+  },
   "ai.verify": async (store, body, options) => ({ verification: await (options.verify || verifyModel)() }),
 };
 

@@ -16,7 +16,7 @@ async function simulate({ user = "owner", canAdd = true, confirm = true, breakIn
     getAttribute: () => null, closest: () => null, matches: () => false,
     querySelector: () => null,
     focus() { focused = this; },
-    dispatchEvent(event) { this.innerText = event.clipboardData.text; },
+    dispatchEvent(event) { steps.push("paste"); this.innerText = event.clipboardData.text; },
   });
   const fields = [node("")];
   let image;
@@ -32,12 +32,14 @@ async function simulate({ user = "owner", canAdd = true, confirm = true, breakIn
     },
   };
   const owner = node(user);
+  owner.matches = (selector) => selector === "span";
+  owner.children = [{}];
   const dialog = {
     ...node("New thread"),
     isConnected: existing,
     querySelectorAll(selector) {
       if (selector.includes("contenteditable")) return fields;
-      if (selector === "a[href],span") return [owner];
+      if (selector === "a[href],span,img[alt]") return [owner];
       if (selector === 'input[type="file"]') return imageOpened ? [upload] : [];
       if (selector === "img[src]") return image ? [image] : [];
       return [post, ...(canAdd ? [add] : []), ...(photo && !missingImageButton ? [addImage] : [])];
@@ -64,7 +66,7 @@ async function simulate({ user = "owner", canAdd = true, confirm = true, breakIn
     execCommand(command, _ui, text) {
       assert.equal(command, "insertText");
       steps.push("text");
-      if (!paste) focused.innerText = breakInsert ? "Teks tidak sama" : text;
+      if (!paste) focused.innerText = breakInsert ? "Teks tidak sama" : text.replace(/\n/g, "");
     },
   };
   const publish = vm.runInNewContext(source + "\npublishThreadsInChrome", {
@@ -116,7 +118,7 @@ test("Threads photo must be visibly attached to the first part before posting", 
   assert.equal(good.photoAttached, true);
   assert.equal(good.status, "posted");
   assert.equal(good.clicks, 1);
-  assert.deepEqual(good.steps, ["new-thread", "add-image", "upload", "text", "next-part", "text", "next-part", "text", "post"]);
+  assert.deepEqual(good.steps, ["new-thread", "add-image", "upload", "paste", "next-part", "text", "next-part", "text", "post"]);
   const moved = await simulate({ photo: true, wrongRow: true });
   assert.equal(moved.status, "failed:image");
   assert.equal(moved.clicks, 0);
@@ -129,5 +131,5 @@ test("Threads photo must be visibly attached to the first part before posting", 
 test("an unlabelled photo control can use the unique already-mounted image input", async () => {
   const result = await simulate({ photo: true, missingImageButton: true, mountedInput: true });
   assert.equal(result.status, "posted");
-  assert.deepEqual(result.steps, ["new-thread", "upload", "text", "next-part", "text", "next-part", "text", "post"]);
+  assert.deepEqual(result.steps, ["new-thread", "upload", "paste", "next-part", "text", "next-part", "text", "post"]);
 });

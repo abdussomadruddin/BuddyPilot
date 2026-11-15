@@ -28,9 +28,13 @@ the queue. Facebook and Threads must be signed in on the same Chrome profile.
    when a job is queued. Jobs from another device are picked up by periodic
    checks, normally about 30 seconds apart. No Semak sekarang click is required.
 
-Facebook personal auto-post currently supports text only. Long Threads drafts
+Facebook personal auto-post supports text with an optional JPEG/PNG. Long Threads drafts
 are split into parts of at most 500 characters, with the optional JPEG/PNG
 attached to part one only. Missing or unverified attachments stop publishing.
+Use Belajar sekarang in Post Pilot on the same Chrome profile to read dated
+posts from the last 30 days on both configured profiles. The extension reads
+visible engagement counts where available. BuddyPilot uses the posts it could
+read for that learning run. This workflow requires the matching BuddyPilot web release.
 If
 Chrome is asleep or logged out, queued drafts wait up to 24 hours; stale
 drafts are not handed off. Claimed or failed jobs are not automatically retried.

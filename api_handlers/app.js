@@ -14,7 +14,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
   <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261115-simple">
-  <script src="/buddypilot-storytelling.js?v=20261115-autopostfix" defer></script>
+  <script src="/buddypilot-storytelling.js?v=20261116-chrome-learning" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -5058,16 +5058,6 @@ Review retargeting when the warm audience is ready</textarea>
           <p id="stLearning" class="note">Memuatkan...</p>
           <button id="stLearnNow" type="button" class="secondary" data-st-ai>Belajar sekarang</button>
           <div id="stLearnStatus" class="st-status" role="status"></div>
-        </section>
-        <section class="workflow-card">
-          <h2>Akaun sosial</h2>
-          <form id="stThreadsForm" class="st-account" autocomplete="off">
-            <h3>Threads <span id="stThreadsState" class="st-account-state"></span></h3>
-            <label for="stThreadsId">Threads User ID</label><input id="stThreadsId" type="text" inputmode="numeric" maxlength="30">
-            <label for="stThreadsToken">Threads access token</label><input id="stThreadsToken" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="1024">
-            <button type="submit" class="secondary">Simpan &amp; uji</button>
-          </form>
-          <div id="stSocialStatus" class="st-status" role="status"></div>
         </section>
         <section class="workflow-card">
           <h2>AI</h2>

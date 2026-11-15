@@ -26,11 +26,11 @@ async function dispatch(body, request = supabaseRequest, now = Date.now()) {
     }
     const multipart = parts.length > 1;
     const auto = body.autoPost === true;
-    const image = auto && platform === "threads" ? safeImageUrl(body.image) : "";
-    if (auto && body.image && !image) throw rejected("Gambar Threads tidak sah.");
+    const image = auto ? safeImageUrl(body.image) : "";
+    if (auto && body.image && !image) throw rejected("Gambar post tidak sah.");
     const [job] = await request(TABLE + "?select=id,status", {
       method: "POST", prefer: "return=representation",
-      body: { owner_key: "post-pilot-mac", kind: "draft", status: image ? "queued_auto_image" : auto ? (platform === "facebook" ? "queued_auto_facebook" : "queued_auto") : multipart ? "queued_thread" : "queued", data: { platform, parts, ...(image ? { image } : {}) } },
+      body: { owner_key: "post-pilot-mac", kind: "draft", status: image ? (platform === "facebook" ? "queued_auto_facebook_image" : "queued_auto_image") : auto ? (platform === "facebook" ? "queued_auto_facebook" : "queued_auto") : multipart ? "queued_thread" : "queued", data: { platform, parts, ...(image ? { image } : {}) } },
     });
     return { job: { id: job.id, state: "queued" } };
   }
@@ -40,7 +40,10 @@ async function dispatch(body, request = supabaseRequest, now = Date.now()) {
       states.push("queued_auto");
       if (body.threadsImages === true) states.push("queued_auto_image");
     }
-    if (body.autoFacebook === true) states.push("queued_auto_facebook");
+    if (body.autoFacebook === true) {
+      states.push("queued_auto_facebook");
+      if (body.facebookImages === true) states.push("queued_auto_facebook_image");
+    }
     if (!states.length) return { job: null };
     const pending = states.length === 1 ? `status=eq.${states[0]}` : `status=in.(${states.join(",")})`;
     const [candidate] = await request(`${TABLE}?select=id,status,data&${SCOPE}&${pending}&created_at=gte.${encodeURIComponent(cutoff)}&order=created_at.asc,id.asc&limit=1`);
@@ -51,7 +54,7 @@ async function dispatch(body, request = supabaseRequest, now = Date.now()) {
     return { job: job ? { id: candidate.id, platform: candidate.data.platform, content: candidate.data.parts[0],
       ...(body.multipart === true || body.autoThreads === true || body.autoFacebook === true ? { parts: candidate.data.parts } : {}),
       ...(candidate.status.startsWith("queued_auto") ? { autoPost: true } : {}),
-      ...(candidate.status === "queued_auto_image" ? { image: candidate.data.image } : {}) } : null };
+      ...(["queued_auto_image", "queued_auto_facebook_image"].includes(candidate.status) ? { image: candidate.data.image } : {}) } : null };
   }
   if (typeof body.id !== "string" || !UUID.test(body.id)) throw rejected("ID giliran tidak sah.");
   if (body.action === "finish" && ["review", "copy", "failed", "posted", "uncertain"].includes(body.state)) {
@@ -64,7 +67,7 @@ async function dispatch(body, request = supabaseRequest, now = Date.now()) {
   if (body.action === "status") {
     const [job] = await request(`${TABLE}?${SCOPE}&id=eq.${body.id}&select=id,status,created_at,reason:data->>reason`);
     if (!job) throw rejected("Draf tidak dijumpai.", 404);
-    const queued = ["queued", "queued_thread", "queued_auto", "queued_auto_image", "queued_auto_facebook"].includes(job.status);
+    const queued = ["queued", "queued_thread", "queued_auto", "queued_auto_image", "queued_auto_facebook", "queued_auto_facebook_image"].includes(job.status);
     const state = queued ? (Date.parse(job.created_at) < Date.parse(cutoff) ? "expired" : "queued") : job.status;
     return { job: { id: job.id, state, ...(state === "failed" && FAILURE_STAGES.has(job.reason) ? { reason: job.reason } : {}) } };
   }

@@ -1,4 +1,4 @@
-async function publishFacebookInChrome(text, name) {
+async function publishFacebookInChrome(text, name, photo = null) {
   if (location.origin !== "https://www.facebook.com" || !text?.trim() || !name) return "failed:profile";
   const compact = (value) => String(value || "").replace(/[\u200B\uFEFF]/gu, "").replace(/\s+/gu, " ").trim();
   const visible = (node) => node.getClientRects().length && getComputedStyle(node).visibility !== "hidden";
@@ -7,7 +7,11 @@ async function publishFacebookInChrome(text, name) {
   const label = (node) => compact(node.getAttribute("aria-label") || node.textContent);
   const control = (root, pattern) => only(find(root, 'button,[role="button"]').filter((node) =>
     !node.disabled && node.getAttribute("aria-disabled") !== "true" && pattern.test(label(node))));
-  const dialogs = () => find(document, '[role="dialog"]');
+  const dialogs = () => {
+    const visibleDialogs = find(document, '[role="dialog"]');
+    return visibleDialogs.filter((dialog) =>
+      !visibleDialogs.includes(dialog.parentElement?.closest('[role="dialog"]')));
+  };
   const field = (dialog) => {
     const fields = find(dialog, '[contenteditable="true"]').filter((node) =>
       !node.parentElement?.closest('[contenteditable="true"]') && !node.closest('[aria-hidden="true"]'));
@@ -41,8 +45,36 @@ async function publishFacebookInChrome(text, name) {
   });
   if (!composer || compact(field(composer).innerText)) return "failed:composer";
   if (!await wait(() => only(dialogs()) === composer && account(composer))) return "failed:profile";
+  let photoSrc = "";
+  const previews = (dialog) => find(dialog, "img[src]").filter((node) =>
+    /^(blob:|data:image\/)/i.test(node.src) && node.complete && node.naturalWidth > 0);
+  if (photo) {
+    if (!["image/jpeg", "image/png"].includes(photo.type) || !photo.base64 || photo.base64.length > 5592408) return "failed:image";
+    const existing = new Set(previews(composer).map((node) => node.src));
+    const inputForPhoto = () => only([...composer.querySelectorAll('input[type="file"]')].filter((node) =>
+      !node.disabled && !node.files?.length && /(?:image\/|\.(?:jpg|jpeg|png)\b)/i.test(node.accept)));
+    const skipPicker = (event) => { if (event.target?.matches('input[type="file"]')) event.preventDefault(); };
+    document.addEventListener("click", skipPicker, true);
+    try {
+      const add = control(composer, /^(photo\s*\/\s*video|photo or video|foto\s*\/\s*video)$/i);
+      if (add) add.click();
+      const input = await wait(() => only(dialogs()) === composer && inputForPhoto());
+      if (!input) return "failed:image";
+      const bytes = Uint8Array.from(atob(photo.base64), (char) => char.charCodeAt(0));
+      const data = new DataTransfer();
+      data.items.add(new File([bytes], photo.type === "image/png" ? "buddypilot.png" : "buddypilot.jpg", { type: photo.type }));
+      input.files = data.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch { return "failed:image"; }
+    finally { document.removeEventListener("click", skipPicker, true); }
+    photoSrc = await wait(() => only(dialogs()) === composer && only(previews(composer).filter((node) => !existing.has(node.src)))?.src);
+    if (!photoSrc || !field(composer) || compact(field(composer).innerText)) return "failed:image";
+  }
+  const photoReady = (dialog) => !photo || previews(dialog).some((node) => node.src === photoSrc);
   field(composer).focus();
-  document.execCommand("insertText", false, text);
+  // Facebook's editor strips line breaks from insertText. Its paste handler
+  // preserves paragraphs when given plain text.
+  if (!/[\r\n]/.test(text)) document.execCommand("insertText", false, text);
   const textReady = () => only(dialogs()) === composer && account(composer) && verifyText(composer);
   if (!await wait(textReady, 6)) {
     const editor = only(dialogs()) === composer ? field(composer) : null;
@@ -60,6 +92,7 @@ async function publishFacebookInChrome(text, name) {
   if (!submit) {
     const next = await wait(() => control(composer, /^(next|seterusnya)$/i), 15);
     if (!next || only(dialogs()) !== composer || !verifyText(composer)) return "failed:next";
+    if (!photoReady(composer)) return "failed:image";
     next.click();
     finalDialog = await wait(() => {
       const dialog = only(dialogs());
@@ -70,8 +103,10 @@ async function publishFacebookInChrome(text, name) {
     submit = control(finalDialog, /^(post|siarkan)$/i);
   }
   if (!submit || only(dialogs()) !== finalDialog || !verifyText(finalDialog)) return "failed:post_button";
+  if (!await wait(() => only(dialogs()) === finalDialog && photoReady(finalDialog), 15)) return "failed:image";
+  if (!verifyText(finalDialog) || control(finalDialog, /^(post|siarkan)$/i) !== submit) return "failed:post_button";
   const confirmations = () => find(document, '[role="alert"],[role="status"],[aria-live]').filter((node) =>
-    /^(post published|your post was published|your post is now published|posted)[.!]?$/i.test(label(node)));
+    /^(post published|your post (?:was|has been|is now) published|posted)[.!]?$/i.test(label(node)));
   const before = new Set(confirmations());
   try {
     submit.click();
