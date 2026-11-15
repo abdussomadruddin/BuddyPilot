@@ -214,7 +214,7 @@ test("Facebook Content Library reads publication date and named metric columns",
     document: { querySelectorAll: () => [table], scrollingElement: { scrollTop: 0, scrollBy() {} } },
     window: { innerHeight: 700 }, setTimeout: (resolve) => resolve(),
   });
-  const { posts } = await scanLibrary(Date.parse("2026-10-16T17:00:00Z"));
+  const { posts } = await scanLibrary(Date.parse("2026-10-16T17:00:00Z"), [{ text: "Contoh post Facebook" }]);
   assert.equal(posts.length, 1);
   assert.equal(posts[0].postedAt, "2026-11-15T15:59:00.000Z");
   assert.equal(posts[0].facebookEngagement, 0);

@@ -35,10 +35,9 @@ async function scanLearningProfile(platform, owner, cutoff, findContentLibrary =
       ? `Profil yang dibuka ialah "${found}", tetapi extension disetkan kepada "${owner}". Betulkan nama dalam extension Post Pilot.`
       : "Profil tidak dapat disahkan. Semak akaun yang log masuk di Chrome." };
   }
-  if (!threads && findContentLibrary) {
-    const link = [...document.querySelectorAll('a[href*="/professional_dashboard/content/content_library"]')].find((node) => node.getClientRects().length);
-    return link ? { libraryUrl: link.href } : { error: "Pautan Content Library tiada pada profil Facebook ini." };
-  }
+  const readProfileText = !threads && findContentLibrary;
+  const libraryUrl = readProfileText ? [...document.querySelectorAll('a[href*="/professional_dashboard/content/content_library"]')]
+    .find((node) => node.getClientRects().length)?.href : undefined;
   const profilePath = currentPath();
   const profileId = new URL(location.href).searchParams.get("id");
 
@@ -146,7 +145,7 @@ async function scanLearningProfile(platform, owner, cutoff, findContentLibrary =
       const id = (threads ? match?.[2] : match?.[1]) || (!threads ? url.searchParams.get("story_fbid") : "");
       if (!id || records.has(id) || (threads && normalize(match[1]) !== name)) continue;
       const date = dateFrom(link);
-      if (!Number.isFinite(date) || date > Date.now() + 60000) continue;
+      if ((!readProfileText && !Number.isFinite(date)) || date > Date.now() + 60000) continue;
       let card = link.closest(threads ? "article,[role=article],[data-pressable-container]" : "article,[role=article]");
       if (!threads) {
         const message = '[data-ad-preview="message"],[data-ad-comet-preview="message"]';
@@ -172,19 +171,38 @@ async function scanLearningProfile(platform, owner, cutoff, findContentLibrary =
       }
       if (!card || ![...card.querySelectorAll("a[href]")].some(isOwner)) continue;
       if (date < cutoff) { crossedCutoff = true; continue; }
-      const content = threads
+      const messageSelector = '[data-ad-preview="message"],[data-ad-comet-preview="message"]';
+      const readContent = () => threads
         ? card.querySelector('[data-testid="post-text"]') || [...card.querySelectorAll('[dir="auto"]')].find((node) => !node.closest("a,button,[role=button]") && node.innerText?.trim().length >= 10)
-        : card.querySelector('[data-ad-preview="message"],[data-ad-comet-preview="message"]');
-      const text = content?.innerText?.trim().slice(0, 12000);
-      if (!text) continue;
-      records.set(id, { platform: threads ? "threads" : "personal", url: url.origin + url.pathname + (match ? "" : "?story_fbid=" + encodeURIComponent(id)), remoteId: id, text, postedAt: new Date(date).toISOString(), ...readMetrics(card) });
+        : card.querySelector(messageSelector);
+      if (readProfileText) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const content = readContent();
+          const scope = content?.parentElement && content.parentElement.querySelectorAll(messageSelector).length === 1
+            ? content.parentElement : content;
+          const expand = [...(scope?.querySelectorAll('button,[role="button"]') || [])].find((button) =>
+            button.getClientRects().length && /^(see more|lihat lagi|lihat selanjutnya)$/i.test(button.innerText.trim()));
+          if (!expand) break;
+          const before = content.innerText;
+          expand.click();
+          for (let settle = 0; settle < 3 && readContent()?.innerText === before; settle++) {
+            await new Promise((resolve) => setTimeout(resolve, 180));
+          }
+          if (readContent()?.innerText === before) break;
+        }
+      }
+      const rawText = readContent()?.innerText?.trim();
+      if (!rawText || (readProfileText && /(?:…|\.\.\.)\s*(?:see more|lihat lagi|lihat selanjutnya)?$/i.test(rawText))) continue;
+      const text = rawText.slice(0, 12000);
+      records.set(id, { platform: threads ? "threads" : "personal", url: url.origin + url.pathname + (match ? "" : "?story_fbid=" + encodeURIComponent(id)), remoteId: id, text,
+        ...(Number.isFinite(date) ? { postedAt: new Date(date).toISOString() } : {}), ...(!readProfileText ? readMetrics(card) : {}) });
       if (records.size >= 80) break;
     }
-    if (crossedCutoff && page >= 3) break;
+    if (!readProfileText && crossedCutoff && page >= 3) break;
     const top = window.scrollY;
     window.scrollBy(0, Math.max(300, window.innerHeight * 0.85));
     await pause();
     if (window.scrollY === top && page > (threads || records.size ? 3 : 9)) break;
   }
-  return { posts: [...records.values()] };
+  return { posts: [...records.values()], ...(readProfileText ? { libraryUrl } : {}) };
 }

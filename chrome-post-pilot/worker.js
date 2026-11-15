@@ -165,7 +165,12 @@ async function collectLearningPosts() {
       let [{ result }] = await chrome.scripting.executeScript({
         target: { tabId: tab.id }, func: scanLearningProfile, args: [platform, owner, cutoff, platform === "facebook"],
       });
+      if (platform === "facebook" && !result?.error && (!result?.posts?.length || !result.libraryUrl)) {
+        notes.push(label + ": " + (result?.posts?.length ? "Pautan Content Library tidak dijumpai untuk semak engagement." : "Teks penuh post belum dapat dibaca daripada profil."));
+        continue;
+      }
       if (platform === "facebook" && result?.libraryUrl) {
+        const profilePosts = result.posts;
         const library = new URL(result.libraryUrl);
         if (library.origin !== new URL(PLATFORMS.facebook).origin ||
             !library.pathname.startsWith("/professional_dashboard/content/content_library")) {
@@ -174,7 +179,7 @@ async function collectLearningPosts() {
         await chrome.tabs.update(tab.id, { url: library.href });
         await waitForTab(tab.id);
         [{ result }] = await chrome.scripting.executeScript({
-          target: { tabId: tab.id }, func: scanFacebookContentLibrary, args: [cutoff],
+          target: { tabId: tab.id }, func: scanFacebookContentLibrary, args: [cutoff, profilePosts],
         });
       }
       if (result?.note) notes.push(result.note);

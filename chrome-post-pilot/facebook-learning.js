@@ -1,10 +1,17 @@
-async function scanFacebookContentLibrary(cutoff) {
+async function scanFacebookContentLibrary(cutoff, profilePosts = []) {
   const origin = "https://www.facebook.com";
   if (location.origin !== origin || !location.pathname.startsWith("/professional_dashboard/content/content_library")) {
     return { error: "Content Library Facebook tidak dapat dibuka." };
   }
   const pause = () => new Promise((resolve) => setTimeout(resolve, 600));
   const posts = new Map();
+  const normalize = (text) => String(text || "").replace(/\s+/g, " ").trim();
+  const profileByText = new Map();
+  for (const post of profilePosts) {
+    const key = normalize(post.text);
+    profileByText.set(key, profileByText.has(key) ? null : post);
+  }
+  const libraryByText = new Map();
   const capturedAt = Date.now();
   const todayParts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kuala_Lumpur", year: "numeric", month: "2-digit", day: "2-digit",
@@ -58,12 +65,21 @@ async function scanFacebookContentLibrary(cutoff) {
       const name = (link.getAttribute("aria-label") || "").replace(/^Post insights,\s*/i, "").trim();
       const text = name || label.slice(0, published.index).trim();
       if (!text || /^(?:photo|video|text) story$/i.test(text) || /(?:…|\.\.\.)$/.test(text)) continue;
+      const key = normalize(text.slice(0, 12000));
+      const profile = profileByText.get(key);
+      if (!profile) continue;
+      const previousId = libraryByText.get(key);
+      if (previousId && previousId !== id) {
+        posts.delete(previousId);
+        continue;
+      }
+      libraryByText.set(key, id);
       const date = parseDate(published[1].trim());
       if (!Number.isFinite(date) || date < cutoff || date > capturedAt) continue;
       const canonical = new URL("/content/insights/", origin);
       canonical.searchParams.set("content_id", id);
       posts.set(id, {
-        platform: "personal", url: canonical.href, text: text.slice(0, 12000),
+        platform: "personal", url: canonical.href, text: profile.text,
         postedAt: new Date(date).toISOString(),
         facebookEngagement: metric(row.cells[engagementIndex]?.innerText),
         views: metric(row.cells[viewsIndex]?.innerText),
