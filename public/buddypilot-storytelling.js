@@ -458,6 +458,50 @@
   $("stSave").addEventListener("click", () => saveDraft());
   $("stApprove").addEventListener("click", () => saveDraft("approved"));
   $("stCopy").addEventListener("click", () => copyText(editor.value));
+  let macJobId = "";
+  async function macRequest(payload) {
+    const response = await fetch("/api/post-pilot-queue", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Giliran Post Pilot tidak tersedia.");
+    return data.job;
+  }
+  $("stMacSend").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const platform = $("stMacPlatform").value;
+    const content = editor.value.trim();
+    if (!platform || !content) return setStatus($("stMacStatus"), "err", "Pilih platform dan sediakan teks post dahulu.");
+    if (platform === "threads" && content.length > 500) return setStatus($("stMacStatus"), "err", "Pendekkan teks Threads kepada maksimum 500 aksara.");
+    button.disabled = true;
+    setStatus($("stMacStatus"), "info", "Menghantar draf ke giliran...");
+    try {
+      const job = await macRequest({ action: "enqueue", platform, content });
+      macJobId = job.id;
+      $("stMacStatusCheck").hidden = false;
+      setStatus($("stMacStatus"), "ok", "Draf dalam giliran untuk Mac. Belum diterbitkan.");
+    } catch (error) {
+      setStatus($("stMacStatus"), "err", error.message);
+    } finally { button.disabled = false; }
+  });
+  $("stMacStatusCheck").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const { state } = await macRequest({ action: "status", id: macJobId });
+      const labels = {
+        queued: "Menunggu Chrome di Mac.",
+        claimed: "Mac mengambil draf. Semak Chrome sebelum menghantar semula.",
+        review: "Draf diisi. Semak profil dan tekan Publish di Mac.",
+        copy: "Buka tab Chrome di Mac dan salin draf ke composer secara manual.",
+        failed: "Mac tidak dapat menyediakan draf. Semak Chrome sebelum cuba lagi.",
+        expired: "Draf tamat tempoh. Hantar semula jika masih diperlukan.",
+      };
+      setStatus($("stMacStatus"), "info", labels[state] || "Status tidak tersedia.");
+    } catch (error) {
+      setStatus($("stMacStatus"), "err", error.message);
+    } finally { button.disabled = false; }
+  });
   $("stUndo").addEventListener("click", () => {
     const previous = state.history.pop();
     if (previous == null) return;

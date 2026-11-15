@@ -39,6 +39,7 @@ const routes = {
   "reports/accounts": () => require("../api_handlers/reports/accounts"),
   "reports/draft": () => require("../api_handlers/reports/draft"),
   storytelling: () => require("../api_handlers/storytelling"),
+  "post-pilot-queue": () => require("../api_handlers/post-pilot-queue"),
   settings: () => require("../api_handlers/settings"),
   "settings/logo": () => require("../api_handlers/settings/logo"),
   "telegram/action": () => require("../api_handlers/telegram/action"),

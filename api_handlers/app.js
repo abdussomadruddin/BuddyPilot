@@ -14,7 +14,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
   <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261114-3">
-  <script src="/buddypilot-storytelling.js?v=20261114-keys" defer></script>
+  <script src="/buddypilot-storytelling.js?v=20261115-queue" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -5064,6 +5064,17 @@ Review retargeting when the warm audience is ready</textarea>
           </div>
           <div id="stLocalReview" class="st-review"></div>
           <div id="stQuality" class="st-quality"></div>
+          <div class="st-actions">
+            <label for="stMacPlatform">Platform</label>
+            <select id="stMacPlatform">
+              <option value="">Pilih platform</option>
+              <option value="facebook">Facebook Personal</option>
+              <option value="threads">Threads</option>
+            </select>
+            <button id="stMacSend" type="button" class="secondary">Hantar draf ke Mac</button>
+            <button id="stMacStatusCheck" type="button" class="secondary" hidden>Semak status</button>
+          </div>
+          <div id="stMacStatus" class="st-status" role="status"></div>
           <div id="stPreview" class="st-preview" hidden>
             <div class="st-preview-head"><span class="st-avatar" aria-hidden="true"></span><div><strong>Nama anda</strong><small>Baru sahaja · Public</small></div></div>
             <div id="stPreviewBody" class="st-preview-body"></div>

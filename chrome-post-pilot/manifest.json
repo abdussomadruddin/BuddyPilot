@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "BuddyPilot Post Pilot",
+  "version": "1.0.0",
+  "minimum_chrome_version": "120",
+  "description": "Prepare BuddyPilot drafts for manual review in Facebook or Threads.",
+  "permissions": ["alarms", "scripting", "storage"],
+  "host_permissions": ["https://buddypilot.vercel.app/*", "https://www.facebook.com/*", "https://www.threads.com/*"],
+  "background": { "service_worker": "worker.js" },
+  "action": { "default_title": "Post Pilot: klik untuk hidup/mati" }
+}
