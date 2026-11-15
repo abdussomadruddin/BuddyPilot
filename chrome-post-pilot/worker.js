@@ -89,6 +89,7 @@ async function poll() {
     const tabs = await chrome.tabs.query({ url: APP + "/*" });
     const app = tabs.find((tab) => new URL(tab.url).pathname === "/" && tab.status === "complete");
     if (!app) return await badge("!", "buka BuddyPilot dan log masuk");
+    void dailyLearning(app.id);
     const claimed = await queue(app.id, { action: "claim", autoThreads: Boolean(threadsUsername), threadsImages: true, facebookImages: true, autoFacebook: Boolean(facebookName), autoOnly: true });
     if (!claimed?.ok) {
       const issue = {
@@ -172,6 +173,37 @@ async function collectLearningPosts() {
     }
   }
   return { posts, notes };
+}
+
+// Once a day, while Chrome and BuddyPilot are open, read the owner's own
+// profiles and send the posts and their engagement to BuddyPilot so Post Pilot
+// learns without anyone pressing a button. It only reads; it never posts.
+const LEARN_EVERY = 20 * 60 * 60 * 1000;
+async function dailyLearning(tabId) {
+  const { lastAutoLearn = 0 } = await chrome.storage.local.get("lastAutoLearn");
+  if (learningScan || Date.now() - lastAutoLearn < LEARN_EVERY) return;
+  await chrome.storage.local.set({ lastAutoLearn: Date.now() });
+  try {
+    learningScan = collectLearningPosts();
+    const { posts } = await learningScan;
+    if (!posts.length) return;
+    await chrome.scripting.executeScript({
+      target: { tabId }, world: "MAIN", args: [posts, APP],
+      func: async (items, origin) => {
+        if (location.origin !== origin || location.pathname === "/login") return null;
+        const response = await fetch("/api/storytelling", {
+          method: "POST", credentials: "same-origin", redirect: "error",
+          headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "learn.chrome", posts: items, auto: true }),
+          signal: AbortSignal.timeout(240000),
+        });
+        return response.ok;
+      },
+    });
+  } catch {
+    // The next day's run tries again.
+  } finally {
+    learningScan = null;
+  }
 }
 
 let learningScan;

@@ -4,15 +4,25 @@ async function scanLearningProfile(platform, owner, cutoff) {
   const pause = () => new Promise((resolve) => setTimeout(resolve, 700));
   const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
   const name = normalize(owner);
-  const profilePath = location.pathname.replace(/\/$/, "").toLowerCase();
-  const profileId = new URL(location.href).searchParams.get("id");
+  // Read live: facebook.com/me turns into the real profile address after the
+  // page has loaded, so a path captured once would still say "/me".
+  const currentPath = () => location.pathname.replace(/\/$/, "").toLowerCase();
+  const headings = () => [...document.querySelectorAll("h1, [role=heading][aria-level='1']")].map((heading) => normalize(heading.textContent)).filter(Boolean);
+  // Facebook shows "Name" or "Name (nickname)"; the saved name may also be the username in the address.
   const verified = () => threads
-    ? profilePath === "/@" + name && [...document.querySelectorAll('a[href], [role="button"], button')].some((node) => /^(edit profile|edit profil|sunting profil)$/i.test(node.innerText?.trim() || ""))
-    : !/^\/(?:login|checkpoint|me)?$/.test(profilePath) && [...document.querySelectorAll("h1, [role=heading][aria-level='1']")].some((heading) => normalize(heading.textContent) === name);
+    ? currentPath() === "/@" + name && [...document.querySelectorAll('a[href], [role="button"], button')].some((node) => /^(edit profile|edit profil|sunting profil)$/i.test(node.innerText?.trim() || ""))
+    : !/^\/(?:login|checkpoint|me)?$/.test(currentPath()) && (currentPath() === "/" + name || headings().some((heading) => heading === name || heading.startsWith(name + " (")));
 
   if (location.origin !== expectedOrigin) return { error: "Halaman profil tidak dapat dibuka." };
-  for (let attempt = 0; attempt < 10 && !verified(); attempt++) await pause();
-  if (!verified()) return { error: "Profil tidak dapat disahkan. Semak akaun yang log masuk di Chrome." };
+  for (let attempt = 0; attempt < 20 && !verified(); attempt++) await pause();
+  if (!verified()) {
+    const found = threads ? currentPath().replace(/^\/@?/, "") : headings()[0] || "";
+    return { error: found && !/^\/(?:login|checkpoint)/.test(currentPath())
+      ? `Profil yang dibuka ialah "${found}", tetapi extension disetkan kepada "${owner}". Betulkan nama dalam extension Post Pilot.`
+      : "Profil tidak dapat disahkan. Semak akaun yang log masuk di Chrome." };
+  }
+  const profilePath = currentPath();
+  const profileId = new URL(location.href).searchParams.get("id");
 
   const dateFrom = (link) => {
     const time = link.querySelector("time");
@@ -33,19 +43,58 @@ async function scanLearningProfile(platform, owner, cutoff) {
     }
     return NaN;
   };
+  // "1.2K" → 1200, "3,410" → 3410; null when the text holds no number.
+  const count = (value) => {
+    const match = String(value || "").match(/(\d+(?:[.,]\d+)*)\s*([km])?(?![a-z])/i);
+    if (!match) return null;
+    const unit = { k: 1000, m: 1000000 }[(match[2] || "").toLowerCase()] || 1;
+    const number = Number(unit === 1 ? match[1].replace(/[.,]/g, "") : match[1].replace(",", ".")) * unit;
+    return Number.isFinite(number) ? Math.round(number) : null;
+  };
+  const ACTIONS = { reactions: /^(?:un)?like$|^suka$|^tidak suka$/i, comments: /^(?:reply|comment|balas|komen)$/i, shares: /^(?:repost|share|kongsi|siar semula)$/i };
+  // Engagement of one post card. A post with an action bar and no numbers has
+  // zero engagement, which is a result, not missing data: it is reported as 0.
   const readMetrics = (card) => {
     const metrics = {};
-    const tags = { reactions: /(?:like|reaction|suka|reaksi)/i, comments: /(?:comment|repl|komen|balasan)/i, shares: /(?:share|repost|kongsi)/i };
-    for (const control of card.querySelectorAll('button, [role="button"], [aria-label]')) {
-      const label = control.getAttribute("aria-label") || "";
+    let bar = false;
+    // Threads (and Facebook's buttons): the action's name is the button's
+    // aria-label, its icon's aria-label, or the icon's <title>; the number,
+    // when there is one, is the button's text.
+    for (const control of card.querySelectorAll('button, [role="button"]')) {
+      if (control.querySelector('button, [role="button"]')) continue; // count the innermost button only
       const visible = control.innerText?.trim() || "";
-      for (const [key, pattern] of Object.entries(tags)) {
-        if (Object.hasOwn(metrics, key) || !pattern.test(label + " " + visible)) continue;
-        const number = (label + " " + visible).match(/(?:^|\D)(\d+(?:[,.]\d+)*)(\s*[km])?(?=\b)/i);
-        if (number) metrics[key] = Math.round(Number(number[1].replace(/,/g, "")) * ({ k: 1000, m: 1000000 }[number[2]?.trim().toLowerCase()] || 1));
+      const labels = [control.getAttribute("aria-label"), ...[...control.querySelectorAll("svg")].flatMap((icon) => [icon.getAttribute("aria-label"), icon.querySelector("title")?.textContent]), visible.replace(/[\d.,\s]+[km]?$/i, "")]
+        .map((label) => String(label || "").trim()).filter(Boolean);
+      for (const [key, pattern] of Object.entries(ACTIONS)) {
+        if (!labels.some((label) => pattern.test(label))) continue;
+        bar = true;
+        metrics[key] = (metrics[key] || 0) + (count(visible) || 0);
       }
     }
-    return metrics;
+    // Facebook: totals sit beside the bar as "12 comments", "1 share", and
+    // reactions as "Like: 12 people" labels or a number beside "All reactions".
+    const texts = [...card.querySelectorAll("span, [aria-label]")];
+    const phrase = (pattern) => {
+      for (const node of texts) {
+        const value = (node.getAttribute("aria-label") || node.textContent || "").trim();
+        if (value.length < 40 && pattern.test(value)) return count(value);
+      }
+      return null;
+    };
+    const comments = phrase(/^[\d.,]+\s*[km]?\s*(?:comments?|komen)$/i);
+    const shares = phrase(/^[\d.,]+\s*[km]?\s*(?:shares?|perkongsian|kongsian)$/i);
+    let reactions = null;
+    for (const node of texts) {
+      const label = node.getAttribute("aria-label") || "";
+      const each = label.match(/^(?:like|love|care|haha|wow|sad|angry|suka|sayang|peduli|sedih|marah)[^:]*:\s*([\d.,]+\s*[km]?)/i);
+      if (each) reactions = (reactions || 0) + (count(each[1]) || 0);
+      else if (reactions == null && /^(?:all reactions|semua reaksi)/i.test(label)) reactions = count(label) ?? count(node.parentElement?.textContent);
+    }
+    if (comments != null) metrics.comments = Math.max(metrics.comments || 0, comments);
+    if (shares != null) metrics.shares = Math.max(metrics.shares || 0, shares);
+    if (reactions != null) metrics.reactions = Math.max(metrics.reactions || 0, reactions);
+    if (!bar && !Object.keys(metrics).length) return {};
+    return { reactions: metrics.reactions || 0, comments: metrics.comments || 0, shares: metrics.shares || 0 };
   };
   const records = new Map();
   const toUrl = (link) => {

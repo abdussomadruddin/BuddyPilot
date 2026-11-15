@@ -90,9 +90,11 @@ const ACTIONS = {
   "learn.chrome": async (store, body, options) => {
     const settings = options.learning || learning.defaultOptions();
     const scan = await publishing.syncChromeLearning(store, body.posts, settings.now());
-    const cycle = await learning.learnFromEngagement(store, { force: true, publicationIds: scan.ids }, settings);
+    // The daily automatic run learns only when there is new evidence; the button always tries.
+    const cycle = await learning.learnFromEngagement(store, { force: body.auto !== true, publicationIds: body.auto === true ? undefined : scan.ids }, settings);
     return { cycle, counts: scan.counts, learning: await learning.learningStatus(store) };
   },
+  "learn.edit": async (store, body, options) => learning.learnFromEdit(store, body, options.learning || learning.defaultOptions()),
   "ai.verify": async (store, body, options) => ({ verification: await (options.verify || verifyModel)() }),
 };
 

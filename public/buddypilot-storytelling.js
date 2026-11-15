@@ -311,6 +311,11 @@
         ...(state.current.image ? { image: state.current.image } : {}) });
       macJobId = job.id;
       window.dispatchEvent(new Event("buddypilot-post-queued"));
+      // Learn from what was changed in the AI draft; runs in the background, nothing shown.
+      if (!state.current.learnedFrom || state.current.learnedFrom !== content) {
+        state.current.learnedFrom = content;
+        post("learn.edit", { generated: state.current.generated || "", content, topic: inputs().topic }).catch(() => {});
+      }
       $("stMacStatusCheck").hidden = false;
       setStatus($("stPublishStatus"), "ok", platform === "threads"
         ? "Dalam giliran auto-post Threads. Pastikan Chrome di Mac aktif."
