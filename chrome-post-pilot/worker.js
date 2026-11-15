@@ -145,7 +145,28 @@ async function poll() {
   }
 }
 
-async function collectLearningPosts() {
+async function suggestExpansionLabels(appTabId, labels) {
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId: appTabId }, world: "MAIN", args: [labels, APP],
+      func: async (candidates, origin) => {
+        if (location.origin !== origin || location.pathname !== "/") return [];
+        const response = await fetch("/api/storytelling", {
+          method: "POST", credentials: "same-origin", redirect: "error",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "learn.browser-assist", labels: candidates }),
+          signal: AbortSignal.timeout(9000),
+        });
+        return response.ok ? (await response.json()).labels : [];
+      },
+    });
+    return Array.isArray(result) ? result.filter((label) => labels.includes(label)) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function collectLearningPosts(appTabId) {
   const { threadsUsername, facebookName } = await chrome.storage.local.get(["threadsUsername", "facebookName"]);
   const profiles = [
     ["facebook", facebookName, PLATFORMS.facebook + "me"],
@@ -165,6 +186,17 @@ async function collectLearningPosts() {
       let [{ result }] = await chrome.scripting.executeScript({
         target: { tabId: tab.id }, func: scanLearningProfile, args: [platform, owner, cutoff, platform === "facebook"],
       });
+      if (platform === "facebook" && appTabId && result?.unresolvedLabels?.length) {
+        const labels = await suggestExpansionLabels(appTabId, result.unresolvedLabels);
+        if (labels.length) {
+          const [{ result: retry }] = await chrome.scripting.executeScript({
+            target: { tabId: tab.id }, func: scanLearningProfile, args: [platform, owner, cutoff, true, labels],
+          });
+          const merged = new Map((result.posts || []).map((post) => [post.remoteId, post]));
+          for (const post of retry?.posts || []) merged.set(post.remoteId, post);
+          result.posts = [...merged.values()].slice(0, 80);
+        }
+      }
       if (platform === "facebook" && !result?.error && (!result?.posts?.length || !result.libraryUrl)) {
         notes.push(label + ": " + (result?.posts?.length ? "Pautan Content Library tidak dijumpai untuk semak engagement." : "Teks penuh post belum dapat dibaca daripada profil."));
         continue;
@@ -231,7 +263,7 @@ chrome.runtime.onStartup.addListener(() => { void syncAlarm(); });
 chrome.alarms.onAlarm.addListener((alarm) => { if (alarm.name === ALARM) void poll(); });
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (message?.action === "learn" && sender.frameId === 0 && sender.url && new URL(sender.url).origin === APP) {
-    learningScan ||= collectLearningPosts().finally(() => { learningScan = null; });
+    learningScan ||= collectLearningPosts(sender.tab?.id).finally(() => { learningScan = null; });
     learningScan.then(respond, () => respond({ error: "Chrome gagal menyemak profil." }));
     return true;
   }

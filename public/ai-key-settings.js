@@ -16,6 +16,11 @@
   const result = document.getElementById("aiKeyResult");
   const test = document.getElementById("aiKeyTest");
   const save = document.getElementById("aiKeySave");
+  const learningKey = document.getElementById("aiLearningKey");
+  const learningStatus = document.getElementById("aiLearningStatus");
+  const learningResult = document.getElementById("aiLearningResult");
+  const learningTest = document.getElementById("aiLearningTest");
+  const learningSave = document.getElementById("aiLearningSave");
   let statuses = [];
   let loading = false;
   let generation = 0;
@@ -38,6 +43,7 @@
       const body = await request();
       if (version !== generation) return;
       statuses = body.providers;
+      renderLearningStatus();
       activeSettings = body.settings || activeSettings;
       provider.value = activeSettings.provider;
       renderModels();
@@ -46,6 +52,26 @@
       if (version === generation) status.textContent = error.message;
     }
   }
+  function renderLearningStatus() {
+    const item = statuses.find((row) => row.provider === "openrouter_learning");
+    learningStatus.textContent = item?.configured ? "Key belajar tersedia." : "Key belajar belum disimpan.";
+  }
+  async function runLearning(action) {
+    learningTest.disabled = learningSave.disabled = learningKey.disabled = true;
+    try {
+      const body = await request({ method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action, apiKey: learningKey.value.trim() }) });
+      if (action === "save-learning") {
+        statuses = statuses.filter((item) => item.provider !== "openrouter_learning").concat(body.result);
+        renderLearningStatus();
+        learningKey.value = "";
+        learningResult.textContent = "Key belajar disimpan.";
+      } else learningResult.textContent = body.result.message;
+    } catch (error) { learningResult.textContent = error.message; }
+    finally { learningTest.disabled = learningSave.disabled = learningKey.disabled = false; }
+  }
+  learningTest.addEventListener("click", () => runLearning("test-learning"));
+  learningSave.addEventListener("click", () => runLearning("save-learning"));
   async function run(action) {
     if (loading) return;
     if (action === "save" && provider.value === "gemini" && !freeConfirmed.checked) { result.textContent = "Sahkan projek Gemini menggunakan Free tier dahulu."; return; }
@@ -77,5 +103,5 @@
     document.querySelectorAll(".menu-settings-panel").forEach((panel) => { panel.hidden = panel.id !== "menuAISettings"; });
     load();
   }));
-  document.querySelector(".topbar-menu").addEventListener("toggle", (event) => { if (!event.target.open) key.value = ""; });
+  document.querySelector(".topbar-menu").addEventListener("toggle", (event) => { if (!event.target.open) { key.value = ""; learningKey.value = ""; } });
 })();

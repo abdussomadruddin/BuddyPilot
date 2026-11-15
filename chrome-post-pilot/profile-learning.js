@@ -1,4 +1,4 @@
-async function scanLearningProfile(platform, owner, cutoff, findContentLibrary = false) {
+async function scanLearningProfile(platform, owner, cutoff, findContentLibrary = false, suggestedLabels = []) {
   const threads = platform === "threads";
   const expectedOrigin = threads ? "https://www.threads.com" : "https://www.facebook.com";
   const pause = () => new Promise((resolve) => setTimeout(resolve, 700));
@@ -125,6 +125,8 @@ async function scanLearningProfile(platform, owner, cutoff, findContentLibrary =
     return { reactions: metrics.reactions || 0, comments: metrics.comments || 0, shares: metrics.shares || 0 };
   };
   const records = new Map();
+  const unresolvedLabels = new Set();
+  if (readProfileText && suggestedLabels.length) window.scrollTo(0, 0);
   const toUrl = (link) => {
     try { return new URL(link.href, location.href); } catch { return null; }
   };
@@ -180,9 +182,26 @@ async function scanLearningProfile(platform, owner, cutoff, findContentLibrary =
           const content = readContent();
           const scope = content?.parentElement && content.parentElement.querySelectorAll(messageSelector).length === 1
             ? content.parentElement : content;
-          const expand = [...(scope?.querySelectorAll('button,[role="button"]') || [])].find((button) =>
-            button.getClientRects().length && /^(see more|lihat lagi|lihat selanjutnya)$/i.test(button.innerText.trim()));
-          if (!expand) break;
+          const controls = [...(scope?.querySelectorAll('button,[role="button"]') || [])].filter((button) =>
+            button.getClientRects().length && !button.closest("a[href],form") &&
+            !button.disabled && button.getAttribute("aria-disabled") !== "true");
+          const labelOf = (button) => normalize(button.getAttribute("aria-label") || button.innerText);
+          const known = /^(see more|lihat lagi|lihat selanjutnya)$/i;
+          const safeAlternative = (button) => {
+            const label = labelOf(button);
+            return label.length <= 65 &&
+              /^(?:read|show|view|see|expand|baca|papar|lihat|tunjuk|kembangkan)\b/.test(label) &&
+              !/comment|repl|share|reaction|link|profile|photo|video|komen|balas|kongsi|profil|gambar|media|insight/.test(label);
+          };
+          const truncated = /(?:…|\.\.\.)/.test(content?.innerText || "");
+          const expand = controls.find((button) => known.test(labelOf(button)) ||
+            (truncated && safeAlternative(button) && suggestedLabels.includes(labelOf(button))));
+          if (!expand) {
+            if (truncated && unresolvedLabels.size < 12) {
+              for (const button of controls.filter(safeAlternative).slice(0, 12 - unresolvedLabels.size)) unresolvedLabels.add(labelOf(button));
+            }
+            break;
+          }
           const before = content.innerText;
           expand.click();
           for (let settle = 0; settle < 3 && readContent()?.innerText === before; settle++) {
@@ -204,5 +223,5 @@ async function scanLearningProfile(platform, owner, cutoff, findContentLibrary =
     await pause();
     if (window.scrollY === top && page > (threads || records.size ? 3 : 9)) break;
   }
-  return { posts: [...records.values()], ...(readProfileText ? { libraryUrl } : {}) };
+  return { posts: [...records.values()], ...(readProfileText ? { libraryUrl, unresolvedLabels: [...unresolvedLabels] } : {}) };
 }

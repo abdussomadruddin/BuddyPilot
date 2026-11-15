@@ -8,7 +8,7 @@ function pageHtml() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BuddyPilot</title>
-  <script src="/ai-key-settings.js?v=1" defer></script>
+  <script src="/ai-key-settings.js?v=2" defer></script>
   <link rel="stylesheet" href="/action-feedback.css?v=1">
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
@@ -4365,6 +4365,7 @@ function pageHtml() {
           <div id="menuAISettings" class="menu-settings-panel" hidden>
             <form id="aiKeyForm" style="display:grid;gap:12px;min-width:0">
               <h3>AI API Key</h3>
+              <h4>Tulis post</h4>
               <label for="aiKeyProvider">Provider</label>
               <select id="aiKeyProvider"><option value="gemini">Google Gemini (Free tier)</option><option value="openrouter">OpenRouter (Free models)</option></select>
               <label for="aiKeyModel">Model</label>
@@ -4375,6 +4376,13 @@ function pageHtml() {
               <input id="aiKeyValue" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="512" placeholder="Kosongkan untuk kekalkan key tersimpan" style="width:100%;min-width:0;box-sizing:border-box">
               <div class="inline-actions"><button id="aiKeyTest" type="button" class="secondary">Test Connection</button><button id="aiKeySave" type="submit">Save &amp; Use</button></div>
               <p id="aiKeyResult" class="note" role="status" aria-live="polite"></p>
+              <h4>Belajar daripada post</h4>
+              <p class="note">OpenRouter Free. Gemma 4 31B untuk analisis gaya dan Nemotron untuk bantuan membaca halaman Facebook.</p>
+              <p id="aiLearningStatus" class="note" role="status"></p>
+              <label for="aiLearningKey">OpenRouter API key untuk belajar</label>
+              <input id="aiLearningKey" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="512">
+              <div class="inline-actions"><button id="aiLearningTest" type="button" class="secondary">Uji key belajar</button><button id="aiLearningSave" type="button">Simpan key belajar</button></div>
+              <p id="aiLearningResult" class="note" role="status" aria-live="polite"></p>
             </form>
           </div>
           <form method="post" action="/api/logout">

@@ -385,3 +385,10 @@ test("slow AI requests send keep-alive spaces and still end in valid JSON", asyn
   assert.equal(quick.statusCode, 200);
   assert.equal(quick.body, JSON.stringify({ ok: true }));
 });
+
+test("browser assist returns only existing labels selected by bounded indexes", async () => {
+  const answer = await post(createMemoryStore(), "learn.browser-assist", { labels: ["show full post", "view more"] }, {
+    learning: { ai: async () => ({ text: '{"indexes":[0,0,9,-1,"1"]}', model: "fixture" }) },
+  });
+  assert.deepEqual(answer.labels, ["show full post"]);
+});

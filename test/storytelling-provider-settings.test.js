@@ -143,3 +143,21 @@ test("provider verify is read-only and missing keys fail before any model reques
   } } });
   assert.equal(result.canGenerate, true);
 });
+
+test("Chrome browser assist uses the fixed free OpenRouter model and zero price caps", async () => {
+  const assert = require("node:assert/strict");
+  const { generateBrowserAssist } = require("../lib/storytelling-ai");
+  const result = await generateBrowserAssist({ prompt: '["show full post"]', json: true, maxOutputTokens: 100 }, {
+    deps: {
+      keySettings: { resolveKey: async (provider) => { assert.equal(provider, "openrouter_learning"); return "fixture-key"; } },
+      fetch: async (url, options) => {
+        assert.equal(url, "https://openrouter.ai/api/v1/chat/completions");
+        const body = JSON.parse(options.body);
+        assert.equal(body.model, "nvidia/nemotron-3.5-super-vl:free");
+        assert.deepEqual(body.provider, { allow_fallbacks: false, max_price: { prompt: 0, completion: 0 } });
+        return Response.json({ choices: [{ finish_reason: "stop", message: { content: '{"indexes":[0]}' } }] });
+      },
+    },
+  });
+  assert.equal(result.provider, "openrouter");
+});
