@@ -55,17 +55,17 @@
   }
 
   // Runs one AI action with loading and retry handling in one place.
-  async function runAi(statusNode, label, work) {
+  async function runAi(statusNode, label, work, retry) {
     if (state.busy) return null;
     setBusy(true, label);
-    setStatus(statusNode, "info", label + " Biasanya 20 hingga 60 saat. Kekalkan skrin ini.");
+    setStatus(statusNode, "info", label);
     try {
       const result = await work();
       setStatus(statusNode, "", "");
       return result;
     } catch (error) {
       const transient = ["rate_limit", "unavailable", "network", "empty", "bad_output", "incomplete"].includes(error.code);
-      setStatus(statusNode, "err", error.message, transient ? () => runAi(statusNode, label, work) : null);
+      setStatus(statusNode, "err", error.message, transient ? retry || (() => runAi(statusNode, label, work)) : null);
       return null;
     } finally {
       setBusy(false);
@@ -115,10 +115,8 @@
     $("stPhotoPreview").hidden = !state.current.image;
     if (state.current.image && $("stPhotoImage").getAttribute("src") !== state.current.image) $("stPhotoImage").src = state.current.image;
     $("stPhoto").textContent = state.current.image ? "Tukar gambar" : "Kamera";
-    $("stStatePage").innerHTML = publishState("page");
     $("stStateThreads").innerHTML = publishState("threads");
     $("stStatePersonal").innerHTML = publishState("personal");
-    $("stPostPage").disabled = state.busy || Boolean(state.current.published?.page);
     $("stPostThreads").disabled = state.busy || Boolean(state.current.published?.threads);
     $("stPostPersonal").disabled = state.busy || Boolean(state.current.published?.personal);
     $("stPostPersonal").textContent = state.current.personalQueued && !state.current.published?.personal ? "Batal giliran FB personal" : "Facebook personal";
@@ -141,7 +139,7 @@
     const value = inputs();
     if (value.topic.length < 3) { setStatus($("stWriteStatus"), "err", "Tulis tajuk dan idea dahulu."); $("stBrief").focus(); return; }
     if (editor.value.trim() && isDirty() && !window.confirm("Post semasa belum disimpan. Jana yang baru?")) return;
-    const result = await runAi($("stWriteStatus"), "Menjana post...", () => post("generate", value));
+    const result = await runAi($("stWriteStatus"), "Menjana draf...", () => post("generate", { ...value, fast: true }), generate);
     if (!result) return;
     state.current = { ...BLANK, generated: result.text, model: result.model, dnaVersion: result.dnaVersion };
     state.savedText = "";
@@ -150,9 +148,10 @@
     void editor.offsetWidth;
     editor.classList.add("st-fresh");
     render();
+    $("stEditorCard").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (result.warnings?.length) setStatus($("stEditStatus"), "info", result.warnings.join(" "));
     // Saved straight away, so a generated post is never lost.
     try { await saveDraft("draft"); } catch (error) { setStatus($("stEditStatus"), "err", error.message); }
-    $("stEditorCard").scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 
   async function copyText(text) {
@@ -201,55 +200,37 @@
     state.imageDirty = false;
   }
 
-  async function publish(action, body, label) {
+  async function postThreads() {
     if (state.busy) return;
+    if (!state.social?.threads?.configured) return sendToMac("threads");
     setBusy(true);
-    setStatus($("stPublishStatus"), "info", "Menghantar ke " + label + "...");
+    setStatus($("stPublishStatus"), "info", "Menghantar ke Threads...");
     try {
       await approveCurrent();
-      const json = await post(action, { id: state.current.id, ...body });
+      const json = await post("publish.threads", { id: state.current.id });
       state.current.status = "published";
-      state.current.published = { ...state.current.published, [json.publication.platform]: { url: json.publication.url, at: json.publication.postedAt } };
-      $("stThread").hidden = true;
-      setStatus($("stPublishStatus"), json.warning ? "err" : "ok", json.warning || "Dah dipost ke " + label + ".");
+      state.current.published = { ...state.current.published, threads: { url: json.publication.url, at: json.publication.postedAt } };
+      setStatus($("stPublishStatus"), json.warning ? "err" : "ok", json.warning || "Dah dipost ke Threads.");
       remember();
     } catch (error) {
-      setStatus($("stPublishStatus"), "err", error.message + (error.code === "not_connected" ? " Buka tab Tetapan." : ""));
+      setStatus($("stPublishStatus"), "err", error.message);
     } finally {
       setBusy(false);
     }
   }
 
-  function renderThread(parts) {
-    $("stThreadParts").innerHTML = parts.map((part) => '<li><textarea rows="4" maxlength="500" data-st-part>' + esc(part) + '</textarea><small></small></li>').join("");
-    $("stThread").hidden = false;
-    countThread();
-    $("stThread").scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }
-
-  function countThread() {
-    $("stThreadParts").querySelectorAll("li").forEach((item) => { item.querySelector("small").textContent = item.querySelector("textarea").value.length + "/500"; });
-  }
-
-  async function prepareThread() {
-    const result = await runAi($("stPublishStatus"), "Menyusun thread...", async () => { await approveCurrent(); return post("threads.split", { id: state.current.id }); });
-    if (!result) return;
-    renderThread(result.parts);
-    if (result.warnings.length) setStatus($("stPublishStatus"), "info", result.warnings.join(" "));
-  }
-
-  async function togglePersonal() {
-    const queued = !state.current.personalQueued;
+  async function postPersonal() {
+    if (state.busy) return;
+    if (!state.current.personalQueued) return sendToMac("facebook");
+    setBusy(true);
     try {
-      await approveCurrent();
-      await post("personal.queue", { id: state.current.id, queued });
-      state.current.personalQueued = queued;
-      setStatus($("stPublishStatus"), queued ? "ok" : "", queued ? "Dihantar ke extension Chrome. Buka Chrome, tekan ikon BuddyPilot, kemudian tekan Post di Facebook sendiri." : "");
-      render();
+      await post("personal.queue", { id: state.current.id, queued: false });
+      state.current.personalQueued = false;
+      setStatus($("stPublishStatus"), "info", "Giliran lama dibatalkan. Tekan Facebook personal untuk hantar ke Chrome.");
       remember();
     } catch (error) {
       setStatus($("stPublishStatus"), "err", error.message);
-    }
+    } finally { setBusy(false); }
   }
 
   // ---------- settings ----------
@@ -260,10 +241,7 @@
 
   function renderSocial(social) {
     state.social = social;
-    $("stPageState").textContent = accountState(social.facebook_page);
     $("stThreadsState").textContent = accountState(social.threads);
-    $("stExtState").textContent = social.extension.configured ? "· token dijana " + new Date(social.extension.updatedAt).toLocaleDateString("en-MY", { dateStyle: "medium" }) : "· belum disambung";
-    if (!$("stPageId").value) $("stPageId").value = social.facebook_page.accountId || "";
     if (!$("stThreadsId").value) $("stThreadsId").value = social.threads.accountId || "";
   }
 
@@ -349,23 +327,21 @@
     if (!response.ok || !data.ok) throw new Error(data.error || "Giliran Post Pilot tidak tersedia.");
     return data.job;
   }
-  $("stMacSend").addEventListener("click", async (event) => {
-    const button = event.currentTarget;
-    const platform = $("stMacPlatform").value;
+  async function sendToMac(platform) {
     const content = editor.value.trim();
-    if (!platform || !content) return setStatus($("stMacStatus"), "err", "Pilih platform dan sediakan teks post dahulu.");
-    if (platform === "threads" && content.length > 500) return setStatus($("stMacStatus"), "err", "Pendekkan teks Threads kepada maksimum 500 aksara.");
-    button.disabled = true;
-    setStatus($("stMacStatus"), "info", "Menghantar draf ke giliran...");
+    if (state.busy || !content) return;
+    setBusy(true);
+    setStatus($("stPublishStatus"), "info", "Menghantar draf ke Mac...");
     try {
       const job = await macRequest({ action: "enqueue", platform, content });
       macJobId = job.id;
       $("stMacStatusCheck").hidden = false;
-      setStatus($("stMacStatus"), "ok", "Draf dalam giliran untuk Mac. Belum diterbitkan.");
+      setStatus($("stPublishStatus"), "ok", "Draf dalam giliran Mac. Belum diterbitkan." +
+        (state.current.image ? " Tambah gambar secara manual di Chrome." : ""));
     } catch (error) {
-      setStatus($("stMacStatus"), "err", error.message);
-    } finally { button.disabled = false; }
-  });
+      setStatus($("stPublishStatus"), "err", error.message);
+    } finally { setBusy(false); }
+  }
   $("stMacStatusCheck").addEventListener("click", async (event) => {
     const button = event.currentTarget;
     button.disabled = true;
@@ -379,9 +355,9 @@
         failed: "Mac tidak dapat menyediakan draf. Semak Chrome sebelum cuba lagi.",
         expired: "Draf tamat tempoh. Hantar semula jika masih diperlukan.",
       };
-      setStatus($("stMacStatus"), "info", labels[state] || "Status tidak tersedia.");
+      setStatus($("stPublishStatus"), "info", labels[state] || "Status tidak tersedia.");
     } catch (error) {
-      setStatus($("stMacStatus"), "err", error.message);
+      setStatus($("stPublishStatus"), "err", error.message);
     } finally { button.disabled = false; }
   });
   $("stNew").addEventListener("click", () => {
@@ -390,7 +366,6 @@
     state.savedText = "";
     editor.value = "";
     $("stBrief").value = "";
-    $("stThread").hidden = true;
     render();
     remember();
     $("stBrief").focus();
@@ -398,37 +373,14 @@
   $("stPhoto").addEventListener("click", () => $("stPhotoInput").click());
   $("stPhotoInput").addEventListener("change", (event) => { addPhoto(event.target.files?.[0]); event.target.value = ""; });
   $("stPhotoRemove").addEventListener("click", () => { state.current.image = ""; state.imageDirty = true; render(); remember(); });
-  $("stPostPage").addEventListener("click", () => {
-    if (window.confirm("Post ke Facebook Page sekarang" + (state.current.image ? " bersama gambar" : "") + "? Post ini akan terus kelihatan kepada umum.")) publish("publish.page", {}, PLATFORMS.page);
-  });
-  $("stPostThreads").addEventListener("click", prepareThread);
-  $("stThreadPost").addEventListener("click", () => {
-    const parts = [...$("stThreadParts").querySelectorAll("textarea")].map((part) => part.value.trim()).filter(Boolean);
-    if (window.confirm("Post " + parts.length + " bahagian ini ke Threads sekarang" + (state.current.image ? " bersama gambar" : "") + "?")) publish("publish.threads", { parts }, PLATFORMS.threads);
-  });
-  $("stThreadCancel").addEventListener("click", () => { $("stThread").hidden = true; });
-  $("stThreadParts").addEventListener("input", countThread);
-  $("stPostPersonal").addEventListener("click", togglePersonal);
+  $("stPostThreads").addEventListener("click", postThreads);
+  $("stPostPersonal").addEventListener("click", postPersonal);
 
   let typing = 0;
   editor.addEventListener("input", () => { render(); clearTimeout(typing); typing = setTimeout(remember, 600); });
   $("stBrief").addEventListener("input", () => { clearTimeout(typing); typing = setTimeout(remember, 600); });
 
-  $("stPageForm").addEventListener("submit", (event) => saveAccount(event, "facebook_page", "stPageId", "stPageToken", "Facebook Page"));
   $("stThreadsForm").addEventListener("submit", (event) => saveAccount(event, "threads", "stThreadsId", "stThreadsToken", "Threads"));
-  $("stExtToken").addEventListener("click", async () => {
-    if (state.social?.extension.configured && !window.confirm("Jana token baru? Token lama dalam extension akan berhenti berfungsi.")) return;
-    try {
-      const json = await request("POST", { action: "extension-token" }, "", "/api/settings/social");
-      $("stExtValue").hidden = false;
-      $("stExtValue").value = json.token;
-      $("stExtValue").select();
-      renderSocial(json.social);
-      setStatus($("stSocialStatus"), "ok", "Salin token ini dan tampal dalam extension BuddyPilot. Ia tidak akan ditunjuk lagi.");
-    } catch (error) {
-      setStatus($("stSocialStatus"), "err", error.message);
-    }
-  });
   $("stLearnNow").addEventListener("click", async () => {
     const json = await runAi($("stLearnStatus"), "AI sedang belajar...", () => post("learn.run"));
     if (!json) return;

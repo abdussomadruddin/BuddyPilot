@@ -35,11 +35,12 @@ async function queue(tabId, body) {
   return result;
 }
 
-async function prepare(tabId, platform, text) {
+async function prepare(tabId, platform, parts) {
   const [{ result }] = await chrome.scripting.executeScript({
-    target: { tabId }, args: [platform, text, new URL(PLATFORMS[platform]).origin],
-    func: async (site, content, origin) => {
+    target: { tabId }, args: [platform, parts, new URL(PLATFORMS[platform]).origin],
+    func: async (site, parts, origin) => {
       if (location.origin !== origin) return "failed";
+      const content = parts[0];
       const visible = (element) => Boolean(element.getClientRects().length && getComputedStyle(element).visibility !== "hidden");
       const dialogs = () => [...document.querySelectorAll('[role="dialog"]')].filter(visible);
       const labels = site === "facebook"
@@ -71,7 +72,9 @@ async function prepare(tabId, platform, text) {
       const panel = document.createElement("aside");
       Object.assign(panel.style, { position: "fixed", top: "12px", right: "12px", width: "min(380px, calc(100vw - 32px))", zIndex: 2147483647, background: "#fff", color: "#17212a", padding: "12px", border: "1px solid #aab6c2", borderRadius: "8px", boxSizing: "border-box" });
       const info = document.createElement("p");
-      info.textContent = filled ? "Draf BuddyPilot diisi. Semak profil dan teks sebelum tekan Publish." : "Composer tidak dapat disahkan. Semak profil yang betul, kemudian salin draf secara manual.";
+      info.textContent = parts.length > 1
+        ? (filled ? "Bahagian pertama diisi. " : "") + "Salin bahagian seterusnya mengikut turutan ke ruang thread sebelum Publish."
+        : filled ? "Draf BuddyPilot diisi. Semak profil dan teks sebelum tekan Publish." : "Composer tidak dapat disahkan. Semak profil yang betul, kemudian salin draf secara manual.";
       const draft = document.createElement("textarea");
       draft.readOnly = true;
       draft.rows = 5;
@@ -86,10 +89,18 @@ async function prepare(tabId, platform, text) {
       copy.type = "button";
       copy.textContent = "Salin draf";
       copy.onclick = async () => {
-        try { await navigator.clipboard.writeText(content); copy.textContent = "Disalin"; }
+        try { await navigator.clipboard.writeText(draft.value); copy.textContent = "Disalin"; }
         catch { draft.focus(); draft.select(); }
       };
-      panel.append(info, draft, copy, close);
+      panel.append(info);
+      if (parts.length > 1) {
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", "Bahagian thread");
+        parts.forEach((_, index) => select.add(new Option("Bahagian " + (index + 1) + " / " + parts.length, String(index))));
+        select.onchange = () => { draft.value = parts[Number(select.value)]; copy.textContent = "Salin draf"; };
+        panel.append(select);
+      }
+      panel.append(draft, copy, close);
       document.body.append(panel);
       return filled ? "review" : "copy";
     },
@@ -115,17 +126,17 @@ async function poll() {
     const tabs = await chrome.tabs.query({ url: APP + "/*" });
     const app = tabs.find((tab) => new URL(tab.url).pathname === "/" && tab.status === "complete");
     if (!app) return await badge("!", "buka BuddyPilot dan log masuk");
-    const claimed = await queue(app.id, { action: "claim" });
+    const claimed = await queue(app.id, { action: "claim", multipart: true });
     if (!claimed?.ok) return await badge("!", claimed?.status === 503 ? "Giliran Supabase belum tersedia" : "Semak sesi atau sambungan BuddyPilot");
     if (!claimed.job) return await badge("ON", "menunggu draf");
-    const { id, platform, content } = claimed.job;
+    const { id, platform, content, parts } = claimed.job;
     let state = "failed";
     try {
       if (!Object.hasOwn(PLATFORMS, platform)) throw new Error("Unknown platform");
       const tab = await chrome.tabs.create({ url: PLATFORMS[platform] });
       await chrome.storage.local.set({ reviewTabId: tab.id });
       await waitForTab(tab.id);
-      state = await prepare(tab.id, platform, content);
+      state = await prepare(tab.id, platform, parts || [content]);
     } finally {
       await queue(app.id, { action: "finish", id, state });
       await badge(state === "failed" ? "!" : "1", state === "failed" ? "draf gagal disediakan" : "semak draf, kemudian tutup tab untuk draf seterusnya");

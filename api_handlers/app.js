@@ -14,7 +14,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
   <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261115-simple">
-  <script src="/buddypilot-storytelling.js?v=20261115-queue" defer></script>
+  <script src="/buddypilot-storytelling.js?v=20261115-post" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -5042,29 +5042,12 @@ Review retargeting when the warm audience is ready</textarea>
             <button id="stNew" type="button" class="secondary">Baru</button>
           </div>
           <div id="stEditStatus" class="st-status" role="status"></div>
-          <div class="st-actions">
-            <label for="stMacPlatform">Platform</label>
-            <select id="stMacPlatform">
-              <option value="">Pilih platform</option>
-              <option value="facebook">Facebook Personal</option>
-              <option value="threads">Threads</option>
-            </select>
-            <button id="stMacSend" type="button" class="secondary">Hantar draf ke Mac</button>
-            <button id="stMacStatusCheck" type="button" class="secondary" hidden>Semak status</button>
-          </div>
-          <div id="stMacStatus" class="st-status" role="status"></div>
-
           <div id="stPublish" class="st-publish" hidden>
             <h3>Dah ok? Post ke</h3>
-            <div class="st-publish-row"><button id="stPostPage" type="button" data-st-post>Facebook Page</button><span id="stStatePage" class="st-publish-state"></span></div>
-            <div class="st-publish-row"><button id="stPostThreads" type="button" data-st-post data-st-ai>Threads</button><span id="stStateThreads" class="st-publish-state"></span></div>
+            <div class="st-publish-row"><button id="stPostThreads" type="button" data-st-post>Threads</button><span id="stStateThreads" class="st-publish-state"></span></div>
             <div class="st-publish-row"><button id="stPostPersonal" type="button" data-st-post>Facebook personal</button><span id="stStatePersonal" class="st-publish-state"></span></div>
-            <div id="stThread" class="st-thread" hidden>
-              <p class="note">Semak thread sebelum post. Setiap bahagian maksimum 500 aksara.</p>
-              <ol id="stThreadParts"></ol>
-              <div class="st-actions"><button id="stThreadPost" type="button">Post thread ini</button><button id="stThreadCancel" type="button" class="secondary">Batal</button></div>
-            </div>
             <div id="stPublishStatus" class="st-status" role="status"></div>
+            <button id="stMacStatusCheck" type="button" class="secondary" hidden>Semak status Mac</button>
           </div>
         </section>
       </div>
@@ -5078,24 +5061,12 @@ Review retargeting when the warm audience is ready</textarea>
         </section>
         <section class="workflow-card">
           <h2>Akaun sosial</h2>
-          <form id="stPageForm" class="st-account" autocomplete="off">
-            <h3>Facebook Page <span id="stPageState" class="st-account-state"></span></h3>
-            <label for="stPageId">Page ID</label><input id="stPageId" type="text" inputmode="numeric" maxlength="30">
-            <label for="stPageToken">Page access token</label><input id="stPageToken" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="1024" placeholder="Kosongkan jika tidak berubah">
-            <button type="submit" class="secondary">Simpan &amp; uji</button>
-          </form>
           <form id="stThreadsForm" class="st-account" autocomplete="off">
             <h3>Threads <span id="stThreadsState" class="st-account-state"></span></h3>
             <label for="stThreadsId">Threads User ID</label><input id="stThreadsId" type="text" inputmode="numeric" maxlength="30">
             <label for="stThreadsToken">Threads access token</label><input id="stThreadsToken" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="1024">
             <button type="submit" class="secondary">Simpan &amp; uji</button>
           </form>
-          <div class="st-account">
-            <h3>Facebook personal (Chrome extension) <span id="stExtState" class="st-account-state"></span></h3>
-            <p class="note">Jana token dan tampal dalam extension BuddyPilot di Chrome. Token ditunjuk sekali sahaja.</p>
-            <button id="stExtToken" type="button" class="secondary">Jana token extension</button>
-            <input id="stExtValue" type="text" readonly hidden aria-label="Token extension">
-          </div>
           <div id="stSocialStatus" class="st-status" role="status"></div>
         </section>
         <section class="workflow-card">

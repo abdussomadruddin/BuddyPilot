@@ -8,6 +8,16 @@ const { dispatch } = require("../api_handlers/storytelling");
 const { createMemoryStore } = require("./storytelling-memory-store");
 
 const PARAGRAPH = "Ramai orang ingat masalah ads dia sebab budget kecil. Sebenarnya bukan. Masalahnya dia tak faham apa yang platform tu nak, jadi setiap kali result jatuh dia tukar benda yang salah.";
+
+test("quick generation returns the first draft and still reviews its length", async () => {
+  const { ai, calls } = mockAi({ text: () => fakePost(2) });
+  const result = await story.generatePost(createMemoryStore(), { topic: "Kempen iklan", length: 4000, fast: true }, { ai });
+  assert.equal(calls.length, 1);
+  assert.equal(result.calls, 1);
+  assert.equal(result.text, fakePost(2));
+  assert.equal(result.review.stats.targetLength, 4000);
+  assert.ok(result.review.stats.deviationPercent < -10);
+});
 function fakePost(paragraphs) {
   return ["Kebanyakan advertiser Malaysia sedang buang duit, dan mereka tak sedar pun.", ...Array.from({ length: paragraphs }, (_, index) => `${PARAGRAPH} Contoh ${index + 1}.`), "Kalau post ni buka mata kau, share supaya kawan yang berniaga pun nampak benda yang sama."].join("\n\n");
 }
@@ -36,7 +46,8 @@ test("the feature is wired into BuddyPilot's navigation and router", () => {
   const page = fs.readFileSync(path.join(__dirname, "../api_handlers/app.js"), "utf8");
   const router = fs.readFileSync(path.join(__dirname, "../api/app.js"), "utf8");
   assert.match(page, /data-tab-target="postpilot"/);
-  assert.match(page, /id="tab-postpilot"[\s\S]*data-st-view="write"[\s\S]*id="stBrief"[\s\S]*id="stPostPage"[\s\S]*id="stPostThreads"[\s\S]*id="stPostPersonal"/);
+  assert.match(page, /id="tab-postpilot"[\s\S]*data-st-view="write"[\s\S]*id="stBrief"[\s\S]*id="stPostThreads"[\s\S]*id="stPostPersonal"/);
+  assert.doesNotMatch(page, /id="(?:stPostPage|stPageToken|stExtToken|stThreadParts)"/);
   // The simple screen: two tabs, one input box, no sliders, drafts list or DNA editor.
   assert.deepEqual([...page.matchAll(/data-st-view="([a-z]+)"/g)].map((match) => match[1]), ["write", "settings"]);
   assert.doesNotMatch(page, /id="stIntensity"|id="stDnaFields"|id="stDraftList"|id="stApprove"/);

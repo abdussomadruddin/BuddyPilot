@@ -1,9 +1,13 @@
 const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/http-body");
 const { supabaseRequest } = require("../lib/supabase-db");
+const { splitForThreads, THREADS_MAX_PARTS } = require("../lib/social-publish");
 
 const LIMITS = { facebook: 63206, threads: 500 };
 const UUID = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+// Separate owner scope keeps handoffs out of the normal drafts and AI quotas.
+const TABLE = "storytelling_items";
+const SCOPE = "owner_key=eq.post-pilot-mac&kind=eq.draft";
 
 function rejected(message, statusCode = 400) {
   return Object.assign(new Error(message), { statusCode });
@@ -14,33 +18,38 @@ async function dispatch(body, request = supabaseRequest, now = Date.now()) {
   if (body.action === "enqueue") {
     const platform = body.platform;
     const content = typeof body.content === "string" ? body.content.trim() : "";
-    if (!Object.hasOwn(LIMITS, platform) || !content || content.length > LIMITS[platform]) {
+    const parts = platform === "threads" && content.length > LIMITS.threads && content.length <= 12000 ? splitForThreads(content) : [content];
+    if (!Object.hasOwn(LIMITS, platform) || parts.length > THREADS_MAX_PARTS || parts.some((part) => !part || part.length > LIMITS[platform])) {
       throw rejected("Pilih platform dan semak panjang teks (Threads: maksimum 500 aksara).");
     }
-    const [job] = await request("post_pilot_queue?select=id,state", {
-      method: "POST", prefer: "return=representation", body: { platform, content },
+    const multipart = parts.length > 1;
+    const [job] = await request(TABLE + "?select=id,status", {
+      method: "POST", prefer: "return=representation",
+      body: { owner_key: "post-pilot-mac", kind: "draft", status: multipart ? "queued_thread" : "queued", data: { platform, parts } },
     });
-    return { job };
+    return { job: { id: job.id, state: "queued" } };
   }
   if (body.action === "claim") {
-    const [candidate] = await request(`post_pilot_queue?select=id,platform,content&state=eq.queued&created_at=gte.${encodeURIComponent(cutoff)}&order=created_at.asc,id.asc&limit=1`);
+    const pending = body.multipart === true ? "status=in.(queued,queued_thread)" : "status=eq.queued";
+    const [candidate] = await request(`${TABLE}?select=id,status,data&${SCOPE}&${pending}&created_at=gte.${encodeURIComponent(cutoff)}&order=created_at.asc,id.asc&limit=1`);
     if (!candidate) return { job: null };
-    const [job] = await request(`post_pilot_queue?id=eq.${candidate.id}&state=eq.queued&select=id`, {
-      method: "PATCH", prefer: "return=representation", body: { state: "claimed", content: "[cleared]" },
+    const [job] = await request(`${TABLE}?${SCOPE}&id=eq.${candidate.id}&status=eq.${candidate.status}&select=id`, {
+      method: "PATCH", prefer: "return=representation", body: { status: "claimed", data: {} },
     });
-    return { job: job ? candidate : null };
+    return { job: job ? { id: candidate.id, platform: candidate.data.platform, content: candidate.data.parts[0], ...(body.multipart === true ? { parts: candidate.data.parts } : {}) } : null };
   }
   if (typeof body.id !== "string" || !UUID.test(body.id)) throw rejected("ID giliran tidak sah.");
   if (body.action === "finish" && ["review", "copy", "failed"].includes(body.state)) {
-    await request(`post_pilot_queue?id=eq.${body.id}&state=eq.claimed`, {
-      method: "PATCH", prefer: "return=minimal", body: { state: body.state, content: "[cleared]" },
+    await request(`${TABLE}?${SCOPE}&id=eq.${body.id}&status=eq.claimed`, {
+      method: "PATCH", prefer: "return=minimal", body: { status: body.state },
     });
     return {};
   }
   if (body.action === "status") {
-    const [job] = await request(`post_pilot_queue?id=eq.${body.id}&select=id,state,created_at`);
+    const [job] = await request(`${TABLE}?${SCOPE}&id=eq.${body.id}&select=id,status,created_at`);
     if (!job) throw rejected("Draf tidak dijumpai.", 404);
-    return { job: { id: job.id, state: job.state === "queued" && Date.parse(job.created_at) < Date.parse(cutoff) ? "expired" : job.state } };
+    const queued = ["queued", "queued_thread"].includes(job.status);
+    return { job: { id: job.id, state: queued ? (Date.parse(job.created_at) < Date.parse(cutoff) ? "expired" : "queued") : job.status } };
   }
   throw rejected("Tindakan tidak sah.");
 }

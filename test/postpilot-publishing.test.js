@@ -55,6 +55,16 @@ async function approvedDraft(store, content = LONG) {
 
 const post = (store, action, body = {}, options = {}) => dispatch(store, { method: "POST", body: { action, ...body }, options });
 
+test("Threads can publish an approved draft in one action without supplied parts", async () => {
+  const store = createMemoryStore();
+  const draft = await approvedDraft(store);
+  const api = fakeSocial();
+  const result = await post(store, "publish.threads", { id: draft.id }, { publishing: { social: api } });
+  assert.equal(api.sent.length, 1);
+  assert.equal(api.sent[0].parts.join(" ").replace(/\s+/g, " "), LONG.replace(/\s+/g, " "));
+  assert.equal(result.publication.parts, api.sent[0].parts.length);
+});
+
 test("thread parts stay within the Threads limit, in order, with nothing dropped", () => {
   const parts = social.splitForThreads(LONG);
   assert.ok(parts.length > 1);
@@ -62,6 +72,8 @@ test("thread parts stay within the Threads limit, in order, with nothing dropped
   assert.equal(parts.join(" ").replace(/\s+/g, " "), LONG.replace(/\s+/g, " "));
   const oneHugeSentence = `${"perkataan ".repeat(200).trim()}.`;
   assert.ok(social.splitForThreads(oneHugeSentence).every((part) => part.length <= 480));
+  const longWord = "x".repeat(1200);
+  assert.equal(social.splitForThreads(longWord).join(""), longWord);
   assert.throws(() => social.validateParts(["a".repeat(501)]), /had Threads ialah 500/);
   assert.throws(() => social.validateParts([]), /kosong/);
   assert.deepEqual(social.validateParts([" satu ", "", "dua"]), ["satu", "dua"]);
