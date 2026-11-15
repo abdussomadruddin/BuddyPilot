@@ -1,5 +1,5 @@
 const { requireAuth } = require("../../lib/auth");
-const { buildInvoiceListFromClients, currentPeriod, getMergedClientsWithStatus, validatePeriod } = require("../../lib/invoices");
+const { buildEditableInvoiceList, currentPeriod, getMergedClientsWithStatus, validatePeriod } = require("../../lib/invoices");
 const { readJsonBody } = require("../../lib/http-body");
 
 module.exports = async function handler(req, res) {
@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     const body = await readJsonBody(req);
     const { config, clients, registryStatus } = await getMergedClientsWithStatus();
     const period = validatePeriod(body.period || currentPeriod(config.timezone), config.timezone);
-    const invoices = buildInvoiceListFromClients(period, clients, config);
+    const invoices = await buildEditableInvoiceList(period, clients, config);
 
     res.statusCode = 200;
     res.end(JSON.stringify({

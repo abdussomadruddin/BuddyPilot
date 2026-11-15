@@ -1239,6 +1239,13 @@ function pageHtml() {
       display: block;
     }
 
+    .billing-extra-editor { grid-column: 1 / -1; min-width: 0; }
+    .billing-extra-editor summary { cursor: pointer; padding: 10px 0; }
+    .billing-extra-item { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: end; gap: 8px; margin-bottom: 8px; }
+    .billing-extra-item input { width: 100%; min-width: 0; box-sizing: border-box; }
+    @media (max-width: 540px) {
+      .billing-extra-item { grid-template-columns: minmax(0, 1fr); }
+    }
     .invoice-row {
       display: grid;
       grid-template-columns: minmax(92px, 0.62fr) minmax(145px, 1.15fr) minmax(128px, 1fr) minmax(105px, 0.75fr) minmax(95px, 0.65fr) minmax(100px, 0.75fr) minmax(110px, auto);
@@ -5057,13 +5064,6 @@ Review retargeting when the warm audience is ready</textarea>
             <button id="stNew" type="button" class="secondary">Baru</button>
           </div>
           <div id="stEditStatus" class="st-status" role="status"></div>
-          <div class="st-group">
-            <h3>Sunting dengan AI</h3>
-            <div id="stRewrites" class="st-chips"></div>
-            <button id="stQualityButton" type="button" class="secondary" data-st-ai data-st-needs-text>Semak kualiti</button>
-          </div>
-          <div id="stLocalReview" class="st-review"></div>
-          <div id="stQuality" class="st-quality"></div>
           <div class="st-actions">
             <label for="stMacPlatform">Platform</label>
             <select id="stMacPlatform">
@@ -5075,6 +5075,13 @@ Review retargeting when the warm audience is ready</textarea>
             <button id="stMacStatusCheck" type="button" class="secondary" hidden>Semak status</button>
           </div>
           <div id="stMacStatus" class="st-status" role="status"></div>
+          <div class="st-group">
+            <h3>Sunting dengan AI</h3>
+            <div id="stRewrites" class="st-chips"></div>
+            <button id="stQualityButton" type="button" class="secondary" data-st-ai data-st-needs-text>Semak kualiti</button>
+          </div>
+          <div id="stLocalReview" class="st-review"></div>
+          <div id="stQuality" class="st-quality"></div>
           <div id="stPreview" class="st-preview" hidden>
             <div class="st-preview-head"><span class="st-avatar" aria-hidden="true"></span><div><strong>Nama anda</strong><small>Baru sahaja · Public</small></div></div>
             <div id="stPreviewBody" class="st-preview-body"></div>
@@ -8903,15 +8910,50 @@ Review retargeting when the warm audience is ready</textarea>
     function updateInvoiceRowTotal(row) {
       const serviceInput = row.querySelector(".service-price-input");
       const discountInput = row.querySelector(".discount-input");
-      if (discountInput && numericValue(discountInput.value) > numericValue(serviceInput?.value)) {
-        discountInput.value = String(numericValue(serviceInput?.value));
+      const subtotal = numericValue(serviceInput?.value ?? row.dataset.servicePrice) + readBillingItems(row).reduce((sum, item) => sum + numericValue(item.amount), 0);
+      if (discountInput && numericValue(discountInput.value) > subtotal) {
+        discountInput.value = String(subtotal);
       }
-      const total = invoiceTotal(serviceInput?.value, discountInput?.value);
+      const total = invoiceTotal(subtotal, discountInput?.value ?? row.dataset.discount);
       const totalNode = row.querySelector(".total-payment");
       if (totalNode) {
         totalNode.textContent = formatMoneyValue(total);
         totalNode.dataset.total = String(total);
       }
+    }
+
+    function readBillingItems(row) {
+      return [...row.querySelectorAll(".billing-extra-item")].map((item) => ({
+        description: item.querySelector("input[type=text]").value.trim(),
+        amount: item.querySelector("input[type=number]").value
+      }));
+    }
+
+    function billingItemFields(item = {}) {
+      return '<div class="billing-extra-item">' +
+        '<label>Keterangan<input type="text" maxlength="160" required value="' + escapeHtml(item.description || "") + '"></label>' +
+        '<label>Harga (RM)<input type="number" min="0.01" max="999999" step="0.01" inputmode="decimal" required value="' + escapeHtml(String(item.amount ?? "")) + '"></label>' +
+        '<button type="button" class="link-button" data-billing-remove>Buang item</button></div>';
+    }
+
+    function billingItemEditor(items = []) {
+      return '<details class="billing-extra-editor"><summary>Edit item PDF</summary><div data-billing-items>' +
+        items.map(billingItemFields).join("") + '</div><button type="button" class="link-button" data-billing-add' +
+        (items.length >= 10 ? " disabled" : "") + '>Tambah item</button></details>';
+    }
+
+    function handleBillingItemClick(event) {
+      const button = event.target.closest("[data-billing-add], [data-billing-remove]");
+      if (!button) return;
+      const row = button.closest(".invoice-row");
+      if (button.hasAttribute("data-billing-add")) {
+        if (readBillingItems(row).length >= 10) return;
+        const items = row.querySelector("[data-billing-items]");
+        items.insertAdjacentHTML("beforeend", billingItemFields());
+        items.lastElementChild.querySelector("input").focus();
+      } else button.closest(".billing-extra-item").remove();
+      row.querySelector("[data-billing-add]").disabled = readBillingItems(row).length >= 10;
+      updateInvoiceRowTotal(row);
     }
 
     function updateAllInvoiceTotals() {
@@ -8923,6 +8965,7 @@ Review retargeting when the warm audience is ready</textarea>
         clientCode: row.dataset.clientCode,
         servicePrice: numericValue(row.querySelector(".service-price-input")?.value),
         discount: numericValue(row.querySelector(".discount-input")?.value),
+        extraItems: readBillingItems(row),
         selected: Boolean(row.querySelector(".invoice-upload-input")?.checked)
       }));
     }
@@ -8947,6 +8990,7 @@ Review retargeting when the warm audience is ready</textarea>
         clientCode: row.dataset.clientCode,
         servicePrice: numericValue(row.dataset.servicePrice),
         discount: numericValue(row.dataset.discount),
+        extraItems: readBillingItems(row),
         canGenerateReceipt: row.dataset.canGenerateReceipt === "true",
         paid: Boolean(row.querySelector(".receipt-paid-input")?.checked)
       }));
@@ -8970,11 +9014,11 @@ Review retargeting when the warm audience is ready</textarea>
 
       const rows = receipts.map((receipt) => {
         const folderNote = receipt.hasDriveFolder ? "" : "<span class=\\"invoice-muted\\">Folder Drive belum diset</span>";
-        const servicePrice = Number(receipt.servicePrice || receipt.amount || 0).toFixed(2);
+        const servicePrice = Number(receipt.servicePrice ?? receipt.amount ?? 0).toFixed(2);
         const discount = Number(receipt.discount || 0).toFixed(2);
-        const total = invoiceTotal(servicePrice, discount);
+        const total = Number(receipt.amount ?? invoiceTotal(servicePrice, discount));
         const canGenerateReceipt = Boolean(receipt.canGenerateReceipt);
-        const totalText = canGenerateReceipt ? formatMoneyValue(total) : "Upload invoice dahulu";
+        const totalText = canGenerateReceipt ? formatMoneyValue(receipt.amount ?? total) : "Upload invoice dahulu";
         const statusNote = receipt.receiptStatusNote || (canGenerateReceipt ? "" : "Upload invoice dahulu");
         return \`
           <div class="invoice-row" data-client-code="\${escapeHtml(receipt.clientCode)}" data-service-price="\${escapeHtml(servicePrice)}" data-discount="\${escapeHtml(discount)}" data-can-generate-receipt="\${escapeHtml(String(canGenerateReceipt))}">
@@ -8998,6 +9042,7 @@ Review retargeting when the warm audience is ready</textarea>
               <button class="link-button review-receipt-button" type="button" data-client-code="\${escapeHtml(receipt.clientCode)}" \${canGenerateReceipt ? "" : "disabled"}>Review Resit</button>
               \${folderNote}
             </div>
+            \${canGenerateReceipt ? billingItemEditor(receipt.extraItems) : ""}
           </div>
         \`;
       }).join("");
@@ -9037,9 +9082,9 @@ Review retargeting when the warm audience is ready</textarea>
 
       const rows = invoices.map((invoice) => {
         const folderNote = invoice.hasDriveFolder ? "" : "<span class=\\"invoice-muted\\">Folder Drive belum diset</span>";
-        const servicePrice = Number(invoice.servicePrice || invoice.amount || 0).toFixed(2);
+        const servicePrice = Number(invoice.servicePrice ?? invoice.amount ?? 0).toFixed(2);
         const discount = Number(invoice.discount || 0).toFixed(2);
-        const total = invoiceTotal(servicePrice, discount);
+        const total = Number(invoice.amount ?? invoiceTotal(servicePrice, discount));
         return \`
           <div class="invoice-row" data-client-code="\${escapeHtml(invoice.clientCode)}">
             <div>
@@ -9067,6 +9112,7 @@ Review retargeting when the warm audience is ready</textarea>
               <button class="link-button review-pdf-button" type="button" data-client-code="\${escapeHtml(invoice.clientCode)}">Review PDF</button>
               \${folderNote}
             </div>
+            \${billingItemEditor(invoice.extraItems)}
           </div>
         \`;
       }).join("");
@@ -9095,6 +9141,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     async function generateInvoices() {
+      const requestedPeriod = invoicePeriod.value;
       invoiceResult.className = "result";
       invoiceResult.textContent = "";
       invoiceList.className = "invoice-list";
@@ -9106,7 +9153,7 @@ Review retargeting when the warm audience is ready</textarea>
         const response = await fetch("/api/invoices/preview", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ period: invoicePeriod.value })
+          body: JSON.stringify({ period: requestedPeriod })
         });
         const json = await readApiJson(response);
         if (response.status === 401) {
@@ -9114,6 +9161,7 @@ Review retargeting when the warm audience is ready</textarea>
           return;
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Generate invoice failed.");
+        if (invoicePeriod.value !== requestedPeriod) return;
         invoicePeriod.value = json.period;
         currentBankStatus = json.bankStatus || null;
         renderInvoiceList(json.invoices || []);
@@ -9126,6 +9174,7 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     async function generateReceipts() {
+      const requestedPeriod = receiptPeriod.value;
       receiptResult.className = "result";
       receiptResult.textContent = "";
       receiptList.className = "invoice-list";
@@ -9137,7 +9186,7 @@ Review retargeting when the warm audience is ready</textarea>
         const response = await fetch("/api/receipts/preview", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ period: receiptPeriod.value })
+          body: JSON.stringify({ period: requestedPeriod })
         });
         const json = await readApiJson(response);
         if (response.status === 401) {
@@ -9145,6 +9194,7 @@ Review retargeting when the warm audience is ready</textarea>
           return;
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Generate receipt failed.");
+        if (receiptPeriod.value !== requestedPeriod) return;
         receiptPeriod.value = json.period;
         currentBankStatus = json.bankStatus || null;
         renderReceiptList(json.receipts || []);
@@ -9285,15 +9335,7 @@ Review retargeting when the warm audience is ready</textarea>
 
       invoiceResult.className = "result";
       invoiceResult.textContent = "";
-      const params = new URLSearchParams({
-        client: draft.clientCode,
-        period: invoicePeriod.value,
-        servicePrice: String(draft.servicePrice),
-        discount: String(draft.discount)
-      });
-      const url = \`/api/invoices/pdf?\${params.toString()}\`;
-      const opened = window.open(url, "_blank");
-      if (!opened) window.location.href = url;
+      openBillingPdf("/api/invoices/pdf", invoicePeriod.value, draft);
     }
 
     async function reviewReceiptPdf(clientCode) {
@@ -9302,21 +9344,48 @@ Review retargeting when the warm audience is ready</textarea>
 
       receiptResult.className = "result";
       receiptResult.textContent = "";
-      const params = new URLSearchParams({
-        client: draft.clientCode,
-        period: receiptPeriod.value,
-        servicePrice: String(draft.servicePrice),
-        discount: String(draft.discount)
+      openBillingPdf("/api/receipts/pdf", receiptPeriod.value, draft);
+    }
+
+    function openBillingPdf(action, period, draft) {
+      const error = billingDraftError([draft]);
+      if (error) throw error;
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = action;
+      form.target = "_blank";
+      form.rel = "noopener";
+      form.hidden = true;
+      const values = { clientCode: draft.clientCode, period, servicePrice: draft.servicePrice, discount: draft.discount, extraItems: JSON.stringify(draft.extraItems) };
+      Object.entries(values).forEach(([name, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = String(value);
+        form.append(input);
       });
-      const url = \`/api/receipts/pdf?\${params.toString()}\`;
-      const opened = window.open(url, "_blank");
-      if (!opened) window.location.href = url;
+      document.body.append(form);
+      form.submit();
+      form.remove();
+    }
+
+    function billingDraftError(drafts) {
+      const invalid = drafts.find((draft) => draft.extraItems.some((item) =>
+        !item.description || !Number.isFinite(Number(item.amount)) || Number(item.amount) < 0.01 || Number(item.amount) > 999999
+      ));
+      if (invalid) return new Error("Isi keterangan dan harga yang sah untuk setiap item tambahan: " + invalid.clientCode);
+      const belowDiscount = drafts.find((draft) => invoiceTotal(
+        draft.servicePrice + draft.extraItems.reduce((sum, item) => sum + Number(item.amount), 0), 0
+      ) < draft.discount);
+      return belowDiscount ? new Error("Jumlah sebelum diskaun terlalu rendah: " + belowDiscount.clientCode) : null;
     }
 
     async function uploadInvoices() {
       invoiceResult.className = "result";
       invoiceResult.textContent = "";
       const drafts = collectInvoiceDrafts().filter((draft) => draft.selected);
+      const invalid = billingDraftError(drafts);
+      if (invalid) return showInvoiceError(invalid);
       if (!drafts.length) {
         showInvoiceError(new Error("Tick sekurang-kurangnya satu invoice untuk upload ke Google Drive."));
         return;
@@ -9366,7 +9435,9 @@ Review retargeting when the warm audience is ready</textarea>
     async function uploadReceipts() {
       receiptResult.className = "result";
       receiptResult.textContent = "";
-      const drafts = collectReceiptDrafts();
+      const drafts = collectReceiptDrafts().filter((draft) => draft.paid && draft.canGenerateReceipt);
+      const invalid = billingDraftError(drafts);
+      if (invalid) return showReceiptError(invalid);
       if (!drafts.some((draft) => draft.paid && draft.canGenerateReceipt)) {
         showReceiptError(new Error("Tick sekurang-kurangnya satu invoice yang telah dibayar."));
         return;
@@ -9790,10 +9861,17 @@ Review retargeting when the warm audience is ready</textarea>
     refreshClientsButton.addEventListener("click", loadClients);
     generateInvoicesButton.addEventListener("click", generateInvoices);
     generateReceiptsButton.addEventListener("click", generateReceipts);
-    invoicePeriod.addEventListener("change", () => localStorage.setItem("buddypilot-invoice-period", invoicePeriod.value));
-    receiptPeriod.addEventListener("change", () => localStorage.setItem("buddypilot-receipt-period", receiptPeriod.value));
+    function resetBillingDrafts(period, storageKey, list, result, uploadButton) {
+      localStorage.setItem(storageKey, period.value);
+      list.replaceChildren();
+      list.className = "invoice-list";
+      uploadButton.disabled = true;
+      setMessage(result, "info", "Jana semula draft untuk bulan yang dipilih.");
+    }
+    invoicePeriod.addEventListener("change", () => resetBillingDrafts(invoicePeriod, "buddypilot-invoice-period", invoiceList, invoiceResult, uploadInvoicesButton));
+    receiptPeriod.addEventListener("change", () => resetBillingDrafts(receiptPeriod, "buddypilot-receipt-period", receiptList, receiptResult, uploadReceiptsButton));
     invoiceList.addEventListener("input", (event) => {
-      if (!event.target.matches(".service-price-input, .discount-input")) return;
+      if (!event.target.matches(".service-price-input, .discount-input, .billing-extra-item input")) return;
       const row = event.target.closest(".invoice-row[data-client-code]");
       if (row) updateInvoiceRowTotal(row);
     });
@@ -9802,16 +9880,21 @@ Review retargeting when the warm audience is ready</textarea>
       updateUploadInvoicesButtonState();
     });
     invoiceList.addEventListener("click", (event) => {
+      handleBillingItemClick(event);
       const button = event.target.closest(".review-pdf-button");
       if (!button) return;
       reviewInvoicePdf(button.dataset.clientCode).catch(showInvoiceError);
     });
     uploadInvoicesButton.addEventListener("click", uploadInvoices);
+    receiptList.addEventListener("input", (event) => {
+      if (event.target.matches(".billing-extra-item input")) updateInvoiceRowTotal(event.target.closest(".invoice-row"));
+    });
     receiptList.addEventListener("change", (event) => {
       if (!event.target.matches(".receipt-paid-input")) return;
       updateUploadReceiptsButtonState();
     });
     receiptList.addEventListener("click", (event) => {
+      handleBillingItemClick(event);
       const button = event.target.closest(".review-receipt-button");
       if (!button) return;
       reviewReceiptPdf(button.dataset.clientCode).catch(showReceiptError);

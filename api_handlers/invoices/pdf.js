@@ -29,6 +29,7 @@ module.exports = async function handler(req, res) {
     const clientCode = body.clientCode || body.code || queryParam(req, "client");
     const period = body.period || queryParam(req, "period");
     const overrides = {};
+    if (body.extraItems !== undefined) overrides.extraItems = Array.isArray(body.extraItems) ? body.extraItems : JSON.parse(body.extraItems);
     if (Object.prototype.hasOwnProperty.call(body, "servicePrice")) overrides.servicePrice = body.servicePrice;
     else if (queryParam(req, "servicePrice") !== null) overrides.servicePrice = queryParam(req, "servicePrice");
     if (Object.prototype.hasOwnProperty.call(body, "discount")) overrides.discount = body.discount;
