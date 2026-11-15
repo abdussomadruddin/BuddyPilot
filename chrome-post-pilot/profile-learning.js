@@ -38,9 +38,20 @@ async function scanLearningProfile(platform, owner, cutoff) {
   const profilePath = currentPath();
   const profileId = new URL(location.href).searchParams.get("id");
 
+  const renderedTimestamp = (link) => {
+    if (threads || !link.getBoundingClientRect) return "";
+    const bounds = link.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return "";
+    return [...link.querySelectorAll("span")].filter((node) => !node.children.length)
+      .map((node) => ({ text: node.textContent.replace(/\u034f/g, ""), rect: node.getBoundingClientRect() }))
+      .filter(({ rect }) => rect.width && rect.height && rect.x >= bounds.x - 2 && rect.right <= bounds.right + 2 &&
+        rect.y >= bounds.y - 2 && rect.y < bounds.bottom)
+      .sort((a, b) => a.rect.x - b.rect.x)
+      .map(({ text }) => text).join("");
+  };
   const dateFrom = (link) => {
     const time = link.querySelector("time");
-    for (const value of [time?.dateTime, link.getAttribute("title"), link.getAttribute("aria-label"), time?.textContent, link.innerText]) {
+    for (const value of [time?.dateTime, link.getAttribute("title"), link.getAttribute("aria-label"), time?.textContent, link.innerText, renderedTimestamp(link)]) {
       if (!value) continue;
       const label = normalize(value);
       if (/^(just now|baru sahaja)$/.test(label)) return Date.now();
@@ -169,7 +180,7 @@ async function scanLearningProfile(platform, owner, cutoff) {
     const top = window.scrollY;
     window.scrollBy(0, Math.max(300, window.innerHeight * 0.85));
     await pause();
-    if (window.scrollY === top && page > 3) break;
+    if (window.scrollY === top && page > (threads || records.size ? 3 : 9)) break;
   }
   return { posts: [...records.values()] };
 }

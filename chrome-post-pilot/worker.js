@@ -159,7 +159,8 @@ async function collectLearningPosts() {
     if (!owner) { notes.push(label + ": tetapkan profil dalam extension."); continue; }
     let tab;
     try {
-      tab = await chrome.tabs.create({ url, active: false });
+      // Facebook lays out its visible timestamp glyphs in the foreground.
+      tab = await chrome.tabs.create({ url, active: platform === "facebook" });
       await waitForTab(tab.id);
       const [{ result }] = await chrome.scripting.executeScript({
         target: { tabId: tab.id }, func: scanLearningProfile, args: [platform, owner, cutoff],
