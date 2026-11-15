@@ -115,14 +115,31 @@ test("output is cleaned of emojis, separators, headings and trailing hashtags", 
   assert.deepEqual(story.localReview(fakePost(21), { targetLength: 4500 }).issues.map((issue) => issue.code), ["repetition"]);
 });
 
-test("a length miss triggers exactly one revision call", async () => {
+test("a length miss is revised in words and paragraphs until within 10%, at most twice", async () => {
   const store = createMemoryStore();
   const { ai, calls } = mockAi({ text: (request, count) => (count === 1 ? fakePost(8) : fakePost(21)) });
   const result = await post(store, "generate", { topic: "Topik pendek" }, { ai });
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 2, "stops once the length is within 10%");
   assert.equal(result.calls, 2);
-  assert.match(calls[1].prompt, /Sasaran 4500 aksara/);
+  assert.match(calls[1].prompt, /terlalu pendek/);
+  assert.match(calls[1].prompt, /lebih kurang \d+ patah perkataan/);
   assert.ok(Math.abs(result.text.length - 4500) / 4500 <= 0.1);
+
+  // Too long, and the first revision only gets part of the way: a second try, closest version kept.
+  const longStore = createMemoryStore();
+  const sizes = [40, 30, 22];
+  const long = mockAi({ text: (request, count) => fakePost(sizes[count - 1] ?? 22) });
+  const trimmed = await post(longStore, "generate", { topic: "Topik panjang" }, { ai: long.ai });
+  assert.equal(long.calls.length, 3, "first draft plus two revisions, never more");
+  assert.match(long.calls[1].prompt, /terlalu panjang/);
+  assert.equal(trimmed.text, fakePost(22).trim());
+
+  // A revision that makes it worse is discarded and stops further tries.
+  const worseStore = createMemoryStore();
+  const worse = mockAi({ text: (request, count) => fakePost(count === 1 ? 30 : 45) });
+  const kept = await post(worseStore, "generate", { topic: "Topik lain" }, { ai: worse.ai });
+  assert.equal(worse.calls.length, 2);
+  assert.equal(kept.text, fakePost(30).trim());
 });
 
 test("section rewrites change only that section; full rewrites keep going through the DNA", async () => {
