@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/client": "2.0.0-beta.5",
+    "@vercel/blob": "^2.9.0",
     "googleapis": "^173.0.0",
     "pdfkit": "^0.15.0",
     "web-push": "3.6.7"

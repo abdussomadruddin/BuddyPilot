@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "BuddyPilot Poster",
+  "version": "1.0.0",
+  "description": "Isi post yang kau luluskan dalam BuddyPilot ke kotak post Facebook personal. Kau tekan Post sendiri.",
+  "action": { "default_popup": "popup.html", "default_title": "BuddyPilot Poster" },
+  "permissions": ["storage", "clipboardWrite"],
+  "host_permissions": ["https://buddypilot.vercel.app/*", "https://www.facebook.com/*", "https://*.public.blob.vercel-storage.com/*"],
+  "content_scripts": [{ "matches": ["https://www.facebook.com/*"], "js": ["facebook.js"], "run_at": "document_idle" }]
+}

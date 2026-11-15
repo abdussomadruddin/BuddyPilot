@@ -4,6 +4,8 @@ const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/http-body");
 const { verifyModel, publicAiConfig } = require("../lib/storytelling-ai");
 const story = require("../lib/storytelling");
+const publishing = require("../lib/storytelling-publish");
+const learning = require("../lib/storytelling-learning");
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -55,8 +57,9 @@ const ACTIONS = {
     return { samples };
   },
   "dna.analyze": async (store, body, options) => ({ dna: await story.analyzeDna(store, options) }),
-  "dna.save": async (store, body) => ({ dna: await story.saveDna(store, body.profile || {}, "manual", "Disunting secara manual.") }),
-  "dna.reset": async (store) => ({ dna: await story.saveDna(store, story.PRESET_DNA, "preset", "Kembali ke preset asal.") }),
+  // What was learned from engagement is kept through manual edits and resets.
+  "dna.save": async (store, body) => ({ dna: await story.saveDna(store, { engagement: (await story.activeDna(store)).profile.engagement, ...(body.profile || {}) }, "manual", "Disunting secara manual.") }),
+  "dna.reset": async (store) => ({ dna: await story.saveDna(store, { ...story.PRESET_DNA, engagement: (await story.activeDna(store)).profile.engagement }, "preset", "Kembali ke preset asal.") }),
   "dna.restore": async (store, body) => {
     const version = await store.get("dna", body.id);
     return { dna: await story.saveDna(store, version.profile, "restore", `Dipulihkan daripada versi ${version.version}.`) };
@@ -77,6 +80,13 @@ const ACTIONS = {
   },
   "draft.delete": async (store, body) => { await store.remove("draft", body.id); return {}; },
   "feedback.save": async (store, body) => story.saveFeedback(store, body),
+  // Publishing: each platform is its own explicit action on an approved draft.
+  "publish.page": async (store, body, options) => publishing.publishDraft(store, { id: body.id, platform: "page", again: body.again === true }, options.publishing),
+  "publish.threads": async (store, body, options) => publishing.publishDraft(store, { id: body.id, platform: "threads", parts: body.parts, again: body.again === true }, options.publishing),
+  "threads.split": async (store, body, options) => publishing.splitThread(store, body, options),
+  "personal.queue": async (store, body) => publishing.queuePersonal(store, body),
+  "image.upload": async (store, body, options) => require("../lib/storytelling-image").saveImage(body, options.image),
+  "learn.run": async (store, body, options) => ({ cycle: await learning.runCycle(store, { force: true }, options.learning), learning: await learning.learningStatus(store) }),
   "ai.verify": async (store, body, options) => ({ verification: await (options.verify || verifyModel)() }),
 };
 
@@ -87,6 +97,7 @@ async function dispatch(store, { method = "GET", url = "/", body = {}, options =
     const parsed = new URL(url, "http://localhost");
     const view = parsed.searchParams.get("view") || "bootstrap";
     if (view === "bootstrap") return bootstrap(store, options);
+    if (view === "learning") return { learning: await learning.learningStatus(store) };
     if (view === "drafts") return { drafts: await story.listDrafts(store, { q: parsed.searchParams.get("q") || "", status: parsed.searchParams.get("status") || "" }) };
     if (view === "draft") {
       const id = parsed.searchParams.get("id");

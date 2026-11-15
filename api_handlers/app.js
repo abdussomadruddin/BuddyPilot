@@ -13,8 +13,8 @@ function pageHtml() {
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
-  <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261114-3">
-  <script src="/buddypilot-storytelling.js?v=20261115-alive" defer></script>
+  <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261115-simple">
+  <script src="/buddypilot-storytelling.js?v=20261115-simple" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">
@@ -5001,146 +5001,91 @@ Review retargeting when the warm audience is ready</textarea>
     <section id="tab-postpilot" class="tab-panel" data-tab-panel="postpilot">
       <header class="st-head">
         <h1>Post Pilot</h1>
-        <p class="note">Facebook Storytelling: satu topik jadi post panjang dalam suara kau sendiri. Tiada apa-apa dipost ke Facebook secara automatik.</p>
+        <p class="note">Tulis tajuk dan idea, semak, kemudian post. AI belajar sendiri daripada engagement post kau.</p>
       </header>
       <div id="stNotice" class="st-notice" role="status" hidden></div>
       <div class="st-tabs" role="tablist" aria-label="Post Pilot">
-        <button type="button" role="tab" data-st-view="write" aria-label="Facebook Storytelling"><span class="st-long">Facebook Storytelling</span><span class="st-short">Tulis</span></button>
-        <button type="button" role="tab" data-st-view="dna" aria-label="My Writing DNA"><span class="st-long">My Writing DNA</span><span class="st-short">DNA</span></button>
-        <button type="button" role="tab" data-st-view="drafts">Draf</button>
-        <button type="button" role="tab" data-st-view="settings" aria-label="AI Settings"><span class="st-long">AI Settings</span><span class="st-short">AI</span></button>
+        <button type="button" role="tab" data-st-view="write">Tulis</button>
+        <button type="button" role="tab" data-st-view="settings">Tetapan</button>
       </div>
 
-      <div class="st-write" data-st-panel="write">
-        <section class="workflow-card st-form" aria-labelledby="stFormTitle">
-          <h2 id="stFormTitle">Topik</h2>
-          <label for="stTopic">Topik post</label>
-          <textarea id="stTopic" rows="2" maxlength="300" placeholder="Contoh: Meta Ads Andromeda 2.0"></textarea>
-          <details class="st-optional">
-            <summary>Konteks tambahan (pilihan)</summary>
-            <label for="stCtx-opinion">Pendapat atau hujah utama</label><textarea id="stCtx-opinion" rows="2" maxlength="1500"></textarea>
-            <label for="stCtx-experience">Pengalaman peribadi (yang benar)</label><textarea id="stCtx-experience" rows="2" maxlength="1500" placeholder="Kosongkan jika tiada; AI tidak akan mereka pengalaman."></textarea>
-            <label for="stCtx-facts">Fakta atau bukti sokongan</label><textarea id="stCtx-facts" rows="2" maxlength="1500"></textarea>
-            <label for="stCtx-audience">Audiens sasaran</label><input id="stCtx-audience" type="text" maxlength="300">
-            <label for="stCtx-tone">Nada emosi</label><input id="stCtx-tone" type="text" maxlength="300">
-            <label for="stCtx-takeaway">Takeaway utama</label><input id="stCtx-takeaway" type="text" maxlength="500">
-            <label for="stCtx-cta">Call to action</label><input id="stCtx-cta" type="text" maxlength="300" placeholder="Default: ajak pembaca share">
-          </details>
-          <label for="stStyle">Gaya penulisan</label>
-          <select id="stStyle"></select>
-          <label for="stLength">Panjang</label>
-          <div class="st-inline"><select id="stLength"></select><input id="stLengthCustom" type="number" min="500" max="8000" step="100" placeholder="Aksara" aria-label="Panjang custom" hidden></div>
-          <label for="stIntensity">Intensiti <b id="stIntensityValue">8</b>/10</label>
-          <input id="stIntensity" type="range" min="1" max="10" value="8">
-          <p class="st-scale"><span>Tenang</span><span>Tajam</span><span>Kontroversi</span></p>
-          <label for="stVoice">Kekuatan suara peribadi <b id="stVoiceValue">10</b>/10</label>
-          <input id="stVoice" type="range" min="1" max="10" value="10">
+      <div class="st-simple" data-st-panel="write">
+        <section class="workflow-card st-form">
+          <label for="stBrief">Tajuk dan idea</label>
+          <textarea id="stBrief" rows="5" maxlength="1500" placeholder="Tulis tajuk, dan apa yang kau nak sampaikan: pendapat, cerita sebenar atau fakta. Contoh: Meta Ads Andromeda 2.0. Ramai masih stack interest, padahal sistem dah berubah."></textarea>
           <button id="stGenerate" type="button" data-st-ai>Generate</button>
           <div id="stWriteStatus" class="st-status" role="status"></div>
         </section>
 
-        <section id="stEditorCard" class="workflow-card st-editor" aria-labelledby="stEditorTitle">
+        <section id="stEditorCard" class="workflow-card st-editor" aria-labelledby="stEditorTitle" hidden>
           <div class="st-editor-head">
             <h2 id="stEditorTitle">Post</h2>
-            <div class="st-meter"><b id="stCount">0 aksara</b><span id="stTarget"></span><span id="stReading"></span><em id="stSaveState"></em></div>
+            <div class="st-meter"><b id="stCount">0 aksara</b><em id="stSaveState"></em></div>
           </div>
-          <textarea id="stEditor" rows="18" maxlength="12000" placeholder="Post yang dijana akan muncul di sini. Kau boleh sunting terus."></textarea>
-          <div class="st-actions st-actions-main">
-            <button id="stCopy" type="button" data-st-needs-text>Salin</button>
-            <button id="stSave" type="button" class="secondary" data-st-needs-text>Simpan draf</button>
+          <textarea id="stEditor" rows="16" maxlength="12000" aria-label="Teks post"></textarea>
+          <div class="st-photo">
+            <input id="stPhotoInput" type="file" accept="image/*" capture="environment" hidden>
+            <button id="stPhoto" type="button" class="secondary">Kamera</button>
+            <figure id="stPhotoPreview" hidden><img id="stPhotoImage" alt="Gambar untuk post ini"><button id="stPhotoRemove" type="button" class="secondary">Buang gambar</button></figure>
+            <span id="stPhotoStatus" class="st-status" role="status"></span>
           </div>
-          <div class="st-actions st-actions-more">
-            <button id="stApprove" type="button" class="secondary" data-st-needs-text>Tanda Approved</button>
-            <button id="stRegenerate" type="button" class="secondary" data-st-ai>Regenerate</button>
-            <button id="stUndo" type="button" class="secondary" disabled>Undo</button>
-            <button id="stPreviewToggle" type="button" class="secondary">Preview Facebook</button>
+          <div class="st-actions">
+            <button id="stRegenerate" type="button" class="secondary" data-st-ai>Jana semula</button>
+            <button id="stCopy" type="button" class="secondary" data-st-needs-text>Salin</button>
             <button id="stNew" type="button" class="secondary">Baru</button>
           </div>
           <div id="stEditStatus" class="st-status" role="status"></div>
-          <div class="st-group">
-            <h3>Sunting dengan AI</h3>
-            <div id="stRewrites" class="st-chips"></div>
-            <button id="stQualityButton" type="button" class="secondary" data-st-ai data-st-needs-text>Semak kualiti</button>
-          </div>
-          <div id="stLocalReview" class="st-review"></div>
-          <div id="stQuality" class="st-quality"></div>
-          <div id="stPreview" class="st-preview" hidden>
-            <div class="st-preview-head"><span class="st-avatar" aria-hidden="true"></span><div><strong>Nama anda</strong><small>Baru sahaja · Public</small></div></div>
-            <div id="stPreviewBody" class="st-preview-body"></div>
-            <div class="st-preview-foot"><span>Like</span><span>Comment</span><span>Share</span></div>
-          </div>
-          <details id="stRevisions" class="st-optional" hidden>
-            <summary>Versi terdahulu draf ini</summary>
-            <ul id="stRevisionList" class="st-list"></ul>
-          </details>
-          <div class="st-group">
-            <h3>Maklum balas untuk draf ini</h3>
-            <div id="stFeedbackTags" class="st-chips"></div>
-            <div class="st-inline"><input id="stFeedbackNote" type="text" maxlength="1000" placeholder="Nota tambahan (pilihan)" aria-label="Nota maklum balas"><button id="stFeedbackSend" type="button" class="secondary">Hantar</button></div>
-            <div id="stFeedbackStatus" class="st-status" role="status"></div>
+
+          <div id="stPublish" class="st-publish" hidden>
+            <h3>Dah ok? Post ke</h3>
+            <div class="st-publish-row"><button id="stPostPage" type="button" data-st-post>Facebook Page</button><span id="stStatePage" class="st-publish-state"></span></div>
+            <div class="st-publish-row"><button id="stPostThreads" type="button" data-st-post data-st-ai>Threads</button><span id="stStateThreads" class="st-publish-state"></span></div>
+            <div class="st-publish-row"><button id="stPostPersonal" type="button" data-st-post>Facebook personal</button><span id="stStatePersonal" class="st-publish-state"></span></div>
+            <div id="stThread" class="st-thread" hidden>
+              <p class="note">Semak thread sebelum post. Setiap bahagian maksimum 500 aksara.</p>
+              <ol id="stThreadParts"></ol>
+              <div class="st-actions"><button id="stThreadPost" type="button">Post thread ini</button><button id="stThreadCancel" type="button" class="secondary">Batal</button></div>
+            </div>
+            <div id="stPublishStatus" class="st-status" role="status"></div>
           </div>
         </section>
       </div>
 
-      <div class="st-columns" data-st-panel="dna" hidden>
+      <div class="st-simple" data-st-panel="settings" hidden>
         <section class="workflow-card">
-          <h2>Writing DNA Profile</h2>
-          <p id="stDnaMeta" class="note"></p>
-          <label for="stDnaName">Nama profil</label>
-          <input id="stDnaName" type="text" maxlength="120">
-          <div id="stDnaFields" class="st-dna-fields"></div>
-          <label for="stDnaRules">Peraturan wajib (satu sebaris)</label>
-          <textarea id="stDnaRules" rows="8"></textarea>
-          <div class="st-actions">
-            <button id="stDnaSave" type="button">Simpan DNA</button>
-            <button id="stDnaAnalyze" type="button" class="secondary" data-st-ai>Analisis contoh post</button>
-            <button id="stDnaLearn" type="button" class="secondary" data-st-ai>Belajar daripada maklum balas</button>
-            <button id="stDnaReset" type="button" class="secondary">Preset asal</button>
-          </div>
-          <div id="stDnaStatus" class="st-status" role="status"></div>
-          <h3>Sejarah versi</h3>
-          <ul id="stDnaVersions" class="st-list"></ul>
+          <h2>AI belajar sendiri</h2>
+          <p id="stLearning" class="note">Memuatkan...</p>
+          <button id="stLearnNow" type="button" class="secondary" data-st-ai>Belajar sekarang</button>
+          <div id="stLearnStatus" class="st-status" role="status"></div>
         </section>
         <section class="workflow-card">
-          <h2>Contoh post saya</h2>
-          <p id="stSampleMeta" class="note"></p>
-          <label for="stSampleText">Tampal satu post Facebook sebenar</label>
-          <textarea id="stSampleText" rows="6" maxlength="12000"></textarea>
-          <label for="stSampleCategory">Kategori atau topik (pilihan)</label>
-          <input id="stSampleCategory" type="text" maxlength="60" placeholder="Contoh: Meta Ads, opinion, cerita bisnes">
-          <div class="st-actions"><button id="stSampleSave" type="button">Tambah contoh</button><button id="stSampleCancel" type="button" class="secondary" hidden>Batal</button></div>
-          <details class="st-optional">
-            <summary>Import pukal (TXT atau Markdown)</summary>
-            <p class="note">Asingkan setiap post dengan satu baris --- atau dua baris kosong.</p>
-            <input id="stImportFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown" aria-label="Fail TXT atau Markdown">
-            <textarea id="stImportText" rows="6" placeholder="Atau tampal semua post di sini" aria-label="Teks untuk diimport"></textarea>
-            <button id="stImport" type="button" class="secondary">Import</button>
-          </details>
-          <div id="stSampleStatus" class="st-status" role="status"></div>
-          <ul id="stSampleList" class="st-list st-samples"></ul>
+          <h2>Akaun sosial</h2>
+          <form id="stPageForm" class="st-account" autocomplete="off">
+            <h3>Facebook Page <span id="stPageState" class="st-account-state"></span></h3>
+            <label for="stPageId">Page ID</label><input id="stPageId" type="text" inputmode="numeric" maxlength="30">
+            <label for="stPageToken">Page access token</label><input id="stPageToken" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="1024" placeholder="Kosongkan jika tidak berubah">
+            <button type="submit" class="secondary">Simpan &amp; uji</button>
+          </form>
+          <form id="stThreadsForm" class="st-account" autocomplete="off">
+            <h3>Threads <span id="stThreadsState" class="st-account-state"></span></h3>
+            <label for="stThreadsId">Threads User ID</label><input id="stThreadsId" type="text" inputmode="numeric" maxlength="30">
+            <label for="stThreadsToken">Threads access token</label><input id="stThreadsToken" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="1024">
+            <button type="submit" class="secondary">Simpan &amp; uji</button>
+          </form>
+          <div class="st-account">
+            <h3>Facebook personal (Chrome extension) <span id="stExtState" class="st-account-state"></span></h3>
+            <p class="note">Jana token dan tampal dalam extension BuddyPilot di Chrome. Token ditunjuk sekali sahaja.</p>
+            <button id="stExtToken" type="button" class="secondary">Jana token extension</button>
+            <input id="stExtValue" type="text" readonly hidden aria-label="Token extension">
+          </div>
+          <div id="stSocialStatus" class="st-status" role="status"></div>
+        </section>
+        <section class="workflow-card">
+          <h2>AI</h2>
+          <p id="stAiInfo" class="note"></p>
+          <button type="button" class="secondary" data-open-ai-keys>Urus AI API Key</button>
         </section>
       </div>
-
-      <section class="workflow-card" data-st-panel="drafts" hidden>
-        <h2>Draf</h2>
-        <div class="st-inline">
-          <input id="stDraftSearch" type="search" placeholder="Cari topik atau kandungan" aria-label="Cari draf">
-          <select id="stDraftFilter" aria-label="Tapis status"><option value="">Semua status</option><option value="draft">Draft</option><option value="approved">Approved</option><option value="published">Published</option></select>
-        </div>
-        <div id="stDraftStatus" class="st-status" role="status"></div>
-        <ul id="stDraftList" class="st-list st-drafts"></ul>
-      </section>
-
-      <section class="workflow-card" data-st-panel="settings" hidden>
-        <h2>AI Settings</h2>
-        <dl id="stSettingsInfo" class="st-settings"></dl>
-        <button id="stVerify" type="button" class="secondary">Semak akses model</button>
-        <button type="button" class="secondary" data-open-ai-keys>Urus AI API Key</button>
-        <div id="stSettingsStatus" class="st-status" role="status"></div>
-        <h3>Pengendalian data</h3>
-        <p id="stDataNotice" class="note"></p>
-        <p class="note">Penggunaan API tertakluk pada caj dan kuota provider yang dipilih. Tiada pertukaran provider atau model secara automatik.</p>
-      </section>
     </section>
 
     <section id="tab-invoicepilot" class="tab-panel" data-tab-panel="invoicepilot">

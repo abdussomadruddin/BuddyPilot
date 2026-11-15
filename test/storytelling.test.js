@@ -36,8 +36,10 @@ test("the feature is wired into BuddyPilot's navigation and router", () => {
   const page = fs.readFileSync(path.join(__dirname, "../api_handlers/app.js"), "utf8");
   const router = fs.readFileSync(path.join(__dirname, "../api/app.js"), "utf8");
   assert.match(page, /data-tab-target="postpilot"/);
-  assert.match(page, /id="tab-postpilot"[\s\S]*data-st-view="write" aria-label="Facebook Storytelling"/);
-  assert.match(page, /data-st-view="dna" aria-label="My Writing DNA"/);
+  assert.match(page, /id="tab-postpilot"[\s\S]*data-st-view="write"[\s\S]*id="stBrief"[\s\S]*id="stPostPage"[\s\S]*id="stPostThreads"[\s\S]*id="stPostPersonal"/);
+  // The simple screen: two tabs, one input box, no sliders, drafts list or DNA editor.
+  assert.deepEqual([...page.matchAll(/data-st-view="([a-z]+)"/g)].map((match) => match[1]), ["write", "settings"]);
+  assert.doesNotMatch(page, /id="stIntensity"|id="stDnaFields"|id="stDraftList"|id="stApprove"/);
   assert.match(router, /storytelling: \(\) => require\("\.\.\/api_handlers\/storytelling"\)/);
 });
 
