@@ -113,3 +113,13 @@ test("autopost jobs are distinct from manual jobs and can finish with uncertain 
     assert.deepEqual(options.body, { status: "uncertain" });
   });
 });
+
+test("failed auto-post exposes only a known failure stage to the app", async () => {
+  await dispatch({ action: "finish", id, state: "failed", reason: "image" }, async (_path, { body }) => {
+    assert.deepEqual(body, { status: "failed", data: { reason: "image" } });
+  });
+  const { job } = await dispatch({ action: "status", id }, async () => [{ id, status: "failed", reason: "image" }]);
+  assert.deepEqual(job, { id, state: "failed", reason: "image" });
+  const unknown = await dispatch({ action: "status", id }, async () => [{ id, status: "failed", reason: "<private>" }]);
+  assert.deepEqual(unknown.job, { id, state: "failed" });
+});

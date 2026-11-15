@@ -1,7 +1,8 @@
 # BuddyPilot Post Pilot for Chrome
 
 This extension publishes only new auto-post jobs initiated explicitly in
-BuddyPilot. It never promotes a previously queued manual draft to auto-post.
+BuddyPilot. It ignores old manual-review jobs instead of promoting or
+replaying them as auto-post jobs.
 It does not read passwords or cookies, and uses no Facebook or Threads API token.
 The BuddyPilot tab must already be authenticated; only administrators can access
 the queue. Facebook and Threads must be signed in on the same Chrome profile.

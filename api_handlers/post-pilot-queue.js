@@ -9,6 +9,7 @@ const UUID = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 // Separate owner scope keeps handoffs out of the normal drafts and AI quotas.
 const TABLE = "storytelling_items";
 const SCOPE = "owner_key=eq.post-pilot-mac&kind=eq.draft";
+const FAILURE_STAGES = new Set(["tab", "profile", "composer", "text", "thread_part", "image", "next", "post_button"]);
 
 function rejected(message, statusCode = 400) {
   return Object.assign(new Error(message), { statusCode });
@@ -54,16 +55,18 @@ async function dispatch(body, request = supabaseRequest, now = Date.now()) {
   }
   if (typeof body.id !== "string" || !UUID.test(body.id)) throw rejected("ID giliran tidak sah.");
   if (body.action === "finish" && ["review", "copy", "failed", "posted", "uncertain"].includes(body.state)) {
+    const reason = body.state === "failed" && FAILURE_STAGES.has(body.reason) ? body.reason : "";
     await request(`${TABLE}?${SCOPE}&id=eq.${body.id}&status=eq.claimed`, {
-      method: "PATCH", prefer: "return=minimal", body: { status: body.state },
+      method: "PATCH", prefer: "return=minimal", body: { status: body.state, ...(reason ? { data: { reason } } : {}) },
     });
     return {};
   }
   if (body.action === "status") {
-    const [job] = await request(`${TABLE}?${SCOPE}&id=eq.${body.id}&select=id,status,created_at`);
+    const [job] = await request(`${TABLE}?${SCOPE}&id=eq.${body.id}&select=id,status,created_at,reason:data->>reason`);
     if (!job) throw rejected("Draf tidak dijumpai.", 404);
     const queued = ["queued", "queued_thread", "queued_auto", "queued_auto_image", "queued_auto_facebook"].includes(job.status);
-    return { job: { id: job.id, state: queued ? (Date.parse(job.created_at) < Date.parse(cutoff) ? "expired" : "queued") : job.status } };
+    const state = queued ? (Date.parse(job.created_at) < Date.parse(cutoff) ? "expired" : "queued") : job.status;
+    return { job: { id: job.id, state, ...(state === "failed" && FAILURE_STAGES.has(job.reason) ? { reason: job.reason } : {}) } };
   }
   throw rejected("Tindakan tidak sah.");
 }

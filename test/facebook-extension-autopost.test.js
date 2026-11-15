@@ -19,7 +19,7 @@ async function simulate({ who = "Owner", finalText = true, confirmed = true } = 
     isConnected: false, getClientRects: () => [1],
     querySelectorAll(selector) {
       if (selector.includes("contenteditable")) return stage === 1 ? [input] : [];
-      if (selector === 'a,span,strong') return [node(who)];
+      if (selector === 'a,span,strong,b,div[dir="auto"]') return [node(who)];
       if (selector === '[dir="auto"]') return stage === 2 && finalText ? [node(text)] : [];
       return stage === 1 ? [next] : [post];
     },
@@ -44,8 +44,8 @@ test("Facebook goes through Next and submits one verified post", async () => {
 });
 
 test("Facebook does not post if profile or final text cannot be verified", async () => {
-  assert.deepEqual(await simulate({ who: "Different account" }), { state: "failed", nextClicks: 0, postClicks: 0 });
-  assert.deepEqual(await simulate({ finalText: false }), { state: "failed", nextClicks: 1, postClicks: 0 });
+  assert.deepEqual(await simulate({ who: "Different account" }), { state: "failed:profile", nextClicks: 0, postClicks: 0 });
+  assert.deepEqual(await simulate({ finalText: false }), { state: "failed:next", nextClicks: 1, postClicks: 0 });
 });
 
 test("Facebook does not retry when the submit result is unknown", async () => {

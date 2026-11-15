@@ -342,8 +342,8 @@
       window.dispatchEvent(new Event("buddypilot-post-queued"));
       $("stMacStatusCheck").hidden = false;
       setStatus($("stPublishStatus"), "ok", platform === "threads"
-        ? (state.current.image ? "Dalam giliran Threads dengan gambar. Extension 1.4.0 diperlukan." : "Dalam giliran auto-post Threads. Pastikan Chrome di Mac aktif.")
-        : "Dalam giliran auto-post Facebook personal. Extension 1.4.0 diperlukan.");
+        ? "Dalam giliran auto-post Threads. Pastikan Chrome di Mac aktif."
+        : "Dalam giliran auto-post Facebook personal. Pastikan Chrome di Mac aktif.");
     } catch (error) {
       setStatus($("stPublishStatus"), "err", error.message);
     } finally { setBusy(false); }
@@ -352,13 +352,17 @@
     const button = event.currentTarget;
     button.disabled = true;
     try {
-      const { state } = await macRequest({ action: "status", id: macJobId });
+      const { state, reason } = await macRequest({ action: "status", id: macJobId });
+      const stages = {
+        tab: "buka tab", profile: "sahkan profil", composer: "buka ruang tulis", text: "isi dan semak teks",
+        thread_part: "tambah bahagian thread", image: "sahkan lampiran gambar", next: "langkah Next", post_button: "sahkan butang Post",
+      };
       const labels = {
         queued: "Menunggu Chrome di Mac.",
         claimed: "Mac mengambil draf. Semak Chrome sebelum menghantar semula.",
         review: "Draf diisi. Semak profil dan tekan Publish di Mac.",
         copy: "Buka tab Chrome di Mac dan salin draf ke composer secara manual.",
-        failed: "Tidak dipost. Mac tidak dapat mengesahkan akaun atau ruang tulis.",
+        failed: "Tidak dipost. Berhenti pada: " + (stages[reason] || "semakan di Chrome") + ".",
         posted: "Platform mengesahkan post sudah diterbitkan.",
         uncertain: "Status publish tidak pasti. Jangan hantar semula sebelum semak profil.",
         expired: "Draf tamat tempoh. Hantar semula jika masih diperlukan.",

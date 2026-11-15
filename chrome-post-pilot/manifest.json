@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "BuddyPilot Post Pilot",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "minimum_chrome_version": "120",
-  "description": "Publish requested Threads posts and prepare Facebook drafts.",
+  "description": "Auto-post approved Threads and Facebook Personal jobs from BuddyPilot.",
   "permissions": ["alarms", "scripting", "storage"],
   "host_permissions": ["https://buddypilot.vercel.app/*", "https://www.facebook.com/*", "https://www.threads.com/*", "https://*.public.blob.vercel-storage.com/postpilot/*"],
   "background": { "service_worker": "worker.js" },

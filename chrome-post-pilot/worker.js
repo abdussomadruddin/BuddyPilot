@@ -38,79 +38,6 @@ async function queue(tabId, body) {
   return result;
 }
 
-async function prepare(tabId, platform, parts) {
-  const [{ result }] = await chrome.scripting.executeScript({
-    target: { tabId }, args: [platform, parts, new URL(PLATFORMS[platform]).origin],
-    func: async (site, parts, origin) => {
-      if (location.origin !== origin) return "failed";
-      const content = parts[0];
-      const visible = (element) => Boolean(element.getClientRects().length && getComputedStyle(element).visibility !== "hidden");
-      const dialogs = () => [...document.querySelectorAll('[role="dialog"]')].filter(visible);
-      const labels = site === "facebook"
-        ? /^(what.s on your mind|apa yang anda fikirkan)([?,].*)?$/i
-        : /^(start a thread|new thread|what.s new|mulakan thread|thread baharu)[?.]?$/i;
-      let openedComposer = false;
-      if (!dialogs().length) {
-        const candidates = [...document.querySelectorAll('button,[role="button"]')].filter((element) =>
-          visible(element) && labels.test((element.getAttribute("aria-label") || element.textContent || "").trim()));
-        if (candidates.length === 1) {
-          candidates[0].click();
-          openedComposer = true;
-        }
-      }
-      let filled = false;
-      for (let i = 0; openedComposer && i < 16; i++) {
-        const open = dialogs();
-        const fields = open.length === 1
-          ? [...open[0].querySelectorAll('[contenteditable="true"][role="textbox"], [contenteditable="true"][data-lexical-editor]')].filter(visible)
-          : [];
-        if (fields.length === 1 && !fields[0].textContent.trim()) {
-          fields[0].focus();
-          document.execCommand("insertText", false, content);
-          filled = (fields[0].innerText || "").trim().replace(/\r\n/g, "\n") === content;
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      }
-      const panel = document.createElement("aside");
-      Object.assign(panel.style, { position: "fixed", top: "12px", right: "12px", width: "min(380px, calc(100vw - 32px))", zIndex: 2147483647, background: "#fff", color: "#17212a", padding: "12px", border: "1px solid #aab6c2", borderRadius: "8px", boxSizing: "border-box" });
-      const info = document.createElement("p");
-      info.textContent = parts.length > 1
-        ? (filled ? "Bahagian pertama diisi. " : "") + "Salin bahagian seterusnya mengikut turutan ke ruang thread sebelum Publish."
-        : filled ? "Draf BuddyPilot diisi. Semak profil dan teks sebelum tekan Publish." : "Composer tidak dapat disahkan. Semak profil yang betul, kemudian salin draf secara manual.";
-      const draft = document.createElement("textarea");
-      draft.readOnly = true;
-      draft.rows = 5;
-      draft.value = content;
-      draft.setAttribute("aria-label", "Draf BuddyPilot");
-      draft.style.width = "100%";
-      const close = document.createElement("button");
-      close.type = "button";
-      close.textContent = "Tutup";
-      close.onclick = () => panel.remove();
-      const copy = document.createElement("button");
-      copy.type = "button";
-      copy.textContent = "Salin draf";
-      copy.onclick = async () => {
-        try { await navigator.clipboard.writeText(draft.value); copy.textContent = "Disalin"; }
-        catch { draft.focus(); draft.select(); }
-      };
-      panel.append(info);
-      if (parts.length > 1) {
-        const select = document.createElement("select");
-        select.setAttribute("aria-label", "Bahagian thread");
-        parts.forEach((_, index) => select.add(new Option("Bahagian " + (index + 1) + " / " + parts.length, String(index))));
-        select.onchange = () => { draft.value = parts[Number(select.value)]; copy.textContent = "Salin draf"; };
-        panel.append(select);
-      }
-      panel.append(draft, copy, close);
-      document.body.append(panel);
-      return filled ? "review" : "copy";
-    },
-  });
-  return result || "failed";
-}
-
 async function waitForTab(tabId) {
   for (let i = 0; i < 30; i++) {
     if ((await chrome.tabs.get(tabId)).status === "complete") return;
@@ -153,43 +80,50 @@ async function poll() {
   if (busy) return;
   busy = true;
   try {
-    const { enabled, reviewTabId, threadsUsername, facebookName } = await chrome.storage.local.get(["enabled", "reviewTabId", "threadsUsername", "facebookName"]);
+    const { enabled, threadsUsername, facebookName } = await chrome.storage.local.get(["enabled", "threadsUsername", "facebookName"]);
     if (!enabled) return;
-    const reviewOpen = Boolean(reviewTabId && await chrome.tabs.get(reviewTabId).catch(() => null));
-    if (reviewOpen && !threadsUsername && !facebookName) return await badge("1", "Semak draf dan tutup tab untuk draf seterusnya");
+    if (!threadsUsername && !facebookName) return await badge("!", "Tetapkan akaun untuk auto-post");
     const tabs = await chrome.tabs.query({ url: APP + "/*" });
     const app = tabs.find((tab) => new URL(tab.url).pathname === "/" && tab.status === "complete");
     if (!app) return await badge("!", "buka BuddyPilot dan log masuk");
-    const claimed = await queue(app.id, { action: "claim", multipart: true, autoThreads: Boolean(threadsUsername), threadsImages: true, autoFacebook: Boolean(facebookName), autoOnly: reviewOpen });
+    const claimed = await queue(app.id, { action: "claim", autoThreads: Boolean(threadsUsername), threadsImages: true, autoFacebook: Boolean(facebookName), autoOnly: true });
     if (!claimed?.ok) return await badge("!", claimed?.status === 503 ? "Giliran Supabase belum tersedia" : "Semak sesi atau sambungan BuddyPilot");
-    if (!claimed.job) return await badge("ON", threadsUsername || facebookName ? "menunggu draf" : "Tetapkan akaun untuk auto-post");
+    if (!claimed.job) return;
     const { id, platform, content, parts, autoPost, image } = claimed.job;
     let state = "failed";
+    let reason = "tab";
     try {
-      if (!Object.hasOwn(PLATFORMS, platform)) throw new Error("Unknown platform");
-      if (autoPost && !(platform === "threads" ? threadsUsername : facebookName)) throw new Error("Profile missing");
+      reason = "profile";
+      if (!autoPost || !Object.hasOwn(PLATFORMS, platform) || !(platform === "threads" ? threadsUsername : facebookName)) return;
+      reason = image ? "image" : "tab";
       const photo = image ? await fetchThreadsPhoto(image) : null;
+      reason = "tab";
       const tab = await chrome.tabs.create({ url: PLATFORMS[platform] });
-      if (!autoPost) await chrome.storage.local.set({ reviewTabId: tab.id });
       await waitForTab(tab.id);
-      if (autoPost) {
-        // Injection failures can occur after clicking Post; never retry them.
-        state = "uncertain";
-        const [{ result }] = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: platform === "threads" ? publishThreadsInChrome : publishFacebookInChrome,
-          args: platform === "threads" ? [parts, threadsUsername, photo] : [content, facebookName],
-        });
-        state = ["posted", "failed", "uncertain"].includes(result) ? result : "uncertain";
-      } else state = await prepare(tab.id, platform, parts || [content]);
+      // Injection failures can occur after clicking Post; never retry them.
+      state = "uncertain";
+      const [{ result }] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: platform === "threads" ? publishThreadsInChrome : publishFacebookInChrome,
+        args: platform === "threads" ? [parts, threadsUsername, photo] : [content, facebookName],
+      });
+      if (typeof result === "string" && result.startsWith("failed:")) {
+        state = "failed";
+        reason = result.slice(7);
+      } else if (result === "posted") state = "posted";
+    } catch {
+      // Keep the last known stage, with no automatic retries.
     } finally {
-      await queue(app.id, { action: "finish", id, state });
+      await queue(app.id, { action: "finish", id, state, ...(state === "failed" ? { reason } : {}) });
       const labels = {
         posted: "Post sudah diterbitkan",
         uncertain: "Status publish tidak pasti. Jangan hantar semula sebelum semak.",
-        failed: "Tidak dipost. Semak akaun, ruang tulis atau lampiran di Chrome.",
+        failed: "Tidak dipost. Peringkat: " + ({
+          tab: "buka tab", profile: "semak profil", composer: "buka ruang tulis", text: "isi teks",
+          thread_part: "tambah bahagian thread", image: "lampirkan gambar", next: "langkah Next", post_button: "butang Post",
+        }[reason] || "tidak diketahui"),
       };
-      await badge(state === "posted" ? "OK" : labels[state] ? "!" : "1", labels[state] || "Semak draf dan tutup tab untuk draf seterusnya");
+      await badge(state === "posted" ? "OK" : "!", labels[state]);
     }
   } catch {
     await badge("!", "tidak dapat menyediakan draf");
