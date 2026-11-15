@@ -70,3 +70,20 @@ test("extension is tokenless and requests only the three required hosts", () => 
   assert.equal(manifest.permissions.includes("cookies"), false);
   new vm.Script(fs.readFileSync("chrome-post-pilot/worker.js", "utf8"));
 });
+
+test("autopost jobs are distinct from manual jobs and can finish with uncertain status", async () => {
+  const draft = await dispatch({ action: "enqueue", platform: "threads", autoPost: true, content: "Post sekali." }, async (_path, { body }) => {
+    assert.equal(body.status, "queued_auto");
+    return [{ id }];
+  });
+  assert.equal(draft.job.state, "queued");
+  const { job } = await dispatch({ action: "claim", autoThreads: true, autoOnly: true }, async (path, options) => {
+    assert.match(path, /status=eq.queued_auto/);
+    return options ? [{ id }] : [{ id, status: "queued_auto", data: { platform: "threads", parts: ["Post sekali."] } }];
+  });
+  assert.equal(job.autoPost, true);
+  await dispatch({ action: "finish", id, state: "uncertain" }, async (path, options) => {
+    assert.match(path, /status=eq.claimed/);
+    assert.deepEqual(options.body, { status: "uncertain" });
+  });
+});

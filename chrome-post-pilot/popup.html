@@ -9,6 +9,8 @@
   div { display: flex; gap: 8px; }
   button { min-height: 38px; padding: 0 10px; border: 1px solid #bac7d3; border-radius: 6px; background: #fff; color: inherit; }
   button:disabled { opacity: .55; }
+  form { display: grid; gap: 6px; margin-top: 16px; }
+  input { min-width: 0; padding: 8px; }
 </style>
 <h1>BuddyPilot Post Pilot</h1>
 <p id="status" role="status">Menyemak...</p>
@@ -16,5 +18,10 @@
   <button id="toggle" disabled>Aktifkan</button>
   <button id="check" disabled>Semak sekarang</button>
 </div>
+<form id="threads-account">
+  <label for="threads-username">Username Threads untuk auto-post</label>
+  <input id="threads-username" placeholder="@username" maxlength="31" autocomplete="off" autocapitalize="none">
+  <button type="submit">Simpan akaun Threads</button>
+</form>
 <script src="popup.js" defer></script>
 </html>

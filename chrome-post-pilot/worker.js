@@ -1,3 +1,5 @@
+importScripts("threads-autopost.js");
+
 const APP = "https://buddypilot.vercel.app";
 const PLATFORMS = { facebook: "https://www.facebook.com/", threads: "https://www.threads.com/" };
 const ALARM = "post-pilot";
@@ -120,26 +122,40 @@ async function poll() {
   if (busy) return;
   busy = true;
   try {
-    const { enabled, reviewTabId } = await chrome.storage.local.get(["enabled", "reviewTabId"]);
+    const { enabled, reviewTabId, threadsUsername } = await chrome.storage.local.get(["enabled", "reviewTabId", "threadsUsername"]);
     if (!enabled) return;
-    if (reviewTabId && await chrome.tabs.get(reviewTabId).catch(() => null)) return await badge("1", "Semak draf dan tutup tab untuk draf seterusnya");
+    const reviewOpen = Boolean(reviewTabId && await chrome.tabs.get(reviewTabId).catch(() => null));
+    if (reviewOpen && !threadsUsername) return await badge("1", "Semak draf dan tutup tab untuk draf seterusnya");
     const tabs = await chrome.tabs.query({ url: APP + "/*" });
     const app = tabs.find((tab) => new URL(tab.url).pathname === "/" && tab.status === "complete");
     if (!app) return await badge("!", "buka BuddyPilot dan log masuk");
-    const claimed = await queue(app.id, { action: "claim", multipart: true });
+    const claimed = await queue(app.id, { action: "claim", multipart: true, autoThreads: Boolean(threadsUsername), autoOnly: reviewOpen });
     if (!claimed?.ok) return await badge("!", claimed?.status === 503 ? "Giliran Supabase belum tersedia" : "Semak sesi atau sambungan BuddyPilot");
-    if (!claimed.job) return await badge("ON", "menunggu draf");
-    const { id, platform, content, parts } = claimed.job;
+    if (!claimed.job) return await badge("ON", threadsUsername ? "menunggu draf" : "Tetapkan username Threads untuk auto-post");
+    const { id, platform, content, parts, autoPost } = claimed.job;
     let state = "failed";
     try {
       if (!Object.hasOwn(PLATFORMS, platform)) throw new Error("Unknown platform");
+      if (autoPost && (platform !== "threads" || !threadsUsername)) throw new Error("Threads account missing");
       const tab = await chrome.tabs.create({ url: PLATFORMS[platform] });
-      await chrome.storage.local.set({ reviewTabId: tab.id });
+      if (!autoPost) await chrome.storage.local.set({ reviewTabId: tab.id });
       await waitForTab(tab.id);
-      state = await prepare(tab.id, platform, parts || [content]);
+      if (autoPost) {
+        // Injection failures can occur after clicking Post; never retry them.
+        state = "uncertain";
+        const [{ result }] = await chrome.scripting.executeScript({
+          target: { tabId: tab.id }, func: publishThreadsInChrome, args: [parts, threadsUsername],
+        });
+        state = ["posted", "failed", "uncertain"].includes(result) ? result : "uncertain";
+      } else state = await prepare(tab.id, platform, parts || [content]);
     } finally {
       await queue(app.id, { action: "finish", id, state });
-      await badge(state === "failed" ? "!" : "1", state === "failed" ? "draf gagal disediakan" : "semak draf, kemudian tutup tab untuk draf seterusnya");
+      const labels = {
+        posted: "Threads sudah dipost",
+        uncertain: "Status Threads tidak pasti. Jangan hantar semula sebelum semak.",
+        failed: "Tidak dipost. Semak akaun atau ruang tulis di Chrome.",
+      };
+      await badge(state === "posted" ? "OK" : labels[state] ? "!" : "1", labels[state] || "Semak draf dan tutup tab untuk draf seterusnya");
     }
   } catch {
     await badge("!", "tidak dapat menyediakan draf");
@@ -166,7 +182,16 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       const { enabled } = await chrome.storage.local.get("enabled");
       if (enabled && !await chrome.alarms.get(ALARM)) await syncAlarm();
     }
-    respond(await chrome.storage.local.get(["enabled", "status"]));
+    if (message.action === "threads-account") {
+      const threadsUsername = String(message.username || "").trim().replace(/^@/, "").toLowerCase();
+      if (threadsUsername && !/^[\w.]{1,30}$/.test(threadsUsername)) {
+        respond({ error: "Username Threads tidak sah." });
+        return;
+      }
+      await chrome.storage.local.set({ threadsUsername });
+      await syncAlarm();
+    }
+    respond(await chrome.storage.local.get(["enabled", "status", "threadsUsername"]));
   })().catch(() => respond({ error: "Chrome tidak dapat menyemak extension." }));
   return true;
 });
