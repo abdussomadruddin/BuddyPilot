@@ -330,18 +330,20 @@
   async function sendToMac(platform) {
     const content = editor.value.trim();
     if (state.busy || !content) return;
-    if (platform === "threads" && state.current.image) {
-      return setStatus($("stPublishStatus"), "err", "Auto-post Threads melalui Chrome menyokong teks sahaja. Buang gambar atau gunakan akaun Threads yang disambung.");
+    if (platform === "facebook" && state.current.image) {
+      return setStatus($("stPublishStatus"), "err", "Auto-post Facebook personal buat masa ini untuk teks sahaja. Gambar disokong untuk Threads.");
     }
     setBusy(true);
     setStatus($("stPublishStatus"), "info", "Menghantar draf ke Mac...");
     try {
-      const job = await macRequest({ action: "enqueue", platform, content, autoPost: platform === "threads" });
+      const job = await macRequest({ action: "enqueue", platform, content, autoPost: true,
+        ...(platform === "threads" && state.current.image ? { image: state.current.image } : {}) });
       macJobId = job.id;
+      window.dispatchEvent(new Event("buddypilot-post-queued"));
       $("stMacStatusCheck").hidden = false;
       setStatus($("stPublishStatus"), "ok", platform === "threads"
-        ? "Dalam giliran auto-post Threads. Pastikan Chrome di Mac aktif."
-        : "Draf dalam giliran Mac. Belum diterbitkan." + (state.current.image ? " Tambah gambar secara manual di Chrome." : ""));
+        ? (state.current.image ? "Dalam giliran Threads dengan gambar. Extension 1.4.0 diperlukan." : "Dalam giliran auto-post Threads. Pastikan Chrome di Mac aktif.")
+        : "Dalam giliran auto-post Facebook personal. Extension 1.4.0 diperlukan.");
     } catch (error) {
       setStatus($("stPublishStatus"), "err", error.message);
     } finally { setBusy(false); }
@@ -357,8 +359,8 @@
         review: "Draf diisi. Semak profil dan tekan Publish di Mac.",
         copy: "Buka tab Chrome di Mac dan salin draf ke composer secara manual.",
         failed: "Tidak dipost. Mac tidak dapat mengesahkan akaun atau ruang tulis.",
-        posted: "Threads mengesahkan post sudah diterbitkan.",
-        uncertain: "Status publish tidak pasti. Jangan hantar semula sebelum semak Threads.",
+        posted: "Platform mengesahkan post sudah diterbitkan.",
+        uncertain: "Status publish tidak pasti. Jangan hantar semula sebelum semak profil.",
         expired: "Draf tamat tempoh. Hantar semula jika masih diperlukan.",
       };
       setStatus($("stPublishStatus"), "info", labels[state] || "Status tidak tersedia.");

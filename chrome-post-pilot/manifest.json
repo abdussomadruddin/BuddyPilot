@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "BuddyPilot Post Pilot",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "minimum_chrome_version": "120",
   "description": "Publish requested Threads posts and prepare Facebook drafts.",
   "permissions": ["alarms", "scripting", "storage"],
-  "host_permissions": ["https://buddypilot.vercel.app/*", "https://www.facebook.com/*", "https://www.threads.com/*"],
+  "host_permissions": ["https://buddypilot.vercel.app/*", "https://www.facebook.com/*", "https://www.threads.com/*", "https://*.public.blob.vercel-storage.com/postpilot/*"],
   "background": { "service_worker": "worker.js" },
+  "content_scripts": [{ "matches": ["https://buddypilot.vercel.app/*"], "js": ["buddypilot-wake.js"], "run_at": "document_idle" }],
   "action": { "default_title": "BuddyPilot Post Pilot", "default_popup": "popup.html" }
 }

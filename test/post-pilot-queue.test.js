@@ -63,12 +63,38 @@ test("long Threads handoffs retain every part and are claimed only by multipart 
   assert.deepEqual(job.parts, row.data.parts);
 });
 
-test("extension is tokenless and requests only the three required hosts", () => {
+test("extension is tokenless and scopes its hosts to publishing and photo delivery", () => {
   const manifest = JSON.parse(fs.readFileSync("chrome-post-pilot/manifest.json", "utf8"));
   assert.equal(manifest.manifest_version, 3);
-  assert.deepEqual(manifest.host_permissions, ["https://buddypilot.vercel.app/*", "https://www.facebook.com/*", "https://www.threads.com/*"]);
+  assert.deepEqual(manifest.host_permissions, ["https://buddypilot.vercel.app/*", "https://www.facebook.com/*", "https://www.threads.com/*", "https://*.public.blob.vercel-storage.com/postpilot/*"]);
   assert.equal(manifest.permissions.includes("cookies"), false);
   new vm.Script(fs.readFileSync("chrome-post-pilot/worker.js", "utf8"));
+});
+
+test("photo and Facebook autojobs require compatible extension capabilities", async () => {
+  const image = "https://fixture.public.blob.vercel-storage.com/postpilot/photo.jpg";
+  let row;
+  const put = async (_path, { body }) => { row = { id, status: body.status, data: body.data }; return [row]; };
+  await assert.rejects(dispatch({ action: "enqueue", platform: "threads", autoPost: true, content: "Teks", image: "https://not-allowed.invalid/photo.jpg" }, put));
+  await dispatch({ action: "enqueue", platform: "threads", autoPost: true, content: "Teks", image }, put);
+  assert.equal(row.status, "queued_auto_image");
+  await dispatch({ action: "claim", autoThreads: true }, async (path) => {
+    assert.doesNotMatch(path, /queued_auto_image/);
+    return [];
+  });
+  const { job } = await dispatch({ action: "claim", autoThreads: true, threadsImages: true }, async (path, options) => {
+    assert.match(path, /queued_auto_image/);
+    return options ? [{ id }] : [row];
+  });
+  assert.equal(job.image, image);
+  assert.equal(job.autoPost, true);
+  await dispatch({ action: "enqueue", platform: "facebook", autoPost: true, content: "Teks" }, put);
+  assert.equal(row.status, "queued_auto_facebook");
+  const fb = await dispatch({ action: "claim", autoFacebook: true, autoOnly: true }, async (path, options) => {
+    assert.match(path, /status=eq.queued_auto_facebook/);
+    return options ? [{ id }] : [row];
+  });
+  assert.equal(fb.job.platform, "facebook");
 });
 
 test("autopost jobs are distinct from manual jobs and can finish with uncertain status", async () => {

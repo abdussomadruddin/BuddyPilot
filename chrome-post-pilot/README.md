@@ -1,7 +1,7 @@
 # BuddyPilot Post Pilot for Chrome
 
-This extension prepares Facebook drafts for manual review. For Threads, it
-publishes only new auto-post jobs initiated by tapping Threads in BuddyPilot.
+This extension publishes only new auto-post jobs initiated explicitly in
+BuddyPilot. It never promotes a previously queued manual draft to auto-post.
 It does not read passwords or cookies, and uses no Facebook or Threads API token.
 The BuddyPilot tab must already be authenticated; only administrators can access
 the queue. Facebook and Threads must be signed in on the same Chrome profile.
@@ -19,15 +19,18 @@ the queue. Facebook and Threads must be signed in on the same Chrome profile.
 4. From Post Pilot on the phone, generate or edit text and tap Facebook
    personal or Threads. Threads uses this queue only when no API account is
    connected. Semak status Mac checks the latest handoff.
-5. For Threads, set the account username in the extension popup once. Chrome
-   checks the username in the composer, fills all parts and presses Post once.
-   Jobs created before auto-post was added are still manual.
-6. Chrome checks at roughly two-minute intervals while running and awake.
-   For Facebook, inspect the account, text and audience, then publish manually.
-   Close the Facebook review tab to allow the next manual draft.
+5. Save the Threads username and the exact Facebook personal profile name
+   once in the extension popup. It checks the destination profile and content
+   before clicking Post. Facebook goes through Next when needed and leaves the
+   existing audience setting unchanged.
+6. With Chrome open and awake, BuddyPilot on the same Mac wakes the extension
+   when a job is queued. Jobs from another device are picked up by periodic
+   checks, normally about 30 seconds apart. No Semak sekarang click is required.
 
-Only text is supported for browser auto-post. Long Threads drafts are split
-into parts of at most 500 characters. If
+Facebook personal auto-post currently supports text only. Long Threads drafts
+are split into parts of at most 500 characters, with the optional JPEG/PNG
+attached to part one only. Missing or unverified attachments stop publishing.
+If
 Chrome is asleep or logged out, queued drafts wait up to 24 hours; stale
 drafts are not handed off. Claimed or failed jobs are not automatically retried.
 Inspect the browser before sending a draft again, especially on an uncertain

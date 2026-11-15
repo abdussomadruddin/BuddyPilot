@@ -1,4 +1,4 @@
-async function publishThreadsInChrome(parts, username) {
+async function publishThreadsInChrome(parts, username, photo = null) {
   if (location.origin !== "https://www.threads.com" || !/^[\w.]{1,30}$/.test(username) ||
       !Array.isArray(parts) || !parts.length || parts.length > 25 ||
       parts.some((part) => typeof part !== "string" || !part.trim() || part.length > 500)) return "failed";
@@ -33,6 +33,22 @@ async function publishThreadsInChrome(parts, username) {
   const composer = await wait(() => only(dialogs()));
   if (!composer || !accounts(composer).length) return "failed";
 
+  const previews = () => find(composer, "img[src]").filter((node) => /^(blob:|data:image\/)/i.test(node.src));
+  const originalPreviews = photo ? new Set(previews().map((node) => node.src)) : null;
+  let photoSrc = "";
+  const firstPhoto = (first) => {
+    if (!first) return "";
+    const added = previews().filter((node) => !originalPreviews.has(node.src));
+    const preview = only(added);
+    if (!preview || !preview.complete || !preview.naturalWidth) return "";
+    for (let row = first.parentElement; row && row !== composer; row = row.parentElement) {
+      const fields = editors(row);
+      if (fields.length !== 1 || fields[0] !== first) break;
+      if (row.contains(preview)) return preview.src;
+    }
+    return "";
+  };
+
   for (let index = 0; index < parts.length; index++) {
     if (only(dialogs()) !== composer) return "failed";
     if (index) {
@@ -48,12 +64,27 @@ async function publishThreadsInChrome(parts, username) {
     fields[index].focus();
     document.execCommand("insertText", false, parts[index]);
     if (!await wait(() => editors(composer).length === index + 1 && matches(editors(composer)[index], parts[index]), 10)) return "failed";
+    if (!index && photo) {
+      const input = only([...composer.querySelectorAll('input[type="file"]')].filter((node) =>
+        !node.disabled && !node.files?.length && /(?:image\/|\.(?:jpg|jpeg|png)\b)/i.test(node.accept)));
+      if (!input || !["image/jpeg", "image/png"].includes(photo.type) || !photo.base64 || photo.base64.length > 5592408) return "failed";
+      try {
+        const bytes = Uint8Array.from(atob(photo.base64), (char) => char.charCodeAt(0));
+        const data = new DataTransfer();
+        data.items.add(new File([bytes], photo.type === "image/png" ? "buddypilot.png" : "buddypilot.jpg", { type: photo.type }));
+        input.files = data.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      } catch { return "failed"; }
+      photoSrc = await wait(() => firstPhoto(editors(composer)[0]));
+      if (!photoSrc) return "failed";
+    }
   }
 
   const submit = control(composer, /^post$/i);
   const fields = editors(composer);
   if (!submit || only(dialogs()) !== composer || !accounts(composer).length ||
-      fields.length !== parts.length || !fields.every((field, i) => matches(field, parts[i]))) return "failed";
+      fields.length !== parts.length || !fields.every((field, i) => matches(field, parts[i])) ||
+      (photo && firstPhoto(fields[0]) !== photoSrc)) return "failed";
 
   const confirmed = () => find(document, '[role="status"],[role="alert"],[aria-live]').filter((node) =>
     /^(?:posted|thread posted|your thread was posted)[.!]?$/i.test(label(node)));

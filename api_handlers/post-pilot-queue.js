@@ -2,6 +2,7 @@ const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/http-body");
 const { supabaseRequest } = require("../lib/supabase-db");
 const { splitForThreads, THREADS_MAX_PARTS } = require("../lib/social-publish");
+const { safeImageUrl } = require("../lib/storytelling-image");
 
 const LIMITS = { facebook: 63206, threads: 500 };
 const UUID = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
@@ -23,24 +24,33 @@ async function dispatch(body, request = supabaseRequest, now = Date.now()) {
       throw rejected("Pilih platform dan semak panjang teks (Threads: maksimum 500 aksara).");
     }
     const multipart = parts.length > 1;
+    const auto = body.autoPost === true;
+    const image = auto && platform === "threads" ? safeImageUrl(body.image) : "";
+    if (auto && body.image && !image) throw rejected("Gambar Threads tidak sah.");
     const [job] = await request(TABLE + "?select=id,status", {
       method: "POST", prefer: "return=representation",
-      body: { owner_key: "post-pilot-mac", kind: "draft", status: platform === "threads" && body.autoPost === true ? "queued_auto" : multipart ? "queued_thread" : "queued", data: { platform, parts } },
+      body: { owner_key: "post-pilot-mac", kind: "draft", status: image ? "queued_auto_image" : auto ? (platform === "facebook" ? "queued_auto_facebook" : "queued_auto") : multipart ? "queued_thread" : "queued", data: { platform, parts, ...(image ? { image } : {}) } },
     });
     return { job: { id: job.id, state: "queued" } };
   }
   if (body.action === "claim") {
-    const pending = body.autoThreads === true
-      ? (body.autoOnly === true ? "status=eq.queued_auto" : "status=in.(queued,queued_thread,queued_auto)")
-      : body.multipart === true ? "status=in.(queued,queued_thread)" : "status=eq.queued";
+    const states = body.autoOnly === true ? [] : body.multipart === true ? ["queued", "queued_thread"] : ["queued"];
+    if (body.autoThreads === true) {
+      states.push("queued_auto");
+      if (body.threadsImages === true) states.push("queued_auto_image");
+    }
+    if (body.autoFacebook === true) states.push("queued_auto_facebook");
+    if (!states.length) return { job: null };
+    const pending = states.length === 1 ? `status=eq.${states[0]}` : `status=in.(${states.join(",")})`;
     const [candidate] = await request(`${TABLE}?select=id,status,data&${SCOPE}&${pending}&created_at=gte.${encodeURIComponent(cutoff)}&order=created_at.asc,id.asc&limit=1`);
     if (!candidate) return { job: null };
     const [job] = await request(`${TABLE}?${SCOPE}&id=eq.${candidate.id}&status=eq.${candidate.status}&select=id`, {
       method: "PATCH", prefer: "return=representation", body: { status: "claimed", data: {} },
     });
     return { job: job ? { id: candidate.id, platform: candidate.data.platform, content: candidate.data.parts[0],
-      ...(body.multipart === true || body.autoThreads === true ? { parts: candidate.data.parts } : {}),
-      ...(candidate.status === "queued_auto" ? { autoPost: true } : {}) } : null };
+      ...(body.multipart === true || body.autoThreads === true || body.autoFacebook === true ? { parts: candidate.data.parts } : {}),
+      ...(candidate.status.startsWith("queued_auto") ? { autoPost: true } : {}),
+      ...(candidate.status === "queued_auto_image" ? { image: candidate.data.image } : {}) } : null };
   }
   if (typeof body.id !== "string" || !UUID.test(body.id)) throw rejected("ID giliran tidak sah.");
   if (body.action === "finish" && ["review", "copy", "failed", "posted", "uncertain"].includes(body.state)) {
@@ -52,7 +62,7 @@ async function dispatch(body, request = supabaseRequest, now = Date.now()) {
   if (body.action === "status") {
     const [job] = await request(`${TABLE}?${SCOPE}&id=eq.${body.id}&select=id,status,created_at`);
     if (!job) throw rejected("Draf tidak dijumpai.", 404);
-    const queued = ["queued", "queued_thread", "queued_auto"].includes(job.status);
+    const queued = ["queued", "queued_thread", "queued_auto", "queued_auto_image", "queued_auto_facebook"].includes(job.status);
     return { job: { id: job.id, state: queued ? (Date.parse(job.created_at) < Date.parse(cutoff) ? "expired" : "queued") : job.status } };
   }
   throw rejected("Tindakan tidak sah.");

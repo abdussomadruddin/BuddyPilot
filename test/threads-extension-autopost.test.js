@@ -4,7 +4,7 @@ const { readFileSync } = require("node:fs");
 const vm = require("node:vm");
 const source = readFileSync("chrome-post-pilot/threads-autopost.js", "utf8");
 
-async function simulate({ user = "owner", canAdd = true, confirm = true, breakInsert = false, existing = false } = {}) {
+async function simulate({ user = "owner", canAdd = true, confirm = true, breakInsert = false, existing = false, photo = false, wrongRow = false } = {}) {
   const parts = ["Pembukaan\n\nPerenggan.", "Sambungan kedua.", "Penutup."];
   let clicks = 0;
   let sent;
@@ -16,6 +16,16 @@ async function simulate({ user = "owner", canAdd = true, confirm = true, breakIn
     focus() { focused = this; },
   });
   const fields = [node("")];
+  let image;
+  const firstRow = { querySelectorAll: () => [fields[0]], contains: (item) => item === image && !wrongRow };
+  fields[0].parentElement = firstRow;
+  const upload = {
+    accept: "image/jpeg,image/png",
+    dispatchEvent() {
+      if (this.files.length !== 1 || fields.length !== 1) return;
+      image = { ...node(""), src: "blob:https://www.threads.com/fixture", complete: true, naturalWidth: 512 };
+    },
+  };
   const owner = node(user);
   const dialog = {
     ...node("New thread"),
@@ -23,6 +33,8 @@ async function simulate({ user = "owner", canAdd = true, confirm = true, breakIn
     querySelectorAll(selector) {
       if (selector.includes("contenteditable")) return fields;
       if (selector === "a[href],span") return [owner];
+      if (selector === 'input[type="file"]') return [upload];
+      if (selector === "img[src]") return image ? [image] : [];
       return canAdd ? [post, add] : [post];
     },
   };
@@ -48,9 +60,14 @@ async function simulate({ user = "owner", canAdd = true, confirm = true, breakIn
   const publish = vm.runInNewContext(source + "\npublishThreadsInChrome", {
     location: { origin: "https://www.threads.com" }, document: doc, URL,
     getComputedStyle: () => ({ visibility: "visible" }), setTimeout: (resolve) => resolve(),
+    atob, File, Event,
+    DataTransfer: class {
+      files = [];
+      items = { add: (file) => this.files.push(file) };
+    },
   });
-  const status = await publish(parts, "owner");
-  return { status, clicks, sent, parts };
+  const status = await publish(parts, "owner", photo ? { type: "image/jpeg", base64: "YWJj" } : null);
+  return { status, clicks, sent, parts, photoAttached: Boolean(image) };
 }
 
 test("Threads publishes all parts, in order, with one click", async () => {
@@ -72,4 +89,14 @@ test("unconfirmed publish is not retried", async () => {
   const result = await simulate({ confirm: false });
   assert.equal(result.status, "uncertain");
   assert.equal(result.clicks, 1);
+});
+
+test("Threads photo must be visibly attached to the first part before posting", async () => {
+  const good = await simulate({ photo: true });
+  assert.equal(good.photoAttached, true);
+  assert.equal(good.status, "posted");
+  assert.equal(good.clicks, 1);
+  const moved = await simulate({ photo: true, wrongRow: true });
+  assert.equal(moved.status, "failed");
+  assert.equal(moved.clicks, 0);
 });

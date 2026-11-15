@@ -1,4 +1,4 @@
-importScripts("threads-autopost.js");
+importScripts("threads-autopost.js", "facebook-autopost.js");
 
 const APP = "https://buddypilot.vercel.app";
 const PLATFORMS = { facebook: "https://www.facebook.com/", threads: "https://www.threads.com/" };
@@ -11,14 +11,15 @@ async function badge(text, title) {
   await chrome.storage.local.set({ status: title });
 }
 
-async function syncAlarm() {
+async function syncAlarm(updateStatus = true) {
   const { enabled } = await chrome.storage.local.get("enabled");
   if (enabled) {
-    if (!await chrome.alarms.get(ALARM)) await chrome.alarms.create(ALARM, { periodInMinutes: 2 });
-    await badge("ON", "menunggu draf");
+    const alarm = await chrome.alarms.get(ALARM);
+    if (alarm?.periodInMinutes !== 0.5) await chrome.alarms.create(ALARM, { periodInMinutes: 0.5 });
+    if (updateStatus) await badge("ON", "menunggu draf");
   } else {
     await chrome.alarms.clear(ALARM);
-    await badge("", "tidak aktif");
+    if (updateStatus) await badge("", "tidak aktif");
   }
 }
 
@@ -118,25 +119,56 @@ async function waitForTab(tabId) {
   throw new Error("Tab load timeout");
 }
 
+async function fetchThreadsPhoto(url) {
+  if (!/^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\/postpilot\/[A-Za-z0-9._-]+$/.test(url)) throw new Error("Invalid photo URL");
+  const response = await fetch(url, { credentials: "omit", redirect: "error", signal: AbortSignal.timeout(12000) });
+  const type = (response.headers.get("content-type") || "").split(";")[0].trim();
+  const max = 4 * 1024 * 1024;
+  if (!response.ok || !response.body || !["image/jpeg", "image/png"].includes(type) ||
+      Number(response.headers.get("content-length")) > max) throw new Error("Invalid photo response");
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > max) {
+      await reader.cancel();
+      throw new Error("Photo exceeds size limit");
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+  const signature = type === "image/jpeg" ? [255, 216, 255] : [137, 80, 78, 71, 13, 10, 26, 10];
+  if (size < 1000 || !signature.every((byte, index) => bytes[index] === byte)) throw new Error("Invalid photo bytes");
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 16384) binary += String.fromCharCode(...bytes.subarray(i, i + 16384));
+  return { type, base64: btoa(binary) };
+}
+
 async function poll() {
   if (busy) return;
   busy = true;
   try {
-    const { enabled, reviewTabId, threadsUsername } = await chrome.storage.local.get(["enabled", "reviewTabId", "threadsUsername"]);
+    const { enabled, reviewTabId, threadsUsername, facebookName } = await chrome.storage.local.get(["enabled", "reviewTabId", "threadsUsername", "facebookName"]);
     if (!enabled) return;
     const reviewOpen = Boolean(reviewTabId && await chrome.tabs.get(reviewTabId).catch(() => null));
-    if (reviewOpen && !threadsUsername) return await badge("1", "Semak draf dan tutup tab untuk draf seterusnya");
+    if (reviewOpen && !threadsUsername && !facebookName) return await badge("1", "Semak draf dan tutup tab untuk draf seterusnya");
     const tabs = await chrome.tabs.query({ url: APP + "/*" });
     const app = tabs.find((tab) => new URL(tab.url).pathname === "/" && tab.status === "complete");
     if (!app) return await badge("!", "buka BuddyPilot dan log masuk");
-    const claimed = await queue(app.id, { action: "claim", multipart: true, autoThreads: Boolean(threadsUsername), autoOnly: reviewOpen });
+    const claimed = await queue(app.id, { action: "claim", multipart: true, autoThreads: Boolean(threadsUsername), threadsImages: true, autoFacebook: Boolean(facebookName), autoOnly: reviewOpen });
     if (!claimed?.ok) return await badge("!", claimed?.status === 503 ? "Giliran Supabase belum tersedia" : "Semak sesi atau sambungan BuddyPilot");
-    if (!claimed.job) return await badge("ON", threadsUsername ? "menunggu draf" : "Tetapkan username Threads untuk auto-post");
-    const { id, platform, content, parts, autoPost } = claimed.job;
+    if (!claimed.job) return await badge("ON", threadsUsername || facebookName ? "menunggu draf" : "Tetapkan akaun untuk auto-post");
+    const { id, platform, content, parts, autoPost, image } = claimed.job;
     let state = "failed";
     try {
       if (!Object.hasOwn(PLATFORMS, platform)) throw new Error("Unknown platform");
-      if (autoPost && (platform !== "threads" || !threadsUsername)) throw new Error("Threads account missing");
+      if (autoPost && !(platform === "threads" ? threadsUsername : facebookName)) throw new Error("Profile missing");
+      const photo = image ? await fetchThreadsPhoto(image) : null;
       const tab = await chrome.tabs.create({ url: PLATFORMS[platform] });
       if (!autoPost) await chrome.storage.local.set({ reviewTabId: tab.id });
       await waitForTab(tab.id);
@@ -144,16 +176,18 @@ async function poll() {
         // Injection failures can occur after clicking Post; never retry them.
         state = "uncertain";
         const [{ result }] = await chrome.scripting.executeScript({
-          target: { tabId: tab.id }, func: publishThreadsInChrome, args: [parts, threadsUsername],
+          target: { tabId: tab.id },
+          func: platform === "threads" ? publishThreadsInChrome : publishFacebookInChrome,
+          args: platform === "threads" ? [parts, threadsUsername, photo] : [content, facebookName],
         });
         state = ["posted", "failed", "uncertain"].includes(result) ? result : "uncertain";
       } else state = await prepare(tab.id, platform, parts || [content]);
     } finally {
       await queue(app.id, { action: "finish", id, state });
       const labels = {
-        posted: "Threads sudah dipost",
-        uncertain: "Status Threads tidak pasti. Jangan hantar semula sebelum semak.",
-        failed: "Tidak dipost. Semak akaun atau ruang tulis di Chrome.",
+        posted: "Post sudah diterbitkan",
+        uncertain: "Status publish tidak pasti. Jangan hantar semula sebelum semak.",
+        failed: "Tidak dipost. Semak akaun, ruang tulis atau lampiran di Chrome.",
       };
       await badge(state === "posted" ? "OK" : labels[state] ? "!" : "1", labels[state] || "Semak draf dan tutup tab untuk draf seterusnya");
     }
@@ -164,10 +198,14 @@ async function poll() {
   }
 }
 
-chrome.runtime.onInstalled.addListener(syncAlarm);
-chrome.runtime.onStartup.addListener(syncAlarm);
+chrome.runtime.onInstalled.addListener(() => { void syncAlarm(); });
+chrome.runtime.onStartup.addListener(() => { void syncAlarm(); });
 chrome.alarms.onAlarm.addListener((alarm) => { if (alarm.name === ALARM) void poll(); });
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
+  if (message?.action === "wake" && sender.frameId === 0 && sender.url && new URL(sender.url).origin === APP) {
+    void syncAlarm(false).then(poll).catch(() => {});
+    return;
+  }
   if (sender.url !== chrome.runtime.getURL("popup.html")) return;
   (async () => {
     if (message.action === "toggle") {
@@ -191,7 +229,16 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       await chrome.storage.local.set({ threadsUsername });
       await syncAlarm();
     }
-    respond(await chrome.storage.local.get(["enabled", "status", "threadsUsername"]));
+    if (message.action === "facebook-account") {
+      const facebookName = String(message.name || "").replace(/\s+/gu, " ").trim();
+      if (facebookName.length > 100) {
+        respond({ error: "Nama profil Facebook terlalu panjang." });
+        return;
+      }
+      await chrome.storage.local.set({ facebookName });
+      await syncAlarm();
+    }
+    respond(await chrome.storage.local.get(["enabled", "status", "threadsUsername", "facebookName"]));
   })().catch(() => respond({ error: "Chrome tidak dapat menyemak extension." }));
   return true;
 });
