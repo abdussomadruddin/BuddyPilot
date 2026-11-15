@@ -124,7 +124,7 @@ test("a different profile is refused, and the message says which one was opened"
   assert.match(result.error, /Profil yang dibuka ialah "orang lain", tetapi extension disetkan kepada "Owner Name"/);
 
   const login = await scan("facebook", "Owner Name", el("body", {}), { origin: "https://www.facebook.com", paths: ["/login"] });
-  assert.match(login.error, /Profil tidak dapat disahkan/);
+  assert.match(login.error, /Sesi Facebook perlu disahkan/);
   const elsewhere = await scan("threads", "owner.name", el("body", {}), { origin: "https://example.com", paths: ["/@owner.name"] });
   assert.match(elsewhere.error, /tidak dapat dibuka/);
 });

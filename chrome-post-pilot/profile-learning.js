@@ -7,14 +7,28 @@ async function scanLearningProfile(platform, owner, cutoff) {
   // Read live: facebook.com/me turns into the real profile address after the
   // page has loaded, so a path captured once would still say "/me".
   const currentPath = () => location.pathname.replace(/\/$/, "").toLowerCase();
-  const headings = () => [...document.querySelectorAll("h1, [role=heading][aria-level='1']")].map((heading) => normalize(heading.textContent)).filter(Boolean);
+  const headings = () => [...document.querySelectorAll("h1, h2, [role=heading][aria-level='1'], [role=heading][aria-level='2']")].map((heading) => normalize(heading.textContent)).filter(Boolean);
   // Facebook shows "Name" or "Name (nickname)"; the saved name may also be the username in the address.
   const verified = () => threads
     ? currentPath() === "/@" + name && [...document.querySelectorAll('a[href], [role="button"], button')].some((node) => /^(edit profile|edit profil|sunting profil)$/i.test(node.innerText?.trim() || ""))
     : !/^\/(?:login|checkpoint|me)?$/.test(currentPath()) && (currentPath() === "/" + name || headings().some((heading) => heading === name || heading.startsWith(name + " (")));
 
   if (location.origin !== expectedOrigin) return { error: "Halaman profil tidak dapat dibuka." };
-  for (let attempt = 0; attempt < 20 && !verified(); attempt++) await pause();
+  const needsFacebookSignIn = () => !threads && (
+    /^\/(?:login|checkpoint|recover)(?:[/.]|$)/i.test(currentPath()) ||
+    (!currentPath() && (
+      document.querySelector('input[type="password"], a[href^="/login/"]') ||
+      [...document.querySelectorAll('button,[role="button"]')].some((button) => {
+        const label = normalize(button.getAttribute("aria-label") || button.innerText);
+        return label === "continue " + name || label === "teruskan " + name ||
+          /^(use another profile|guna profil lain)$/.test(label);
+      })
+    ))
+  );
+  for (let attempt = 0; attempt < 20 && !verified(); attempt++) {
+    if (needsFacebookSignIn()) return { error: "Sesi Facebook perlu disahkan. Buka Facebook di Chrome dan cuba Belajar sekarang semula." };
+    await pause();
+  }
   if (!verified()) {
     const found = threads ? currentPath().replace(/^\/@?/, "") : headings()[0] || "";
     return { error: found && !/^\/(?:login|checkpoint)/.test(currentPath())
@@ -37,7 +51,7 @@ async function scanLearningProfile(platform, owner, cutoff) {
         return Date.now() - Number(relative[1]) * minutes * 60000;
       }
       if (/\b\d{4}\b/.test(value)) {
-        const date = Date.parse(value);
+        const date = Date.parse(value.replace(/\s+at\s+/i, " "));
         if (Number.isFinite(date)) return date;
       }
     }
@@ -119,6 +133,20 @@ async function scanLearningProfile(platform, owner, cutoff) {
       const date = dateFrom(link);
       if (!Number.isFinite(date) || date > Date.now() + 60000) continue;
       let card = link.closest(threads ? "article,[role=article],[data-pressable-container]" : "article,[role=article]");
+      if (!threads) {
+        const message = '[data-ad-preview="message"],[data-ad-comet-preview="message"]';
+        if (card && !card.querySelector(message)) continue;
+        if (!card && match && url.pathname.toLowerCase().startsWith(profilePath + "/posts/")) {
+          for (let parent = link.parentElement, depth = 0; parent && depth < 13; parent = parent.parentElement, depth++) {
+            const messages = parent.querySelectorAll(message);
+            if (messages.length > 1) break;
+            if (messages.length === 1 && [...parent.querySelectorAll("a[href]")].some(isOwner)) {
+              card = parent;
+              break;
+            }
+          }
+        }
+      }
       if (threads && !card) {
         for (let parent = link.parentElement, depth = 0; parent && depth < 8; parent = parent.parentElement, depth++) {
           if (parent.querySelector('[data-testid="post-text"],[dir="auto"]') && [...parent.querySelectorAll("a[href]")].some(isOwner)) {
