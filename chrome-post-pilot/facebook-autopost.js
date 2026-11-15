@@ -31,7 +31,8 @@ async function publishFacebookInChrome(text, name) {
   };
 
   if (dialogs().length) return "failed:composer";
-  const open = await wait(() => control(document, /^(what.s on your mind|apa yang anda fikirkan)([?,].*)?$/i));
+  const open = await wait(() => control(document, /^(what.s on your mind|apa yang anda fikirkan)([?,].*)?$/i)
+    || control(document, /^(create post|cipta siaran)$/i));
   if (!open || dialogs().length) return "failed:composer";
   open.click();
   const composer = await wait(() => {

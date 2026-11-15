@@ -4,7 +4,7 @@ const { readFileSync } = require("node:fs");
 const vm = require("node:vm");
 const source = readFileSync("chrome-post-pilot/threads-autopost.js", "utf8");
 
-async function simulate({ user = "owner", canAdd = true, confirm = true, breakInsert = false, existing = false, photo = false, wrongRow = false, paste = false, missingImageButton = false } = {}) {
+async function simulate({ user = "owner", canAdd = true, confirm = true, breakInsert = false, existing = false, photo = false, wrongRow = false, paste = false, missingImageButton = false, mountedInput = false } = {}) {
   const parts = ["Pembukaan\n\nPerenggan.", "Sambungan kedua.", "Penutup."];
   let clicks = 0;
   let sent;
@@ -20,7 +20,7 @@ async function simulate({ user = "owner", canAdd = true, confirm = true, breakIn
   });
   const fields = [node("")];
   let image;
-  let imageOpened = false;
+  let imageOpened = mountedInput;
   const firstRow = { closest: () => null, querySelectorAll: () => [fields[0]], contains: (item) => item === image && !wrongRow };
   fields[0].parentElement = firstRow;
   const upload = {
@@ -124,4 +124,10 @@ test("Threads photo must be visibly attached to the first part before posting", 
   const missing = await simulate({ photo: true, missingImageButton: true });
   assert.equal(missing.status, "failed:image");
   assert.deepEqual(missing.steps, ["new-thread"]);
+});
+
+test("an unlabelled photo control can use the unique already-mounted image input", async () => {
+  const result = await simulate({ photo: true, missingImageButton: true, mountedInput: true });
+  assert.equal(result.status, "posted");
+  assert.deepEqual(result.steps, ["new-thread", "upload", "text", "next-part", "text", "next-part", "text", "post"]);
 });

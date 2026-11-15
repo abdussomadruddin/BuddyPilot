@@ -56,23 +56,24 @@ async function publishThreadsInChrome(parts, username, photo = null) {
   };
 
   if (photo) {
-    const imageLabel = /^(?:(?:add|attach|upload) (?:(?:an? )?(?:image|photo)(?: or video)?|media)|photo\/video|tambah gambar|muat naik gambar)$/i;
+    const imageLabel = /^(?:(?:add|attach|upload) (?:(?:an? )?(?:image|photo)(?: or video)?|media)|media|photo(?:\/| or )video|tambah gambar|muat naik gambar)$/i;
+    const photoInput = () => only([...composer.querySelectorAll('input[type="file"]')].filter((node) =>
+      !node.disabled && !node.files?.length && /(?:image\/|\.(?:jpg|jpeg|png)\b)/i.test(node.accept)));
     const addImage = await wait(() => {
       if (only(dialogs()) !== composer) return null;
       return only(find(composer, 'button,[role="button"]').filter((node) => {
         if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
-        const labels = [label(node), node.getAttribute("title"), node.querySelector("[aria-label]")?.getAttribute("aria-label")];
+        const labels = [label(node), node.getAttribute("title"), node.querySelector("[aria-label]")?.getAttribute("aria-label"), node.querySelector("svg title")?.textContent];
         return labels.some((value) => imageLabel.test((value || "").trim()));
-      }));
-    });
+      })) || (photoInput() ? true : null);
+    }, 15);
     if (!addImage || !["image/jpeg", "image/png"].includes(photo.type) || !photo.base64 || photo.base64.length > 5592408) return "failed:image";
     // Let Threads prepare its file input, but supply the file without the OS picker.
     const skipFilePicker = (event) => { if (event.target?.matches('input[type="file"]')) event.preventDefault(); };
     document.addEventListener("click", skipFilePicker, true);
     try {
-      addImage.click();
-      const input = await wait(() => only(dialogs()) === composer && only([...composer.querySelectorAll('input[type="file"]')].filter((node) =>
-        !node.disabled && !node.files?.length && /(?:image\/|\.(?:jpg|jpeg|png)\b)/i.test(node.accept))));
+      if (addImage !== true) addImage.click();
+      const input = await wait(() => only(dialogs()) === composer && photoInput());
       if (!input) return "failed:image";
       const bytes = Uint8Array.from(atob(photo.base64), (char) => char.charCodeAt(0));
       const data = new DataTransfer();
