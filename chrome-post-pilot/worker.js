@@ -5,7 +5,8 @@ let busy = false;
 
 async function badge(text, title) {
   await chrome.action.setBadgeText({ text });
-  await chrome.action.setTitle({ title: "Post Pilot: " + title + " (klik untuk hidup/mati)" });
+  await chrome.action.setTitle({ title: "Post Pilot: " + title });
+  await chrome.storage.local.set({ status: title });
 }
 
 async function syncAlarm() {
@@ -28,7 +29,7 @@ async function queue(tabId, body) {
       const response = await fetch("/api/post-pilot-queue", {
         method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(12000),
       });
-      return response.ok ? response.json() : null;
+      return response.ok ? response.json() : { status: response.status };
     },
   });
   return result;
@@ -110,12 +111,12 @@ async function poll() {
   try {
     const { enabled, reviewTabId } = await chrome.storage.local.get(["enabled", "reviewTabId"]);
     if (!enabled) return;
-    if (reviewTabId && await chrome.tabs.get(reviewTabId).catch(() => null)) return;
+    if (reviewTabId && await chrome.tabs.get(reviewTabId).catch(() => null)) return await badge("1", "Semak draf dan tutup tab untuk draf seterusnya");
     const tabs = await chrome.tabs.query({ url: APP + "/*" });
     const app = tabs.find((tab) => new URL(tab.url).pathname === "/" && tab.status === "complete");
     if (!app) return await badge("!", "buka BuddyPilot dan log masuk");
     const claimed = await queue(app.id, { action: "claim" });
-    if (!claimed?.ok) return await badge("!", "semak sesi atau sambungan BuddyPilot");
+    if (!claimed?.ok) return await badge("!", claimed?.status === 503 ? "Giliran Supabase belum tersedia" : "Semak sesi atau sambungan BuddyPilot");
     if (!claimed.job) return await badge("ON", "menunggu draf");
     const { id, platform, content } = claimed.job;
     let state = "failed";
@@ -139,9 +140,22 @@ async function poll() {
 chrome.runtime.onInstalled.addListener(syncAlarm);
 chrome.runtime.onStartup.addListener(syncAlarm);
 chrome.alarms.onAlarm.addListener((alarm) => { if (alarm.name === ALARM) void poll(); });
-chrome.action.onClicked.addListener(async () => {
-  const { enabled } = await chrome.storage.local.get("enabled");
-  await chrome.storage.local.set({ enabled: !enabled });
-  await syncAlarm();
-  if (!enabled) await poll();
+chrome.runtime.onMessage.addListener((message, sender, respond) => {
+  if (sender.url !== chrome.runtime.getURL("popup.html")) return;
+  (async () => {
+    if (message.action === "toggle") {
+      const { enabled } = await chrome.storage.local.get("enabled");
+      await chrome.storage.local.set({ enabled: !enabled });
+      await syncAlarm();
+      if (!enabled) await poll();
+    } else if (message.action === "check") {
+      await syncAlarm();
+      await poll();
+    } else if (message.action === "status") {
+      const { enabled } = await chrome.storage.local.get("enabled");
+      if (enabled && !await chrome.alarms.get(ALARM)) await syncAlarm();
+    }
+    respond(await chrome.storage.local.get(["enabled", "status"]));
+  })().catch(() => respond({ error: "Chrome tidak dapat menyemak extension." }));
+  return true;
 });

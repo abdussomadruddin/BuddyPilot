@@ -12,7 +12,9 @@ the queue. Facebook and Threads must be signed in on the same Chrome profile.
 2. In Chrome, open `chrome://extensions`, enable Developer mode, select
    Load unpacked and choose the `chrome-post-pilot` directory.
 3. Open BuddyPilot on the Mac and leave the signed-in tab open. Pin the
-   extension and click its icon to enable it: the badge shows ON.
+   extension, click its icon and choose Aktifkan. Use Semak sekarang to check
+   the connection without waiting for the next alarm. Service worker (Inactive)
+   in Chrome's extension list is normal between events.
 4. From Post Pilot on the phone, generate or edit text, pick a platform and
    choose Hantar draf ke Mac. Semak status checks the latest handoff.
 5. Chrome checks at roughly two-minute intervals while running and awake.
