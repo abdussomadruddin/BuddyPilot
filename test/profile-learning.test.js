@@ -193,3 +193,31 @@ test("the extension runs the profile check once a day from the app tab, and only
   const client = readFileSync("public/buddypilot-storytelling.js", "utf8");
   assert.match(client, /post\("learn\.edit", \{ generated: state\.current\.generated/);
 });
+
+test("Facebook Content Library reads publication date and named metric columns", async () => {
+  const assert = require("node:assert/strict");
+  const { readFileSync } = require("node:fs");
+  const { runInNewContext } = require("node:vm");
+  const label = { innerText: "Contoh post Facebook\nPublished •\n15 November 2026 at 23:59",
+    querySelector: () => ({ href: "https://www.facebook.com/content/insights/?content_id=fixture", getAttribute: () => "Post insights, Contoh post Facebook" }) };
+  const cell = (innerText) => ({ innerText });
+  const headers = ["Views", "Preview", "Comments", "Engagement"].map(cell);
+  const table = {
+    rows: [{ cells: headers }, { cells: [cell("55"), label, cell("--"), cell("0")] }],
+    querySelectorAll: () => headers,
+    getBoundingClientRect: () => ({ height: 800 }),
+  };
+  const origin = "https://www.facebook.com";
+  const scanLibrary = runInNewContext(readFileSync("chrome-post-pilot/facebook-learning.js", "utf8") + "\nscanFacebookContentLibrary", {
+    location: new URL(origin + "/professional_dashboard/content/content_library/"),
+    URL, Intl, Date: class extends Date { static now() { return Date.parse("2026-11-15T17:00:00Z"); } },
+    document: { querySelectorAll: () => [table], scrollingElement: { scrollTop: 0, scrollBy() {} } },
+    window: { innerHeight: 700 }, setTimeout: (resolve) => resolve(),
+  });
+  const { posts } = await scanLibrary(Date.parse("2026-10-16T17:00:00Z"));
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].postedAt, "2026-11-15T15:59:00.000Z");
+  assert.equal(posts[0].facebookEngagement, 0);
+  assert.equal(posts[0].views, 55);
+  assert.equal(posts[0].comments, undefined);
+});

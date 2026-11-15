@@ -1,4 +1,4 @@
-async function scanLearningProfile(platform, owner, cutoff) {
+async function scanLearningProfile(platform, owner, cutoff, findContentLibrary = false) {
   const threads = platform === "threads";
   const expectedOrigin = threads ? "https://www.threads.com" : "https://www.facebook.com";
   const pause = () => new Promise((resolve) => setTimeout(resolve, 700));
@@ -34,6 +34,10 @@ async function scanLearningProfile(platform, owner, cutoff) {
     return { error: found && !/^\/(?:login|checkpoint)/.test(currentPath())
       ? `Profil yang dibuka ialah "${found}", tetapi extension disetkan kepada "${owner}". Betulkan nama dalam extension Post Pilot.`
       : "Profil tidak dapat disahkan. Semak akaun yang log masuk di Chrome." };
+  }
+  if (!threads && findContentLibrary) {
+    const link = [...document.querySelectorAll('a[href*="/professional_dashboard/content/content_library"]')].find((node) => node.getClientRects().length);
+    return link ? { libraryUrl: link.href } : { error: "Pautan Content Library tiada pada profil Facebook ini." };
   }
   const profilePath = currentPath();
   const profileId = new URL(location.href).searchParams.get("id");

@@ -1,4 +1,4 @@
-importScripts("threads-autopost.js", "facebook-autopost.js", "profile-learning.js");
+importScripts("threads-autopost.js", "facebook-autopost.js", "profile-learning.js", "facebook-learning.js");
 
 const APP = "https://buddypilot.vercel.app";
 const PLATFORMS = { facebook: "https://www.facebook.com/", threads: "https://www.threads.com/" };
@@ -162,9 +162,22 @@ async function collectLearningPosts() {
       // Facebook lays out its visible timestamp glyphs in the foreground.
       tab = await chrome.tabs.create({ url, active: platform === "facebook" });
       await waitForTab(tab.id);
-      const [{ result }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id }, func: scanLearningProfile, args: [platform, owner, cutoff],
+      let [{ result }] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id }, func: scanLearningProfile, args: [platform, owner, cutoff, platform === "facebook"],
       });
+      if (platform === "facebook" && result?.libraryUrl) {
+        const library = new URL(result.libraryUrl);
+        if (library.origin !== new URL(PLATFORMS.facebook).origin ||
+            !library.pathname.startsWith("/professional_dashboard/content/content_library")) {
+          throw new Error("Invalid Facebook Content Library");
+        }
+        await chrome.tabs.update(tab.id, { url: library.href });
+        await waitForTab(tab.id);
+        [{ result }] = await chrome.scripting.executeScript({
+          target: { tabId: tab.id }, func: scanFacebookContentLibrary, args: [cutoff],
+        });
+      }
+      if (result?.note) notes.push(result.note);
       if (result?.posts?.length) posts.push(...result.posts);
       else notes.push(label + ": " + (result?.error || "Tiada post bertarikh dalam 30 hari dapat dibaca."));
     } catch {
