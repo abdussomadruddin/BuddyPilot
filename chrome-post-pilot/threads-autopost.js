@@ -55,6 +55,36 @@ async function publishThreadsInChrome(parts, username, photo = null) {
     return "";
   };
 
+  if (photo) {
+    const imageLabel = /^(?:(?:add|attach|upload) (?:(?:an? )?(?:image|photo)(?: or video)?|media)|photo\/video|tambah gambar|muat naik gambar)$/i;
+    const addImage = await wait(() => {
+      if (only(dialogs()) !== composer) return null;
+      return only(find(composer, 'button,[role="button"]').filter((node) => {
+        if (node.disabled || node.getAttribute("aria-disabled") === "true") return false;
+        const labels = [label(node), node.getAttribute("title"), node.querySelector("[aria-label]")?.getAttribute("aria-label")];
+        return labels.some((value) => imageLabel.test((value || "").trim()));
+      }));
+    });
+    if (!addImage || !["image/jpeg", "image/png"].includes(photo.type) || !photo.base64 || photo.base64.length > 5592408) return "failed:image";
+    // Let Threads prepare its file input, but supply the file without the OS picker.
+    const skipFilePicker = (event) => { if (event.target?.matches('input[type="file"]')) event.preventDefault(); };
+    document.addEventListener("click", skipFilePicker, true);
+    try {
+      addImage.click();
+      const input = await wait(() => only(dialogs()) === composer && only([...composer.querySelectorAll('input[type="file"]')].filter((node) =>
+        !node.disabled && !node.files?.length && /(?:image\/|\.(?:jpg|jpeg|png)\b)/i.test(node.accept))));
+      if (!input) return "failed:image";
+      const bytes = Uint8Array.from(atob(photo.base64), (char) => char.charCodeAt(0));
+      const data = new DataTransfer();
+      data.items.add(new File([bytes], photo.type === "image/png" ? "buddypilot.png" : "buddypilot.jpg", { type: photo.type }));
+      input.files = data.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch { return "failed:image"; }
+    finally { document.removeEventListener("click", skipFilePicker, true); }
+    photoSrc = await wait(() => only(dialogs()) === composer && firstPhoto(editors(composer)[0]));
+    if (!photoSrc) return "failed:image";
+  }
+
   for (let index = 0; index < parts.length; index++) {
     if (only(dialogs()) !== composer) return "failed:composer";
     if (index) {
@@ -85,20 +115,6 @@ async function publishThreadsInChrome(parts, username, photo = null) {
         current[index].dispatchEvent(new ClipboardEvent("paste", { clipboardData, bubbles: true, cancelable: true }));
       } catch { return "failed:text"; }
       if (!await wait(textReady, 8)) return "failed:text";
-    }
-    if (!index && photo) {
-      const input = only([...composer.querySelectorAll('input[type="file"]')].filter((node) =>
-        !node.disabled && !node.files?.length && /(?:image\/|\.(?:jpg|jpeg|png)\b)/i.test(node.accept)));
-      if (!input || !["image/jpeg", "image/png"].includes(photo.type) || !photo.base64 || photo.base64.length > 5592408) return "failed:image";
-      try {
-        const bytes = Uint8Array.from(atob(photo.base64), (char) => char.charCodeAt(0));
-        const data = new DataTransfer();
-        data.items.add(new File([bytes], photo.type === "image/png" ? "buddypilot.png" : "buddypilot.jpg", { type: photo.type }));
-        input.files = data.files;
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-      } catch { return "failed:image"; }
-      photoSrc = await wait(() => firstPhoto(editors(composer)[0]));
-      if (!photoSrc) return "failed:image";
     }
   }
 
