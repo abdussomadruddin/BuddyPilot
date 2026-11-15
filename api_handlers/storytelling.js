@@ -4,6 +4,8 @@ const { requireAuth } = require("../lib/auth");
 const { readJsonBody } = require("../lib/http-body");
 const { verifyModel, publicAiConfig } = require("../lib/storytelling-ai");
 const story = require("../lib/storytelling");
+const publishing = require("../lib/storytelling-publish");
+const learning = require("../lib/storytelling-learning");
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -55,8 +57,9 @@ const ACTIONS = {
     return { samples };
   },
   "dna.analyze": async (store, body, options) => ({ dna: await story.analyzeDna(store, options) }),
-  "dna.save": async (store, body) => ({ dna: await story.saveDna(store, body.profile || {}, "manual", "Disunting secara manual.") }),
-  "dna.reset": async (store) => ({ dna: await story.saveDna(store, story.PRESET_DNA, "preset", "Kembali ke preset asal.") }),
+  // What was learned from engagement is kept through manual edits and resets.
+  "dna.save": async (store, body) => ({ dna: await story.saveDna(store, { engagement: (await story.activeDna(store)).profile.engagement, ...(body.profile || {}) }, "manual", "Disunting secara manual.") }),
+  "dna.reset": async (store) => ({ dna: await story.saveDna(store, { ...story.PRESET_DNA, engagement: (await story.activeDna(store)).profile.engagement }, "preset", "Kembali ke preset asal.") }),
   "dna.restore": async (store, body) => {
     const version = await store.get("dna", body.id);
     return { dna: await story.saveDna(store, version.profile, "restore", `Dipulihkan daripada versi ${version.version}.`) };
@@ -77,6 +80,13 @@ const ACTIONS = {
   },
   "draft.delete": async (store, body) => { await store.remove("draft", body.id); return {}; },
   "feedback.save": async (store, body) => story.saveFeedback(store, body),
+  // Publishing: each platform is its own explicit action on an approved draft.
+  "publish.page": async (store, body, options) => publishing.publishDraft(store, { id: body.id, platform: "page", again: body.again === true }, options.publishing),
+  "publish.threads": async (store, body, options) => publishing.publishDraft(store, { id: body.id, platform: "threads", parts: body.parts, again: body.again === true }, options.publishing),
+  "threads.split": async (store, body, options) => publishing.splitThread(store, body, options),
+  "personal.queue": async (store, body) => publishing.queuePersonal(store, body),
+  "image.upload": async (store, body, options) => require("../lib/storytelling-image").saveImage(body, options.image),
+  "learn.run": async (store, body, options) => ({ cycle: await learning.runCycle(store, { force: true }, options.learning), learning: await learning.learningStatus(store) }),
   "ai.verify": async (store, body, options) => ({ verification: await (options.verify || verifyModel)() }),
 };
 
@@ -87,6 +97,7 @@ async function dispatch(store, { method = "GET", url = "/", body = {}, options =
     const parsed = new URL(url, "http://localhost");
     const view = parsed.searchParams.get("view") || "bootstrap";
     if (view === "bootstrap") return bootstrap(store, options);
+    if (view === "learning") return { learning: await learning.learningStatus(store) };
     if (view === "drafts") return { drafts: await story.listDrafts(store, { q: parsed.searchParams.get("q") || "", status: parsed.searchParams.get("status") || "" }) };
     if (view === "draft") {
       const id = parsed.searchParams.get("id");
@@ -101,18 +112,46 @@ async function dispatch(store, { method = "GET", url = "/", body = {}, options =
   return action(store, body, options);
 }
 
+// AI calls can take minutes. Phones drop a request that sends nothing for that
+// long ("Load failed"), so after a few quiet seconds the response starts and a
+// space is sent every 8s; JSON ignores leading whitespace. The real outcome,
+// including errors, is then in the JSON body ("ok") instead of the status code.
+function startKeepAlive(res) {
+  const state = { started: false, timer: null };
+  state.timer = setTimeout(function tick() {
+    if (!state.started) {
+      state.started = true;
+      res.statusCode = 200;
+      res.setHeader("x-accel-buffering", "no");
+    }
+    res.write(" ");
+    state.timer = setTimeout(tick, 8000);
+  }, 4000);
+  return state;
+}
+
+function finish(res, keepAlive, status, body) {
+  if (keepAlive) clearTimeout(keepAlive.timer);
+  if (keepAlive?.started) return res.end(JSON.stringify({ ...body, status }));
+  return send(res, status, body);
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("content-type", "application/json; charset=utf-8");
   res.setHeader("cache-control", "no-store");
+  let keepAlive = null;
   try {
     requireAuth(req);
     const body = req.method === "POST" ? await readJsonBody(req) : {};
     const options = req.method === "GET" ? { config: await publicAiConfig() } : {};
-    return send(res, 200, { ok: true, ...await dispatch(story.createStore(), { method: req.method, url: req.url || "/", body, options }) });
+    keepAlive = startKeepAlive(res);
+    const result = await dispatch(story.createStore(), { method: req.method, url: req.url || "/", body, options });
+    return finish(res, keepAlive, 200, { ok: true, ...result });
   } catch (error) {
     // Only the error text is logged: never writing samples, drafts or keys.
     if (!error.statusCode || error.statusCode >= 500) console.error("storytelling_error", { code: error.code || "", message: String(error?.message || error).slice(0, 200) });
-    return send(res, error.statusCode || 500, { ok: false, code: error.code || "", error: error?.message || String(error) });
+    return finish(res, keepAlive, error.statusCode || 500, { ok: false, code: error.code || "", error: error?.message || String(error) });
   }
 };
 module.exports.dispatch = dispatch;
+module.exports._test = { startKeepAlive, finish };

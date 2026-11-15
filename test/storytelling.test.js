@@ -36,8 +36,10 @@ test("the feature is wired into BuddyPilot's navigation and router", () => {
   const page = fs.readFileSync(path.join(__dirname, "../api_handlers/app.js"), "utf8");
   const router = fs.readFileSync(path.join(__dirname, "../api/app.js"), "utf8");
   assert.match(page, /data-tab-target="postpilot"/);
-  assert.match(page, /id="tab-postpilot"[\s\S]*data-st-view="write" aria-label="Facebook Storytelling"/);
-  assert.match(page, /data-st-view="dna" aria-label="My Writing DNA"/);
+  assert.match(page, /id="tab-postpilot"[\s\S]*data-st-view="write"[\s\S]*id="stBrief"[\s\S]*id="stPostPage"[\s\S]*id="stPostThreads"[\s\S]*id="stPostPersonal"/);
+  // The simple screen: two tabs, one input box, no sliders, drafts list or DNA editor.
+  assert.deepEqual([...page.matchAll(/data-st-view="([a-z]+)"/g)].map((match) => match[1]), ["write", "settings"]);
+  assert.doesNotMatch(page, /id="stIntensity"|id="stDnaFields"|id="stDraftList"|id="stApprove"/);
   assert.match(router, /storytelling: \(\) => require\("\.\.\/api_handlers\/storytelling"\)/);
 });
 
@@ -115,14 +117,31 @@ test("output is cleaned of emojis, separators, headings and trailing hashtags", 
   assert.deepEqual(story.localReview(fakePost(21), { targetLength: 4500 }).issues.map((issue) => issue.code), ["repetition"]);
 });
 
-test("a length miss triggers exactly one revision call", async () => {
+test("a length miss is revised in words and paragraphs until within 10%, at most twice", async () => {
   const store = createMemoryStore();
   const { ai, calls } = mockAi({ text: (request, count) => (count === 1 ? fakePost(8) : fakePost(21)) });
   const result = await post(store, "generate", { topic: "Topik pendek" }, { ai });
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 2, "stops once the length is within 10%");
   assert.equal(result.calls, 2);
-  assert.match(calls[1].prompt, /Sasaran 4500 aksara/);
+  assert.match(calls[1].prompt, /terlalu pendek/);
+  assert.match(calls[1].prompt, /lebih kurang \d+ patah perkataan/);
   assert.ok(Math.abs(result.text.length - 4500) / 4500 <= 0.1);
+
+  // Too long, and the first revision only gets part of the way: a second try, closest version kept.
+  const longStore = createMemoryStore();
+  const sizes = [40, 30, 22];
+  const long = mockAi({ text: (request, count) => fakePost(sizes[count - 1] ?? 22) });
+  const trimmed = await post(longStore, "generate", { topic: "Topik panjang" }, { ai: long.ai });
+  assert.equal(long.calls.length, 3, "first draft plus two revisions, never more");
+  assert.match(long.calls[1].prompt, /terlalu panjang/);
+  assert.equal(trimmed.text, fakePost(22).trim());
+
+  // A revision that makes it worse is discarded and stops further tries.
+  const worseStore = createMemoryStore();
+  const worse = mockAi({ text: (request, count) => fakePost(count === 1 ? 30 : 45) });
+  const kept = await post(worseStore, "generate", { topic: "Topik lain" }, { ai: worse.ai });
+  assert.equal(worse.calls.length, 2);
+  assert.equal(kept.text, fakePost(30).trim());
 });
 
 test("section rewrites change only that section; full rewrites keep going through the DNA", async () => {
@@ -262,7 +281,7 @@ test("rate limits back off and retry; an exhausted quota stops with a clear mess
 
   const down = fakeFetch([{ status: 503, body: {} }]);
   await assert.rejects(generateText({ prompt: "P" }, { env, deps: { fetch: down.fetchImpl, sleep } }), (error) => error.code === "unavailable");
-  assert.equal(down.requests.length, 3, "two retries, then give up");
+  assert.equal(down.requests.length, 4, "two retries, then one try on the free sibling Gemini model");
 });
 
 test("incomplete, blocked and missing-model answers are reported, not passed on", async () => {
@@ -289,4 +308,49 @@ test("no secret or key name reaches the browser files", () => {
   const config = story.publicConfig();
   assert.deepEqual(Object.keys(config).filter((key) => /key/i.test(key)), ["keyConfigured"]);
   assert.match(config.dataNotice, /Google Gemini/);
+});
+
+test("busy gemini-3.8-flash falls back once to free gemini-3.6-flash with the same key", async () => {
+  const fallbackEnv = { GEMINI_API_KEY: "test-key", STORYTELLING_AI_PROVIDER: "gemini", STORYTELLING_AI_MODEL: "gemini-3.8-flash" };
+  const responses = [{ status: 503, body: {} }, { status: 503, body: {} }, { status: 503, body: {} }, { status: 200, body: { candidates: [{ content: { parts: [{ text: "Dari sandaran." }] }, finishReason: "STOP" }] } }];
+  const busy = fakeFetch(responses);
+  const result = await generateText({ prompt: "P" }, { env: fallbackEnv, deps: { fetch: busy.fetchImpl, sleep: async () => {} } });
+  assert.equal(result.text, "Dari sandaran.");
+  assert.equal(result.model, "gemini-3.6-flash");
+  assert.match(String(busy.requests.at(-1).url), /gemini-3\.6-flash/);
+
+  const quota = fakeFetch([{ status: 429, body: { error: { message: "limit: 0, PerDay" } } }]);
+  await assert.rejects(generateText({ prompt: "P" }, { env: fallbackEnv, deps: { fetch: quota.fetchImpl, sleep: async () => {} } }), (error) => error.code === "quota");
+  assert.equal(quota.requests.length, 1, "exhausted quota never tries another model");
+});
+
+test("gemini-3 posts ask for low thinking, and retry without it when the model refuses the setting", async () => {
+  const thinkEnv = { GEMINI_API_KEY: "test-key", STORYTELLING_AI_PROVIDER: "gemini", STORYTELLING_AI_MODEL: "gemini-3.8-flash" };
+  const ok = { status: 200, body: { candidates: [{ content: { parts: [{ text: "Siap." }] }, finishReason: "STOP" }] } };
+  const plain = fakeFetch([ok]);
+  await generateText({ prompt: "P" }, { env: thinkEnv, deps: { fetch: plain.fetchImpl, sleep: async () => {} } });
+  assert.deepEqual(JSON.parse(plain.requests[0].init.body).generationConfig.thinkingConfig, { thinkingLevel: "low" });
+
+  const refuses = fakeFetch([{ status: 400, body: { error: { message: "Unknown field thinking_level" } } }, ok]);
+  const result = await generateText({ prompt: "P" }, { env: thinkEnv, deps: { fetch: refuses.fetchImpl, sleep: async () => {} } });
+  assert.equal(result.text, "Siap.");
+  assert.equal(JSON.parse(refuses.requests[1].init.body).generationConfig.thinkingConfig, undefined);
+});
+
+test("slow AI requests send keep-alive spaces and still end in valid JSON", async () => {
+  const { startKeepAlive, finish } = require("../api_handlers/storytelling")._test;
+  const chunks = [];
+  const res = { statusCode: 0, headers: {}, setHeader(k, v) { this.headers[k] = v; }, write(c) { chunks.push(c); }, end(c) { chunks.push(c); this.ended = true; } };
+  const keepAlive = startKeepAlive(res);
+  await new Promise((done) => setTimeout(done, 4300));
+  finish(res, keepAlive, 503, { ok: false, code: "unavailable", error: "Sibuk" });
+  const body = JSON.parse(chunks.join("").trim());
+  assert.ok(chunks[0] === " ", "a space was sent while waiting");
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(body, { ok: false, code: "unavailable", error: "Sibuk", status: 503 });
+
+  const quick = { statusCode: 0, setHeader() {}, write() { throw new Error("no write for quick answers"); }, end(c) { this.body = c; } };
+  finish(quick, startKeepAlive(quick), 200, { ok: true });
+  assert.equal(quick.statusCode, 200);
+  assert.equal(quick.body, JSON.stringify({ ok: true }));
 });

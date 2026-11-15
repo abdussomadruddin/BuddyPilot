@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<title>BuddyPilot Poster</title>
+<style>
+  :root { --ink: #18232d; --muted: #61717f; --line: #dce5ea; --blue: #1464da; --red: #bd3455; --green: #087b5e; }
+  body { width: 340px; margin: 0; padding: 14px; color: var(--ink); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  h1 { margin: 0 0 10px; font-size: 16px; }
+  p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+  input { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+  button { min-height: 36px; padding: 7px 12px; border: 0; border-radius: 8px; background: var(--blue); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+  button.secondary { background: #edf3f6; color: var(--ink); }
+  button:disabled { opacity: .5; cursor: default; }
+  ul { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
+  li { padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+  li strong { display: block; margin-bottom: 2px; }
+  li small { display: block; margin-bottom: 8px; color: var(--muted); }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  #status { min-height: 18px; margin: 10px 0 0; font-size: 13px; }
+  #status.err { color: var(--red); }
+  #status.ok { color: var(--green); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <h1>BuddyPilot Poster</h1>
+  <div id="pair" hidden>
+    <p>Tampal token extension dari BuddyPilot &gt; Post Pilot &gt; Tetapan.</p>
+    <input id="token" type="password" placeholder="bp_..." autocomplete="off" spellcheck="false">
+    <div class="row"><button id="save" type="button">Simpan</button></div>
+  </div>
+  <div id="main" hidden>
+    <ul id="queue"></ul>
+    <div class="row">
+      <button id="sync" type="button" class="secondary">Sync engagement</button>
+      <button id="unpair" type="button" class="secondary">Tukar token</button>
+    </div>
+  </div>
+  <p id="status" role="status"></p>
+  <script src="popup.js"></script>
+</body>
+</html>

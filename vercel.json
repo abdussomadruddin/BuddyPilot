@@ -26,13 +26,17 @@
   ],
   "functions": {
     "api/app.js": {
-      "maxDuration": 60
+      "maxDuration": 300
     }
   },
   "crons": [
     {
       "path": "/api/cron/weekly-reports",
       "schedule": "0 22 * * 0"
+    },
+    {
+      "path": "/api/cron/postpilot-engagement",
+      "schedule": "30 21 * * *"
     },
     {
       "path": "/api/cron/daily-ads-report",

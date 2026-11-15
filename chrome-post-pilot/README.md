@@ -7,7 +7,7 @@ the queue. Facebook and Threads must be signed in on the same Chrome profile.
 
 ## Setup
 
-1. Apply `supabase/migrations/20261115000100_post_pilot_queue.sql` and deploy
+1. Apply `supabase/migrations/20261115000200_post_pilot_queue.sql` and deploy
    the matching BuddyPilot code. Do not point the extension at another project.
 2. In Chrome, open `chrome://extensions`, enable Developer mode, select
    Load unpacked and choose the `chrome-post-pilot` directory.

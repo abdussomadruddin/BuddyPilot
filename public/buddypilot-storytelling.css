@@ -202,3 +202,37 @@
 /* A tapped tab keeps :hover on touch screens; only the active tab is highlighted. */
 .st-tabs button:not(.active), .st-tabs button:not(.active):hover, .st-tabs button:not(.active):focus { background: transparent !important; color: var(--bp-muted, #61717f) !important; box-shadow: none !important; }
 .st-tabs button.active, .st-tabs button.active:hover, .st-tabs button.active:focus { background: var(--bp-panel, #fff) !important; color: var(--bp-ink, #18232d) !important; box-shadow: 0 1px 3px rgba(20, 40, 60, .12) !important; }
+
+/* Simple layout: one column, write then post. */
+#tab-postpilot { max-width: 760px; }
+.st-simple { display: grid; gap: 16px; }
+.st-simple .st-form { position: static; }
+.st-simple .st-form > label:first-child, .st-account > label:first-of-type { margin-top: 0; }
+#stBrief { min-height: 120px; font-size: 15px; }
+.st-simple #stEditor { min-height: 360px; }
+.st-publish { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--bp-line, #dce5ea); }
+.st-publish-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; }
+.st-publish-row > button { flex: 0 0 190px; min-height: 44px; }
+.st-publish-state { flex: 1 1 200px; min-width: 0; font-size: 13px; color: var(--bp-green, #087b5e); overflow-wrap: anywhere; }
+.st-publish-state a { color: var(--bp-blue, #1464da); font-weight: 700; }
+.st-thread { margin-top: 14px; padding: 14px; border: 1px solid var(--bp-line, #dce5ea); border-radius: 12px; background: var(--bp-soft, #edf3f6); }
+.st-thread ol { margin: 10px 0 0; padding-left: 22px; display: grid; gap: 10px; }
+.st-thread li small { display: block; margin-top: 2px; text-align: right; font-size: 11px; color: var(--bp-muted, #61717f); font-variant-numeric: tabular-nums; }
+.st-thread textarea { font-size: 14px; }
+.st-account { padding: 14px 0; border-top: 1px solid var(--bp-line, #dce5ea); }
+.st-account:first-of-type { padding-top: 0; border-top: 0; }
+.st-account h3 { color: var(--bp-ink, #18232d) !important; font-size: 14px !important; }
+.st-account-state { font-weight: 500; color: var(--bp-muted, #61717f); overflow-wrap: anywhere; }
+.st-account button { margin-top: 12px !important; }
+#stExtValue { margin-top: 10px !important; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+@media (max-width: 600px) {
+  .st-publish-row > button { flex: 1 1 100%; min-height: 48px; }
+  .st-publish-state { flex-basis: 100%; }
+  .st-simple .st-actions { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .st-simple #stEditor { min-height: 300px; }
+}
+.st-photo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+.st-photo > button { min-height: 44px; }
+.st-photo figure { display: flex; align-items: center; gap: 10px; margin: 0; }
+.st-photo img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--bp-line, #dce5ea); }
+.st-photo .st-status { margin-top: 0; flex: 1 1 100%; }
