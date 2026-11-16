@@ -39,6 +39,7 @@
   async function load() {
     const version = ++generation;
     status.textContent = "Memuatkan status...";
+    learningStatus.textContent = "Memuatkan status...";
     try {
       const body = await request();
       if (version !== generation) return;
@@ -49,12 +50,16 @@
       renderModels();
       renderStatus();
     } catch (error) {
-      if (version === generation) status.textContent = error.message;
+      if (version === generation) status.textContent = learningStatus.textContent = error.message;
     }
   }
   function renderLearningStatus() {
     const item = statuses.find((row) => row.provider === "openrouter_learning");
-    learningStatus.textContent = item?.configured ? "Key belajar tersedia." : "Key belajar belum disimpan.";
+    learningStatus.textContent = !item?.configured ? "Key belajar belum disimpan."
+      : item.source === "app" ? "Key tersimpan: ******** (App)" : "Key tersedia: ******** (Vercel)";
+    learningKey.placeholder = item?.configured ? "Kosongkan untuk kekalkan key tersimpan" : "Masukkan OpenRouter API key";
+    learningTest.disabled = !item?.configured && !learningKey.value.trim();
+    learningSave.disabled = !learningKey.value.trim();
   }
   async function runLearning(action) {
     learningTest.disabled = learningSave.disabled = learningKey.disabled = true;
@@ -68,8 +73,9 @@
         learningResult.textContent = "Key belajar disimpan.";
       } else learningResult.textContent = body.result.message;
     } catch (error) { learningResult.textContent = error.message; }
-    finally { learningTest.disabled = learningSave.disabled = learningKey.disabled = false; }
+    finally { learningKey.disabled = false; renderLearningStatus(); }
   }
+  learningKey.addEventListener("input", renderLearningStatus);
   learningTest.addEventListener("click", () => runLearning("test-learning"));
   learningSave.addEventListener("click", () => runLearning("save-learning"));
   async function run(action) {
@@ -103,5 +109,11 @@
     document.querySelectorAll(".menu-settings-panel").forEach((panel) => { panel.hidden = panel.id !== "menuAISettings"; });
     load();
   }));
-  document.querySelector(".topbar-menu").addEventListener("toggle", (event) => { if (!event.target.open) { key.value = ""; learningKey.value = ""; } });
+  document.querySelector(".topbar-menu").addEventListener("toggle", (event) => {
+    if (!event.target.open) {
+      key.value = "";
+      learningKey.value = "";
+      renderLearningStatus();
+    }
+  });
 })();

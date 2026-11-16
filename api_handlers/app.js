@@ -8,7 +8,7 @@ function pageHtml() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BuddyPilot</title>
-  <script src="/ai-key-settings.js?v=2" defer></script>
+  <script src="/ai-key-settings.js?v=3" defer></script>
   <link rel="stylesheet" href="/action-feedback.css?v=1">
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
@@ -4379,7 +4379,7 @@ function pageHtml() {
               <h4>Belajar daripada post</h4>
               <p class="note">OpenRouter Free. Gemma 4 31B untuk analisis gaya dan Nemotron untuk bantuan membaca halaman Facebook.</p>
               <p id="aiLearningStatus" class="note" role="status"></p>
-              <label for="aiLearningKey">OpenRouter API key untuk belajar</label>
+              <label for="aiLearningKey">OpenRouter API key baharu untuk belajar</label>
               <input id="aiLearningKey" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="512">
               <div class="inline-actions"><button id="aiLearningTest" type="button" class="secondary">Uji key belajar</button><button id="aiLearningSave" type="button">Simpan key belajar</button></div>
               <p id="aiLearningResult" class="note" role="status" aria-live="polite"></p>
