@@ -14,7 +14,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
   <script src="/client-ads-monitor.js?v=1" defer></script>
   <link rel="stylesheet" href="/buddypilot-storytelling.css?v=20261115-simple">
-  <script src="/buddypilot-storytelling.js?v=20261116-learn-daily" defer></script>
+  <script src="/buddypilot-storytelling.js?v=20261116-style-learning" defer></script>
   <link rel="icon" href="/favicon.ico?v=3" sizes="any">
   <link rel="icon" href="/icons/app-icon-32x32.png?v=3" type="image/png" sizes="32x32">
   <link rel="icon" href="/icons/app-icon-192x192.png?v=3" type="image/png" sizes="192x192">

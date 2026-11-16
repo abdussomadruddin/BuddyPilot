@@ -11,7 +11,7 @@ async function scanFacebookContentLibrary(cutoff, profilePosts = []) {
     const key = normalize(post.text);
     profileByText.set(key, profileByText.has(key) ? null : post);
   }
-  const libraryByText = new Map();
+
   const capturedAt = Date.now();
   const todayParts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kuala_Lumpur", year: "numeric", month: "2-digit", day: "2-digit",
@@ -62,24 +62,19 @@ async function scanFacebookContentLibrary(cutoff, profilePosts = []) {
       const label = preview.innerText.trim();
       const published = label.match(/\bPublished\s*[•·]\s*(.+)$/is);
       if (!published) continue;
-      const name = (link.getAttribute("aria-label") || "").replace(/^Post insights,\s*/i, "").trim();
+      const accessible = link.getAttribute("aria-label") || "";
+      const name = /^Post insights,\s*/i.test(accessible) ? accessible.replace(/^Post insights,\s*/i, "").trim() : "";
       const text = name || label.slice(0, published.index).trim();
       if (!text || /^(?:photo|video|text) story$/i.test(text) || /(?:…|\.\.\.)$/.test(text)) continue;
       const key = normalize(text.slice(0, 12000));
       const profile = profileByText.get(key);
-      if (!profile) continue;
-      const previousId = libraryByText.get(key);
-      if (previousId && previousId !== id) {
-        posts.delete(previousId);
-        continue;
-      }
-      libraryByText.set(key, id);
+      if (!profile && !name) continue;
       const date = parseDate(published[1].trim());
       if (!Number.isFinite(date) || date < cutoff || date > capturedAt) continue;
       const canonical = new URL("/content/insights/", origin);
       canonical.searchParams.set("content_id", id);
       posts.set(id, {
-        platform: "personal", url: canonical.href, text: profile.text,
+        platform: "personal", url: canonical.href, text: profile?.text || text.slice(0, 12000),
         postedAt: new Date(date).toISOString(),
         facebookEngagement: metric(row.cells[engagementIndex]?.innerText),
         views: metric(row.cells[viewsIndex]?.innerText),

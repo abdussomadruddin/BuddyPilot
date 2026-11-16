@@ -163,24 +163,27 @@ test("an edited draft teaches the next drafts; an unchanged one becomes an examp
   assert.equal((await learning.learnFromEdit(store, { content: "pendek" }, { ai })).sample, false);
 });
 
-test("the daily automatic run learns only on new evidence; the reason names what is missing", async () => {
+test("the daily automatic run learns only on new evidence; including posts with no engagement", async () => {
   const store = createMemoryStore();
   const now = () => new Date("2026-11-16T12:00:00Z");
   let aiCalls = 0;
-  const ai = async () => { aiCalls += 1; return { text: JSON.stringify({ engagement: "Hook satu ayat.", changes: ["Hook satu ayat menang."] }), model: "mock" }; };
+  const requests = [];
+  const ai = async (request) => { aiCalls += 1; requests.push(request); return { text: JSON.stringify({ hook: "Pembuka satu ayat.", engagement: "Hook satu ayat.", changes: ["Perhatikan hook satu ayat."] }), model: "mock" }; };
   const post = (i, hoursAgo, likes) => ({ platform: "threads", url: `https://www.threads.com/@owner/post/P${i}`, text: `Post nombor ${i} yang cukup panjang untuk dibaca.`, postedAt: new Date(now().getTime() - hoursAgo * 3600000).toISOString(), ...(likes == null ? {} : { reactions: likes, comments: 0, shares: 0 }) });
   const send = (posts, auto) => dispatch(store, { method: "POST", body: { action: "learn.chrome", posts, ...(auto ? { auto: true } : {}) }, options: { learning: { now, ai } } });
 
   const early = await send([post(1, 40, 0), post(2, 5, 3), post(3, 50)], false);
-  assert.equal(early.cycle.learned, false);
-  assert.match(early.cycle.reason, /3 post dibaca: 1 layak, 1 terlalu baru \(kurang sehari\), 1 tiada angka engagement/);
+  assert.equal(early.cycle.learned, true);
+  assert.equal(early.cycle.posts, 3);
+  assert.match(requests[0].prompt, /Post nombor 3/);
 
   const ready = await send([post(4, 30, 2), post(5, 60, 0), post(6, 70, 9)], true);
   assert.equal(ready.cycle.learned, true, "zero likes still counts, so three day-old posts are enough");
-  assert.equal(aiCalls, 1);
+  assert.equal(aiCalls, 2);
+  assert.match(requests[1].prompt, /score|skor 100/);
   const repeat = await send([post(4, 30, 2), post(5, 60, 0), post(6, 70, 9)], true);
   assert.equal(repeat.cycle.learned, false, "the automatic run waits for new posts");
-  assert.equal(aiCalls, 1);
+  assert.equal(aiCalls, 2);
   const button = await send([post(4, 30, 2), post(5, 60, 0), post(6, 70, 9)], false);
   assert.equal(button.cycle.learned, true, "the button still learns on demand");
 });
@@ -214,7 +217,7 @@ test("Facebook Content Library reads publication date and named metric columns",
     document: { querySelectorAll: () => [table], scrollingElement: { scrollTop: 0, scrollBy() {} } },
     window: { innerHeight: 700 }, setTimeout: (resolve) => resolve(),
   });
-  const { posts } = await scanLibrary(Date.parse("2026-10-16T17:00:00Z"), [{ text: "Contoh post Facebook" }]);
+  const { posts } = await scanLibrary(Date.parse("2026-10-16T17:00:00Z"));
   assert.equal(posts.length, 1);
   assert.equal(posts[0].postedAt, "2026-11-15T15:59:00.000Z");
   assert.equal(posts[0].facebookEngagement, 0);

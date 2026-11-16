@@ -237,7 +237,7 @@
   function renderLearning(learning) {
     const counts = Object.entries(learning.posts).map(([id, count]) => count + " di " + (PLATFORMS[id] || id)).join(", ");
     $("stLearning").textContent = (learning.total ? "AI sedang jejak " + learning.total + " post (" + counts + "). " : "Belum ada post dijejak. ")
-      + (learning.last ? "Kali terakhir belajar: " + when(learning.last.at) + ". " + learning.last.note : "Belum pernah belajar daripada engagement.");
+      + (learning.last ? "Kali terakhir belajar: " + when(learning.last.at) + ". " + learning.last.note : "Belum pernah belajar daripada post.");
   }
 
   async function loadSettings() {
@@ -396,7 +396,6 @@
     const status = $("stLearnStatus");
     const json = await runAi(status, "Chrome sedang membaca post 30 hari terakhir...", async () => {
       const scan = await scanChrome();
-      if (!scan.posts.length) throw new Error(scan.notes?.join(" ") || "Tiada post dalam 30 hari dapat dibaca.");
       setStatus(status, "info", "AI sedang belajar daripada post yang dibaca...");
       return { ...await post("learn.chrome", { posts: scan.posts }), notes: scan.notes };
     });

@@ -91,7 +91,7 @@ const ACTIONS = {
     const settings = options.learning || learning.defaultOptions();
     const scan = await publishing.syncChromeLearning(store, body.posts, settings.now());
     // The daily automatic run learns only when there is new evidence; the button always tries.
-    const cycle = await learning.learnFromEngagement(store, { force: body.auto !== true, publicationIds: body.auto === true ? undefined : scan.ids }, settings);
+    const cycle = await learning.learnFromEngagement(store, { force: body.auto !== true }, settings);
     return { cycle, counts: scan.counts, learning: await learning.learningStatus(store) };
   },
   "learn.browser-assist": async (store, body, options) => {

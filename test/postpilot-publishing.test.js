@@ -281,17 +281,18 @@ test("learning writes a new DNA version from the best and worst posts, then wait
   await publication(store, "page", `TERBAIK ${LONG}`, { reactions: 200, comments: 40, shares: 20, reach: 2000 }, 5, now);
   await publication(store, "page", `SEDERHANA ${LONG}`, { reactions: 40, comments: 3, shares: 1, reach: 2000 }, 6, now);
   const early = await learning.learnFromEngagement(store, {}, options);
-  assert.equal(early.learned, false);
-  assert.match(early.reason, /sekurang-kurangnya 3 post/);
-  assert.equal(calls.length, 0, "no AI call without enough posts");
+  assert.equal(early.learned, true);
+  assert.equal(early.posts, 2);
+  assert.equal((await story.activeDna(store)).profile.engagement, "");
 
   await publication(store, "page", `TERLEMAH ${LONG}`, { reactions: 2, comments: 0, shares: 0, reach: 2000 }, 7, now);
   await publication(store, "page", `BARU SANGAT ${LONG}`, { reactions: 999, comments: 99, shares: 99, reach: 1000 }, 0.2, now);
   const result = await learning.learnFromEngagement(store, {}, options);
   assert.equal(result.learned, true);
-  assert.equal(result.posts, 3, "a post under a day old is not judged yet");
-  assert.match(calls[0].prompt, /PALING TINGGI[\s\S]*TERBAIK[\s\S]*PALING RENDAH[\s\S]*TERLEMAH/);
-  assert.doesNotMatch(calls[0].prompt, /BARU SANGAT/);
+  assert.equal(result.posts, 4, "young posts count toward voice");
+  assert.match(calls[1].prompt, /CONTOH UTAMA[\s\S]*TERBAIK[\s\S]*PALING RENDAH[\s\S]*TERLEMAH/);
+  assert.doesNotMatch(calls[1].prompt.split("CONTOH GAYA")[0], /BARU SANGAT/);
+  assert.match(calls[1].prompt, /CONTOH GAYA[\s\S]*BARU SANGAT/);
 
   const dna = await story.activeDna(store);
   assert.equal(dna.source, "engagement");
@@ -310,7 +311,7 @@ test("learning writes a new DNA version from the best and worst posts, then wait
 
   const again = await learning.learnFromEngagement(store, {}, options);
   assert.equal(again.learned, false, "nothing new, so no second AI call");
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
   assert.equal((await learning.learnFromEngagement(store, { force: true }, options)).learned, true);
 
   // Manual DNA edits and a reset keep what was learned.

@@ -197,12 +197,8 @@ async function collectLearningPosts(appTabId) {
           result.posts = [...merged.values()].slice(0, 80);
         }
       }
-      if (platform === "facebook" && !result?.error && (!result?.posts?.length || !result.libraryUrl)) {
-        notes.push(label + ": " + (result?.posts?.length ? "Pautan Content Library tidak dijumpai untuk semak engagement." : "Teks penuh post belum dapat dibaca daripada profil."));
-        continue;
-      }
       if (platform === "facebook" && result?.libraryUrl) {
-        const profilePosts = result.posts;
+        const profilePosts = result.posts || [];
         const library = new URL(result.libraryUrl);
         if (library.origin !== new URL(PLATFORMS.facebook).origin ||
             !library.pathname.startsWith("/professional_dashboard/content/content_library")) {
@@ -213,6 +209,14 @@ async function collectLearningPosts(appTabId) {
         [{ result }] = await chrome.scripting.executeScript({
           target: { tabId: tab.id }, func: scanFacebookContentLibrary, args: [cutoff, profilePosts],
         });
+        if (!result?.posts?.length && profilePosts.some((post) => post.postedAt)) {
+          result = { posts: profilePosts.filter((post) => post.postedAt),
+            note: "Engagement Facebook belum dapat dipadankan. Teks bertarikh daripada profil digunakan untuk gaya." };
+        }
+      }
+      if (platform === "facebook" && !result?.libraryUrl && !result?.note && !result?.error) {
+        result.posts = (result.posts || []).filter((post) => post.postedAt);
+        notes.push(label + ": Content Library tidak tersedia. Post bertarikh daripada profil digunakan untuk gaya.");
       }
       if (result?.note) notes.push(result.note);
       if (result?.posts?.length) posts.push(...result.posts);

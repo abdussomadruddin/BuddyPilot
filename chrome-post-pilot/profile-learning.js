@@ -153,7 +153,7 @@ async function scanLearningProfile(platform, owner, cutoff, findContentLibrary =
         const message = '[data-ad-preview="message"],[data-ad-comet-preview="message"]';
         if (card && !card.querySelector(message)) continue;
         if (!card && match && url.pathname.toLowerCase().startsWith(profilePath + "/posts/")) {
-          for (let parent = link.parentElement, depth = 0; parent && depth < 13; parent = parent.parentElement, depth++) {
+          for (let parent = link.parentElement, depth = 0; parent && depth < 18; parent = parent.parentElement, depth++) {
             const messages = parent.querySelectorAll(message);
             if (messages.length > 1) break;
             if (messages.length === 1 && [...parent.querySelectorAll("a[href]")].some(isOwner)) {
@@ -183,9 +183,9 @@ async function scanLearningProfile(platform, owner, cutoff, findContentLibrary =
           const scope = content?.parentElement && content.parentElement.querySelectorAll(messageSelector).length === 1
             ? content.parentElement : content;
           const controls = [...(scope?.querySelectorAll('button,[role="button"]') || [])].filter((button) =>
-            button.getClientRects().length && !button.closest("a[href],form") &&
+            button.getClientRects().length && !button.closest("a[href],form,[role=menu]") &&
             !button.disabled && button.getAttribute("aria-disabled") !== "true");
-          const labelOf = (button) => normalize(button.getAttribute("aria-label") || button.innerText);
+          const labelOf = (button) => normalize(button.innerText || button.getAttribute("aria-label"));
           const known = /^(see more|lihat lagi|lihat selanjutnya)$/i;
           const safeAlternative = (button) => {
             const label = labelOf(button);
