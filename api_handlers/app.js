@@ -4662,9 +4662,10 @@ function pageHtml() {
             </div>
             <div>
               <label for="reportMetaAccount">Meta Ads account</label>
-              <select id="reportMetaAccount" name="metaAccountId">
+              <select id="reportMetaAccount" name="metaAccountId" aria-describedby="reportMetaAccountStatus">
                 <option value="">Tiada</option>
               </select>
+              <p id="reportMetaAccountStatus" class="note" role="status"></p>
             </div>
             <div>
               <label for="reportTikTokAccount">TikTok advertiser</label>
@@ -7053,13 +7054,16 @@ Review retargeting when the warm audience is ready</textarea>
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load Meta Ads accounts.");
         currentMetaAccounts = json.accounts || [];
-        status.textContent = currentMetaAccounts.length
-          ? currentMetaAccounts.length + " akaun tersedia."
-          : "Tiada akaun ditemui. Semak sambungan Meta Ads di Tetapan.";
+        const accountMessage = json.warning || (currentMetaAccounts.length
+          ? currentMetaAccounts.length + " akaun diterima daripada " + (json.source === "adflow" ? "AdFlow." : "Meta MCP.")
+          : "Tiada akaun ditemui. Semak sambungan Meta Ads di Tetapan.");
+        status.textContent = accountMessage;
+        document.getElementById("reportMetaAccountStatus").textContent = accountMessage;
         populateAdsAccountOptions();
         applySelectedClientReportDefaults();
       } catch (error) {
         status.textContent = "Senarai Meta gagal dimuatkan. Semak sambungan Meta Ads di Tetapan atau cuba lagi.";
+        document.getElementById("reportMetaAccountStatus").textContent = status.textContent;
       } finally {
         refresh.disabled = false;
       }

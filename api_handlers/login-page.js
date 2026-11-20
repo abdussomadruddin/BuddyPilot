@@ -224,6 +224,7 @@ function loginHtml({ error, setupMissing } = {}) {
         <input id="password" name="password" type="password" autocomplete="current-password" autofocus required>
         <button type="submit">Login</button>
       </form>
+      <p><a href="/privacy.html">Polisi privasi &amp; pemadaman data</a></p>
       <div class="error">Password salah.</div>
       <div class="setup">APP_PASSWORD belum diset di Vercel env. Set env production dahulu, kemudian redeploy.</div>
     </section>

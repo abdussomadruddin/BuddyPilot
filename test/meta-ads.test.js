@@ -331,3 +331,27 @@ test("saved client phase is preserved and invalid legacy values default safely",
   }
   assert.equal(normalizeAdsReportConfig({ phase: 'invalid' }).phase, 'SETUP PHASE');
 });
+
+test("account discovery follows Meta cursors and preserves accounts across pages", async () => {
+  const calls = [];
+  const accounts = await _test.listMetaAdAccountsWithClient({
+    listTools: async () => ({ tools: [{ name: "ads_get_ad_accounts", inputSchema: { required: ["client_conversation_id"] } }] }),
+    callTool: async ({ arguments: args }) => {
+      calls.push(args);
+      const payload = args.cursor
+        ? { ad_accounts: [{ ad_account_id: "2", ad_account_name: "Second" }], next_cursor: null }
+        : { ad_accounts: [{ ad_account_id: "1", ad_account_name: "First" }], next_cursor: "page2" };
+      return { content: [{ type: "text", text: JSON.stringify(payload) }] };
+    },
+  });
+  assert.equal(accounts.length, 2);
+  assert.equal(calls[1].cursor, "page2");
+  assert.match(calls[0].client_conversation_id, /^[A-Za-z0-9]{20}$/);
+});
+
+test("account discovery refuses repeated cursors instead of returning an incomplete list", async () => {
+  await assert.rejects(_test.listMetaAdAccountsWithClient({
+    listTools: async () => ({ tools: [{ name: "ads_get_ad_accounts" }] }),
+    callTool: async () => ({ content: [{ type: "text", text: '{"ad_accounts":[],"next_cursor":"repeat"}' }] }),
+  }), /pagination tidak lengkap/);
+});
