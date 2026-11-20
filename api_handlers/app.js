@@ -8851,7 +8851,7 @@ Review retargeting when the warm audience is ready</textarea>
     function billingItemFields(item = {}) {
       return '<div class="billing-extra-item">' +
         '<label>Keterangan<input type="text" maxlength="160" required value="' + escapeHtml(item.description || "") + '"></label>' +
-        '<label>Harga (RM)<input type="number" min="0.01" max="999999" step="0.01" inputmode="decimal" required value="' + escapeHtml(String(item.amount ?? "")) + '"></label>' +
+        '<label>Harga (RM)<input type="number" min="0" max="999999" step="0.01" inputmode="decimal" required value="' + escapeHtml(String(item.amount ?? "")) + '"></label>' +
         '<button type="button" class="link-button" data-billing-remove>Buang item</button></div>';
     }
 
@@ -9290,7 +9290,7 @@ Review retargeting when the warm audience is ready</textarea>
 
     function billingDraftError(drafts) {
       const invalid = drafts.find((draft) => draft.extraItems.some((item) =>
-        !item.description || !Number.isFinite(Number(item.amount)) || Number(item.amount) < 0.01 || Number(item.amount) > 999999
+        !item.description || !item.amount.trim() || !Number.isFinite(Number(item.amount)) || Number(item.amount) < 0 || Number(item.amount) > 999999
       ));
       if (invalid) return new Error("Isi keterangan dan harga yang sah untuk setiap item tambahan: " + invalid.clientCode);
       const belowDiscount = drafts.find((draft) => invoiceTotal(

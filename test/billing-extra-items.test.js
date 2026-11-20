@@ -20,9 +20,19 @@ test("extra items are priced separately and included in the subtotal and discoun
 });
 
 test("invalid additional items are rejected server-side", () => {
+  for (const amount of ["", " ", null, false]) {
+    assert.throws(() => buildInvoice({ client, period, config, overrides: { extraItems: [{ description: "Item", amount }] } }), /Harga item mesti diisi/);
+  }
   for (const extraItems of [null, {}, [{ description: " ", amount: 12 }], [{ description: "Item", amount: -1 }], [{ description: "x".repeat(161), amount: 12 }], Array(11).fill({ description: "Item", amount: 12 })]) {
     assert.throws(() => buildInvoice({ client, period, config, overrides: { extraItems } }));
   }
+});
+
+test("free additional items are kept without increasing the invoice total", () => {
+  const invoice = buildInvoice({ client, period, config, overrides: { extraItems: [{ description: "Bonus service", amount: "0" }] } });
+  assert.equal(invoice.total, 100);
+  assert.equal(invoice.lineItems[1].description, "Bonus service");
+  assert.equal(invoice.lineItems[1].amount, 0);
 });
 
 test("saved invoice items reload; receipts inherit them until separately edited", async (t) => {
