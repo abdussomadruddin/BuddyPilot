@@ -41,16 +41,44 @@
     clearPreview();
     updateTotal();
   }
-  function addRow() {
+  function addRow(values = {}) {
     if (rows.children.length >= 200) return;
     const row = document.createElement("fieldset");
     row.className = "billing-transaction";
     row.innerHTML = '<legend></legend><label>Tarikh<input type="date" data-field="date" required></label><label class="billing-id">Transaction ID<input data-field="id" maxlength="100" required></label><label>Amaun<input type="number" data-field="amount" min="0" max="999999999.99" step="0.01" required></label><label>Status<select data-field="status"><option>Paid</option><option>Pending</option><option>Failed</option><option>Refunded</option></select></label><button type="button" class="secondary" aria-label="Buang transaksi" title="Buang transaksi"><svg class="icon" aria-hidden="true"><use href="/icons.svg?v=billing1#trash"></use></svg></button>';
     row.querySelector("button").addEventListener("click", () => { row.remove(); invalidate(); });
+    for (const field of row.querySelectorAll("[data-field]")) {
+      if (Object.hasOwn(values, field.dataset.field)) field.value = values[field.dataset.field];
+    }
     rows.append(row);
     invalidate();
   }
-  add.addEventListener("click", addRow);
+  add.addEventListener("click", () => addRow());
+  document.getElementById("billingFillExample").addEventListener("click", () => {
+    const hasDraft = [...form.querySelectorAll("input, textarea, select")].some((field) =>
+      field instanceof HTMLSelectElement
+        ? field.selectedIndex !== 0
+        : field.value !== field.defaultValue
+    ) || rows.children.length > 1;
+    if (hasDraft && !window.confirm("Gantikan input dan transaksi sekarang dengan data contoh?")) return;
+    const example = {
+      company: "Syarikat Contoh Sdn. Bhd.", address: "Jalan Contoh\n50450 Kuala Lumpur\nMalaysia",
+      registration: "SSM CONTOH", account: "1234567890123456",
+      start: "2026-11-01", end: "2026-11-21", paymentMethod: "Visa",
+      last4: "1234", currency: "MYR", funds: "0.00", vatRate: "0", vat: "0.00",
+    };
+    for (const [name, value] of Object.entries(example)) form.elements[name].value = value;
+    rows.replaceChildren();
+    const transactions = [
+      [20, "84.41"], [18, "189.00"], [15, "189.00"], [12, "189.00"],
+      [10, "189.00"], [7, "0.25"], [7, "189.23"],
+    ];
+    transactions.forEach(([day, amount], index) => addRow({
+      date: "2026-11-" + String(day).padStart(2, "0"),
+      id: "CONTOH-" + String(index + 1).padStart(3, "0"), amount, status: "Paid",
+    }));
+    status.textContent = "Data contoh diisi.";
+  });
   form.addEventListener("input", invalidate);
   form.addEventListener("change", invalidate);
   form.addEventListener("submit", async (event) => {

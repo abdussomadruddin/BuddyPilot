@@ -10,7 +10,7 @@ function pageHtml() {
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BuddyPilot</title>
   <script src="/ai-key-settings.js?v=3" defer></script>
-  <script src="/billing-summary.js?v=1" defer></script>
+  <script src="/billing-summary.js?v=2" defer></script>
   <link rel="stylesheet" href="/action-feedback.css?v=1">
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
@@ -4334,7 +4334,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261114-1">
   <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-6">
-  <link rel="stylesheet" href="/billing-summary.css?v=1">
+  <link rel="stylesheet" href="/billing-summary.css?v=2">
 </head>
 <body>
   <main>
