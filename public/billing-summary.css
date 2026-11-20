@@ -1,0 +1,30 @@
+.billing-summary-form { max-width: 1100px; margin: 0 auto; }
+.billing-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.billing-summary-form label { display: grid; gap: 6px; min-width: 0; font-size: 13px; font-weight: 600; }
+.billing-summary-form input, .billing-summary-form select, .billing-summary-form textarea { min-width: 0; width: 100%; box-sizing: border-box; font-size: 16px; }
+.billing-transactions { margin-top: 28px; border-top: 1px solid #d7e0e9; padding-top: 18px; }
+.billing-transactions > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.billing-transactions h2 { font-size: 20px; margin: 0; }
+.billing-transaction { display: grid; grid-template-columns: 150px minmax(0, 1fr) 125px 100px 44px; align-items: end; gap: 10px; margin: 0 0 12px; padding: 12px; border: 1px solid #d7e0e9; border-radius: 8px; background: #fff; min-width: 0; }
+.billing-transaction legend { font-size: 12px; font-weight: 600; padding: 0 4px; color: #536575; }
+.billing-transaction button { width: 44px; height: 44px; padding: 10px; }
+.billing-total { display: flex; gap: 16px; justify-content: space-between; padding: 16px 0; font-weight: 700; flex-wrap: wrap; }
+.billing-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.billing-actions a:not([hidden]) { display: inline-flex; align-items: center; min-height: 44px; }
+#billingPreview iframe { width: 100%; height: 740px; border: 1px solid #d7e0e9; border-radius: 8px; background: #fff; }
+#billingStatus { min-height: 24px; overflow-wrap: anywhere; }
+#billingGenerate[aria-busy="true"]::before { content: ""; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: billing-spin .8s linear infinite; }
+@keyframes billing-spin { to { transform: rotate(360deg); } }
+@media (max-width: 700px) {
+  .topbar .topbar-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .topbar .topbar-tabs .nav-liquid-indicator { width: calc((100% - 8px) / 5); }
+  .topbar .topbar-tabs .tab-button { min-width: 0; padding-left: 2px; padding-right: 2px; }
+  .topbar .topbar-tabs .tab-button span { font-size: 11px; white-space: normal; }
+  .billing-fields { gap: 12px; }
+  .billing-fields > label:nth-child(3), .billing-fields > label:nth-child(4) { grid-column: 1 / -1; }
+  .billing-transaction { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .billing-id { grid-column: 1 / -1; grid-row: 1; }
+  .billing-transaction button { justify-self: end; }
+  #billingPreview iframe { height: 480px; }
+}
+@media (prefers-reduced-motion: reduce) { #billingGenerate[aria-busy="true"]::before { animation: none; } }

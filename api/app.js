@@ -1,4 +1,5 @@
 const routes = {
+  "billing-summary": () => require("../api_handlers/billing-summary"),
   "settings/ai-keys": () => require("../api_handlers/ai-key-settings"),
   "client-ads-monitor": () => require("../api_handlers/client-ads-monitor"),
   activity: () => require("../api_handlers/activity"),

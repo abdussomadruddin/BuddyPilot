@@ -47,11 +47,14 @@ test("motion has an accessible off switch and no new continuous animation or API
   assert.doesNotMatch(css, /\binfinite\b|@import|url\(https?:/);
 });
 
-test("mobile layer loads last, fits the four main tabs and keeps text readable", () => {
+test("billing layer expands navigation to five tabs without changing legacy mobile workflows", () => {
   const mobileCss = fs.readFileSync(require.resolve("../public/buddypilot-mobile.css"), "utf8");
   const source = fs.readFileSync(require.resolve("../api_handlers/app.js"), "utf8");
   assert.ok(source.indexOf("buddypilot-mobile.css") > source.indexOf("buddypilot-liquid.css"));
-  assert.equal((source.match(/class="tab-button[^"]*" type="button" data-tab-target=/g) || []).length, 4);
+  assert.equal((source.match(/class="tab-button[^"]*" type="button" data-tab-target=/g) || []).length, 5);
+  const billingCss = fs.readFileSync(require.resolve("../public/billing-summary.css"), "utf8");
+  assert.ok(source.indexOf("billing-summary.css") > source.indexOf("buddypilot-polish.css"));
+  assert.match(billingCss, /\.topbar \.topbar-tabs \{ grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
   // The base styles lay out four tabs; the mobile layer must not narrow them to three.
   assert.match(source, /\.topbar \.topbar-tabs \{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
   assert.doesNotMatch(mobileCss, /repeat\(3, minmax/);

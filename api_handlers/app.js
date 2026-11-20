@@ -1,4 +1,5 @@
 const { requireAuth } = require("../lib/auth");
+const { billingSummaryPanel } = require("../lib/billing-summary-ui");
 
 function pageHtml() {
   const uiIcon = (name, tone = "") => `<svg class="icon section-icon ${tone}" aria-hidden="true"><use href="/icons.svg#${name}"></use></svg>`;
@@ -9,6 +10,7 @@ function pageHtml() {
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BuddyPilot</title>
   <script src="/ai-key-settings.js?v=3" defer></script>
+  <script src="/billing-summary.js?v=1" defer></script>
   <link rel="stylesheet" href="/action-feedback.css?v=1">
   <script src="/action-feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="/client-ads-monitor.css?v=1">
@@ -4332,6 +4334,7 @@ function pageHtml() {
   <link rel="stylesheet" href="/buddypilot-workflow.css?v=20261112-1">
   <link rel="stylesheet" href="/buddypilot-mobile.css?v=20261114-1">
   <link rel="stylesheet" href="/buddypilot-polish.css?v=20261114-6">
+  <link rel="stylesheet" href="/billing-summary.css?v=1">
 </head>
 <body>
   <main>
@@ -4347,6 +4350,7 @@ function pageHtml() {
         <button class="tab-button" type="button" data-tab-target="adscmo"><svg class="icon" aria-hidden="true"><use href="/icons.svg#chart"></use></svg><span>Ads CMO</span></button>
         <button class="tab-button" type="button" data-tab-target="clientpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#users"></use></svg><span>Client Pilot</span></button>
         <button class="tab-button" type="button" data-tab-target="postpilot"><svg class="icon" aria-hidden="true"><use href="/icons.svg#file-text"></use></svg><span>Post Pilot</span></button>
+        <button class="tab-button" type="button" data-tab-target="billingpdf" aria-label="Billing PDF" title="Billing PDF"><svg class="icon" aria-hidden="true"><use href="/icons.svg#file-text"></use></svg><span>Billing PDF</span></button>
       </nav>
       <details class="topbar-menu">
         <summary aria-label="Buka tetapan" title="Tetapan" aria-controls="appSettingsMenu"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg><span>Tetapan</span></summary>
@@ -4792,6 +4796,7 @@ Review retargeting when the warm audience is ready</textarea>
       </section>
     </section>
 
+    ${billingSummaryPanel()}
     <section id="tab-clientpilot" class="tab-panel" data-tab-panel="clientpilot">
       <section class="card">
         <div class="section-heading">
@@ -5439,8 +5444,8 @@ Review retargeting when the warm audience is ready</textarea>
     const LAST_REPORT_CLIENT_KEY = "buddypilot-last-report-client-v1";
     const TODAY_CACHE_KEY = "buddypilot-operations-cache-v1";
     const OPERATIONS_CACHE_MS = 5 * 60 * 1000;
-    const NAV_ITEMS = ["dashboard", "adscmo", "clientpilot", "postpilot"];
-    const NAV_TITLES = { dashboard: "Hari Ini", adscmo: "Ads CMO", clientpilot: "Client Pilot", postpilot: "Post Pilot" };
+    const NAV_ITEMS = ["dashboard", "adscmo", "clientpilot", "postpilot", "billingpdf"];
+    const NAV_TITLES = { dashboard: "Hari Ini", adscmo: "Ads CMO", clientpilot: "Client Pilot", postpilot: "Post Pilot", billingpdf: "Billing PDF" };
     let currentPreview = null;
     let seenVariations = [];
     let preparedCreativeFile = null;
