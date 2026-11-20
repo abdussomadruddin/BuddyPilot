@@ -4925,6 +4925,8 @@ Review retargeting when the warm audience is ready</textarea>
                   <option value="">Tiada</option>
                 </select>
                 <input id="clientMetaAccountName" name="metaAccountName" type="hidden">
+                <button id="refreshClientMetaAccounts" class="secondary" type="button">Muat semula akaun Meta</button>
+                <p id="clientMetaAccountStatus" class="note" role="status"></p>
                 <input id="clientMetaCurrency" name="metaCurrency" type="hidden">
               </div>
               <div class="full">
@@ -7037,6 +7039,11 @@ Review retargeting when the warm audience is ready</textarea>
     }
 
     async function loadMetaAccounts() {
+      const refresh = document.getElementById("refreshClientMetaAccounts");
+      const status = document.getElementById("clientMetaAccountStatus");
+      if (refresh.disabled) return;
+      refresh.disabled = true;
+      status.textContent = "Memuatkan akaun Meta...";
       try {
         const response = await fetch("/api/meta/accounts");
         const json = await readApiJson(response);
@@ -7046,14 +7053,19 @@ Review retargeting when the warm audience is ready</textarea>
         }
         if (!response.ok || !json.ok) throw new Error(json.error || "Gagal load Meta Ads accounts.");
         currentMetaAccounts = json.accounts || [];
+        status.textContent = currentMetaAccounts.length
+          ? currentMetaAccounts.length + " akaun tersedia."
+          : "Tiada akaun ditemui. Semak sambungan Meta Ads di Tetapan.";
         populateAdsAccountOptions();
         applySelectedClientReportDefaults();
       } catch (error) {
-        currentMetaAccounts = [];
-        populateAdsAccountOptions();
-        setMessage(clientResult, "err", \`Meta MCP: \${error?.message || error}\`);
+        status.textContent = "Senarai Meta gagal dimuatkan. Semak sambungan Meta Ads di Tetapan atau cuba lagi.";
+      } finally {
+        refresh.disabled = false;
       }
     }
+
+    document.getElementById("refreshClientMetaAccounts").addEventListener("click", loadMetaAccounts);
 
     async function loadMetaConnection() {
       try {
@@ -7077,17 +7089,11 @@ Review retargeting when the warm audience is ready</textarea>
           : "";
         connectMetaButton.textContent = connection.connected ? "Reauthorize" : "Connect Meta Ads";
         disconnectMetaButton.hidden = !connection.connected;
-        if (connection.connected) await loadMetaAccounts();
-        else {
-          currentMetaAccounts = [];
-          populateAdsAccountOptions();
-        }
       } catch (error) {
-        currentMetaAccounts = [];
         metaConnectionText.textContent = error?.message || String(error);
         metaAuthorizationWarning.hidden = true;
-        populateAdsAccountOptions();
       }
+      await loadMetaAccounts();
     }
 
     async function loadTikTokConnection() {
