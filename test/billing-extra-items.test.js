@@ -63,12 +63,15 @@ test("saved invoice items reload; receipts inherit them until separately edited"
   assert.deepEqual(editedReceipt.extraItems, []);
 });
 
-test("invoice and paid receipt render an item breakdown page without changing legacy page count", async () => {
+test("invoice and paid receipt keep short extras inline and paginate long tables", async () => {
   const base = buildInvoice({ client, period, config });
+  const compact = buildInvoice({ client, period, config, overrides: {
+    extraItems: [{ description: "Video production", amount: 200 }, { description: "Bonus service", amount: 0 }],
+  } });
   const detailed = buildInvoice({ client, period, config, overrides: {
     extraItems: Array.from({ length: 10 }, (_, i) => ({ description: String(i) + " W".repeat(78), amount: 999999 })),
   } });
-  for (const [invoice, expected] of [[base, 1], [detailed, 2], [{ ...detailed, documentType: "receipt", documentLabel: "RESIT" }, 2]]) {
+  for (const [invoice, expected] of [[base, 1], [compact, 1], [{ ...compact, documentType: "receipt", documentLabel: "RESIT" }, 1], [detailed, 2], [{ ...detailed, documentType: "receipt", documentLabel: "RESIT" }, 2]]) {
     const pdf = await renderInvoicePdf(invoice);
     assert.equal((pdf.toString("latin1").match(/\/Type \/Page\b/g) || []).length, expected);
   }
